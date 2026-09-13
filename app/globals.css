@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/* Font dari next/font (didefinisikan di app/layout.tsx) */
+@theme inline {
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: var(--font-poppins), var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme {
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Tema DM Digital: putih, hitam, biru muda */
+  --color-paper: #f4f5f7;
+  --color-ink: #111111;
+  --color-muted: #5b6270;
+  --color-line: #e3e6eb;
+  --color-brand: #1e8bff;
+  --color-brand-deep: #0a6fe0;
+  --color-brand-soft: #dcebff;
+  --color-brand-softer: #f1f7ff;
+
+  /* Status (selalu disertai ikon + label, tidak pernah warna saja) */
+  --color-ok: #16a34a;
+  --color-ok-soft: #e7f6ec;
+  --color-warn: #fab219;
+  --color-warn-soft: #fff4d6;
+  --color-bad: #d03b3b;
+  --color-bad-soft: #fdecec;
+
+  --animate-pop-in: pop-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-indeterminate: progress-indeterminate 1.4s ease-in-out infinite;
+
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes progress-indeterminate {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(250%); }
+  }
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Latar putih bernuansa marmer lembut, seperti foto produk */
+body {
+  background-color: var(--color-paper);
+  background-image:
+    radial-gradient(120% 60% at 8% 0%, rgb(255 255 255 / 0.95) 0%, rgb(255 255 255 / 0) 60%),
+    radial-gradient(80% 50% at 100% 35%, rgb(255 255 255 / 0.9) 0%, rgb(255 255 255 / 0) 60%),
+    radial-gradient(90% 60% at 0% 100%, rgb(255 255 255 / 0.85) 0%, rgb(255 255 255 / 0) 55%);
+  background-attachment: fixed;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-brand-soft);
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
