@@ -217,28 +217,46 @@ export function ProxySection({
             </select>
           </div>
           <div>
-          <p className="mb-1.5 text-xs font-bold tracking-wider text-muted uppercase">Format</p>
-          <div
-            role="radiogroup"
-            aria-label="Format proxy"
-            className="inline-flex flex-wrap gap-1 rounded-2xl border-2 border-ink bg-white p-1 sm:rounded-full"
-          >
-            {PROXY_FORMATS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                role="radio"
-                aria-checked={format === option}
-                onClick={() => changeFormat(option)}
-                className={cn(
-                  "rounded-xl px-3 py-1.5 font-mono text-xs font-semibold transition-colors sm:rounded-full",
-                  format === option ? "bg-ink text-white" : "text-ink hover:bg-brand-softer",
-                )}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
+            <label htmlFor="format-select" className="mb-1.5 block text-xs font-bold tracking-wider text-muted uppercase">
+              Format
+            </label>
+
+            {/* Layar kecil: dropdown agar semua pilihan terlihat */}
+            <select
+              id="format-select"
+              value={format}
+              onChange={(event) => changeFormat(event.target.value as ProxyFormat)}
+              className={inputClass + " w-full font-mono sm:hidden"}
+            >
+              {PROXY_FORMATS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+
+            {/* Layar lebar: pilihan berbentuk pill */}
+            <div
+              role="radiogroup"
+              aria-label="Format proxy"
+              className="hidden w-fit max-w-full gap-1 rounded-full border-2 border-ink bg-white p-1 sm:inline-flex"
+            >
+              {PROXY_FORMATS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={format === option}
+                  onClick={() => changeFormat(option)}
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-1.5 font-mono text-xs font-semibold whitespace-nowrap transition-colors",
+                    format === option ? "bg-ink text-white" : "text-ink hover:bg-brand-softer",
+                  )}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex">
