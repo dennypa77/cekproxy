@@ -143,6 +143,8 @@ Buka `/admin` dan login dengan `ADMIN_PASSWORD`.
 - **Nonaktifkan**: customer tidak bisa membuka halaman pesanan.
 - **Log replace**: semua percobaan replace beserta error teknisnya (hanya terlihat oleh admin).
 
+**Semua Proxy** menggabungkan seluruh proxy dari semua akun di pool dalam satu tabel: IP, port, username, password, negara, status valid, akun asal, dan nomor pesanan pemakainya. Ada pencarian, filter akun/negara/status, serta tombol Copy, Download .txt, dan Download .csv lengkap.
+
 **Dashboard** menampilkan jumlah akun available, pesanan aktif, dan daftar pesanan yang akan expired dalam 3 hari untuk di-follow-up di Shopee.
 
 ---

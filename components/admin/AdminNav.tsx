@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/akun", label: "Pool Akun" },
   { href: "/admin/pesanan", label: "Pesanan" },
+  { href: "/admin/proxy", label: "Semua Proxy" },
 ];
 
 export function AdminNav() {
