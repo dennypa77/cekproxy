@@ -195,8 +195,8 @@ export function ProxySection({
       />
 
       {/* Toolbar */}
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end">
           <div>
             <label htmlFor="country-filter" className="mb-1.5 block text-xs font-bold tracking-wider text-muted uppercase">
               Negara
@@ -221,12 +221,11 @@ export function ProxySection({
               Format
             </label>
 
-            {/* Layar kecil: dropdown agar semua pilihan terlihat */}
             <select
               id="format-select"
               value={format}
               onChange={(event) => changeFormat(event.target.value as ProxyFormat)}
-              className={inputClass + " w-full font-mono sm:hidden"}
+              className={inputClass + " w-full font-mono sm:w-56"}
             >
               {PROXY_FORMATS.map((option) => (
                 <option key={option} value={option}>
@@ -234,32 +233,9 @@ export function ProxySection({
                 </option>
               ))}
             </select>
-
-            {/* Layar lebar: pilihan berbentuk pill */}
-            <div
-              role="radiogroup"
-              aria-label="Format proxy"
-              className="hidden w-fit max-w-full gap-1 rounded-full border-2 border-ink bg-white p-1 sm:inline-flex"
-            >
-              {PROXY_FORMATS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  role="radio"
-                  aria-checked={format === option}
-                  onClick={() => changeFormat(option)}
-                  className={cn(
-                    "shrink-0 rounded-full px-3 py-1.5 font-mono text-xs font-semibold whitespace-nowrap transition-colors",
-                    format === option ? "bg-ink text-white" : "text-ink hover:bg-brand-softer",
-                  )}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end">
           <Button
             variant="secondary"
             size="sm"
