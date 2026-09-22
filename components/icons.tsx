@@ -156,6 +156,12 @@ export const TicketIcon = (p: IconProps) => (
     <path d="M13 5v2M13 17v2M13 11v2" />
   </Icon>
 );
+export const KeyIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="7.5" cy="15.5" r="4.5" />
+    <path d="m10.7 12.3 8.3-8.3M17 6l2.5 2.5M14.5 8.5 17 11" />
+  </Icon>
+);
 export const LockIcon = (p: IconProps) => (
   <Icon {...p}>
     <rect x="3" y="11" width="18" height="11" rx="2" />

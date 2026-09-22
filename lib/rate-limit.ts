@@ -6,6 +6,8 @@ export const RATE_LIMITS = {
   search: { max: 10, windowSeconds: 60 },
   replace: { max: 5, windowSeconds: 60 },
   whitelist: { max: 10, windowSeconds: 60 },
+  /** ganti username/password proxy */
+  credentials: { max: 5, windowSeconds: 600 },
   /** semua request API customer (bandwidth, proxy, dll.) */
   api: { max: 90, windowSeconds: 60 },
   login: { max: 5, windowSeconds: 300 },

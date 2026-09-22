@@ -30,6 +30,11 @@ export type BandwidthResponse =
     }
   | { available: false; message: string };
 
+export interface ProxyCredentials {
+  username: string;
+  password: string;
+}
+
 export interface CountryOption {
   code: string;
   count: number;

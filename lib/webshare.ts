@@ -2,10 +2,13 @@ import "server-only";
 import { z } from "zod";
 import { isTestMode } from "./env";
 import { mockTransport } from "./webshare-mock";
+import { randomInt } from "node:crypto";
 import {
   WebshareError,
   type IpAuthorization,
   type PlanInfo,
+  type ProxyConfigInfo,
+  type ProxyCredentialPatch,
   type ProxyItem,
   type ReplacementJob,
   type ReplaceTarget,
@@ -36,7 +39,7 @@ type Query = Record<string, string | number | undefined>;
 
 async function request<T = unknown>(
   apiKey: string,
-  method: "GET" | "POST" | "DELETE",
+  method: "GET" | "POST" | "PATCH" | "DELETE",
   path: string,
   options: { query?: Query; body?: unknown; timeoutMs?: number } = {},
 ): Promise<T> {
@@ -215,6 +218,12 @@ const replacementSchema = z.object({
 
 const availableCountriesSchema = z.object({ available_countries: z.record(z.string(), z.coerce.number()) });
 
+const proxyConfigSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+  state: z.string().nullish().transform((v) => v ?? null),
+});
+
 // ---------------------------------------------------------------------------
 // Transport asli
 // ---------------------------------------------------------------------------
@@ -302,6 +311,16 @@ const realTransport: WebshareTransport = {
   async deleteIpAuthorization(apiKey, id) {
     if (!Number.isInteger(id) || id <= 0) throw new WebshareError("bad_request", `ID whitelist tidak valid: ${id}`);
     await request(apiKey, "DELETE", `/api/v2/proxy/ipauthorization/${id}/`);
+  },
+
+  async getProxyConfig(apiKey) {
+    const data = await request(apiKey, "GET", "/api/v2/proxy/config/");
+    return parseOrThrow(proxyConfigSchema, data, "proxy config");
+  },
+
+  async updateProxyCredentials(apiKey, patch) {
+    const data = await request(apiKey, "PATCH", "/api/v2/proxy/config/", { body: patch, timeoutMs: 20_000 });
+    return parseOrThrow(proxyConfigSchema, data, "proxy config");
   },
 };
 
@@ -452,5 +471,35 @@ export function deleteIpAuthorization(apiKey: string, id: number): Promise<void>
   return transport().deleteIpAuthorization(apiKey, id);
 }
 
+/** Username & password proxy: 8–32 karakter alfanumerik (aturan Webshare). */
+export const PROXY_CREDENTIAL_PATTERN = /^[a-zA-Z0-9]{8,32}$/;
+
+const CREDENTIAL_CHARS = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+export function generateCredential(length = 14): string {
+  return Array.from({ length }, () => CREDENTIAL_CHARS[randomInt(CREDENTIAL_CHARS.length)]).join("");
+}
+
+export function getProxyConfig(apiKey: string): Promise<ProxyConfigInfo> {
+  return transport().getProxyConfig(apiKey);
+}
+
+/** Ganti username dan/atau password proxy akun. Minimal satu field wajib diisi. */
+export function updateProxyCredentials(apiKey: string, patch: ProxyCredentialPatch): Promise<ProxyConfigInfo> {
+  const cleaned: ProxyCredentialPatch = {};
+  for (const key of ["username", "password"] as const) {
+    const value = patch[key];
+    if (value === undefined) continue;
+    if (!PROXY_CREDENTIAL_PATTERN.test(value)) {
+      throw new WebshareError("bad_request", `${key} tidak memenuhi format 8-32 karakter alfanumerik`);
+    }
+    cleaned[key] = value;
+  }
+  if (!cleaned.username && !cleaned.password) {
+    throw new WebshareError("bad_request", "Tidak ada perubahan kredensial yang dikirim");
+  }
+  return transport().updateProxyCredentials(apiKey, cleaned);
+}
+
 export { WebshareError };
-export type { IpAuthorization, PlanInfo, ProxyItem, ReplacementJob, ReplaceTarget, SubscriptionInfo };
+export type { IpAuthorization, PlanInfo, ProxyConfigInfo, ProxyItem, ReplacementJob, ReplaceTarget, SubscriptionInfo };

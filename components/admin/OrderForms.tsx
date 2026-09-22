@@ -272,6 +272,72 @@ export function ExtendOrderForm({ action }: { action: (formData: FormData) => Pr
   );
 }
 
+export function CredentialsForm({ action }: { action: (formData: FormData) => Promise<AdminActionState> }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const { pending, state, onSubmit, formRef } = useServerForm(action);
+
+  const random = () => {
+    const chars = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const values = new Uint32Array(14);
+    crypto.getRandomValues(values);
+    return Array.from(values, (n) => chars[n % chars.length]).join("");
+  };
+
+  return (
+    <form ref={formRef} onSubmit={onSubmit} className="space-y-3">
+      <p className="text-sm text-muted">
+        Kosongkan salah satu jika tidak ingin diubah. Berlaku untuk semua proxy di akun ini, dan customer wajib
+        memperbarui aplikasinya.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className={labelClass} htmlFor="cred_username">
+            Username baru
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="cred_username"
+              name="username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              autoComplete="off"
+              maxLength={32}
+              className={`${inputClass} font-mono`}
+            />
+            <Button variant="secondary" onClick={() => setUsername(random())}>
+              Acak
+            </Button>
+          </div>
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="cred_password">
+            Password baru
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="cred_password"
+              name="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="off"
+              maxLength={32}
+              className={`${inputClass} font-mono`}
+            />
+            <Button variant="secondary" onClick={() => setPassword(random())}>
+              Acak
+            </Button>
+          </div>
+        </div>
+      </div>
+      <Button type="submit" loading={pending} disabled={!username && !password}>
+        Ganti kredensial
+      </Button>
+      <ResultDetails state={state} />
+    </form>
+  );
+}
+
 export function LinkAccountForm({
   action,
   accounts,

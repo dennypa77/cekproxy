@@ -8,7 +8,8 @@ export type CustomerOperation =
   | "replace"
   | "whitelist_list"
   | "whitelist_add"
-  | "whitelist_delete";
+  | "whitelist_delete"
+  | "credentials";
 
 const DEFAULTS: Record<CustomerOperation, string> = {
   bandwidth: "Data bandwidth sedang tidak tersedia.",
@@ -18,6 +19,7 @@ const DEFAULTS: Record<CustomerOperation, string> = {
   whitelist_list: "Daftar IP whitelist belum bisa dimuat. Silakan coba lagi.",
   whitelist_add: "IP belum bisa ditambahkan. Silakan coba lagi.",
   whitelist_delete: "IP belum bisa dihapus. Silakan coba lagi.",
+  credentials: "Username & password belum bisa diubah. Silakan coba lagi.",
 };
 
 /**
@@ -40,6 +42,13 @@ export function customerErrorMessage(error: unknown, operation: CustomerOperatio
     case "upstream":
       return "Server proxy sedang lambat atau tidak dapat dihubungi. Silakan coba lagi beberapa saat lagi.";
     case "bad_request": {
+      if (operation === "credentials") {
+        const raw = `${error.message} ${JSON.stringify(error.detail ?? "")}`.toLowerCase();
+        if (raw.includes("already") || raw.includes("taken") || raw.includes("unique")) {
+          return "Username tersebut sudah dipakai. Coba username lain.";
+        }
+        return "Username/password ditolak. Gunakan 8–32 karakter huruf dan angka saja.";
+      }
       if (operation === "whitelist_add") {
         const raw = `${error.message} ${JSON.stringify(error.detail ?? "")}`.toLowerCase();
         if (raw.includes("already") || raw.includes("exist") || raw.includes("unique")) {

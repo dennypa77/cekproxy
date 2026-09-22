@@ -286,6 +286,28 @@ export const mockTransport: WebshareTransport = {
     return structuredClone(entry);
   },
 
+  async getProxyConfig(apiKey) {
+    await latency();
+    const account = accountFor(apiKey);
+    const first = account.proxies[0];
+    return { username: first?.username ?? "dmuser0000", password: first?.password ?? "mockpass0000", state: "completed" };
+  },
+
+  async updateProxyCredentials(apiKey, patch) {
+    await latency(400, 900);
+    const account = accountFor(apiKey);
+    for (const proxy of account.proxies) {
+      if (patch.username) proxy.username = patch.username;
+      if (patch.password) proxy.password = patch.password;
+    }
+    const first = account.proxies[0];
+    return {
+      username: patch.username ?? first?.username ?? "dmuser0000",
+      password: patch.password ?? first?.password ?? "mockpass0000",
+      state: "completed",
+    };
+  },
+
   async deleteIpAuthorization(apiKey, id) {
     await latency();
     const account = accountFor(apiKey);

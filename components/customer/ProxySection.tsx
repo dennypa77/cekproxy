@@ -8,13 +8,14 @@ import {
   ChevronRightIcon,
   CopyIcon,
   DownloadIcon,
+  KeyIcon,
   LockIcon,
   RefreshIcon,
   ServerIcon,
   SwapIcon,
   WhatsAppIcon,
 } from "@/components/icons";
-import { Badge, Button, Card, CardHeader, cn } from "@/components/ui";
+import { Badge, Button, Card, CardHeader, cn, inputClass } from "@/components/ui";
 import { apiFetch, orderApi } from "@/lib/client/api";
 import { copyText, downloadText } from "@/lib/client/clipboard";
 import { countryFlag, countryName } from "@/lib/format";
@@ -23,14 +24,17 @@ import {
   formatProxy,
   PROXY_FORMATS,
   type ProxiesResponse,
+  type ProxyCredentials,
   type ProxyFormat,
   type PublicProxy,
   type ReplaceResponse,
 } from "@/lib/public-types";
+import { CredentialsModal } from "./CredentialsModal";
 import { ReplaceModal } from "./ReplaceModal";
 
 const PAGE_SIZE = 100;
 const FORMAT_STORAGE_KEY = "dm-proxy-format";
+const ALL_COUNTRIES = "ALL";
 
 export function ProxySection({
   orderNo,
@@ -51,6 +55,8 @@ export function ProxySection({
   const [format, setFormat] = useState<ProxyFormat>("ip:port:user:pass");
   const [page, setPage] = useState(1);
   const [replaceTarget, setReplaceTarget] = useState<PublicProxy | null>(null);
+  const [country, setCountry] = useState<string>(ALL_COUNTRIES);
+  const [credentialsOpen, setCredentialsOpen] = useState(false);
   const pendingPolls = useRef(0);
 
   useEffect(() => {
@@ -93,13 +99,33 @@ export function ProxySection({
   }, [data, load]);
 
   const proxies = useMemo(() => data?.proxies ?? [], [data]);
-  const totalPages = Math.max(1, Math.ceil(proxies.length / PAGE_SIZE));
+
+  // Negara yang benar-benar ada di pesanan ini, diurutkan dari jumlah terbanyak.
+  const countryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const proxy of proxies) {
+      const code = proxy.country ?? "";
+      counts.set(code, (counts.get(code) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [proxies]);
+
+  const visible = useMemo(
+    () => (country === ALL_COUNTRIES ? proxies : proxies.filter((p) => (p.country ?? "") === country)),
+    [proxies, country],
+  );
+
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const pageItems = proxies.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pageItems = visible.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const remaining = Math.max(replaceQuota - replaceUsed, 0);
   const quotaExhausted = remaining === 0;
   const disabled = expired || !data;
-  const validCount = proxies.filter((p) => p.valid).length;
+  const validCount = visible.filter((p) => p.valid).length;
+  const countryLabel = country === ALL_COUNTRIES ? "semua negara" : countryName(country);
+  const credentials: ProxyCredentials | null = proxies[0]
+    ? { username: proxies[0].username, password: proxies[0].password }
+    : null;
 
   function changeFormat(next: ProxyFormat) {
     setFormat(next);
@@ -117,16 +143,27 @@ export function ProxySection({
   }
 
   async function copyAll() {
-    if (!proxies.length) return;
-    const ok = await copyText(proxies.map((p) => formatProxy(p, format)).join("\n"));
-    if (ok) toast.success(`${proxies.length} proxy disalin`);
+    if (!visible.length) return;
+    const ok = await copyText(visible.map((p) => formatProxy(p, format)).join("\n"));
+    if (ok) toast.success(visible.length + " proxy (" + countryLabel + ") disalin");
     else toast.error("Gagal menyalin. Gunakan tombol Download .txt.");
   }
 
   function download() {
-    if (!proxies.length) return;
-    downloadText(`proxy-${orderNo}.txt`, proxies.map((p) => formatProxy(p, format)).join("\n") + "\n");
-    toast.success("File .txt diunduh");
+    if (!visible.length) return;
+    const suffix = country === ALL_COUNTRIES ? "" : "-" + country.toLowerCase();
+    downloadText("proxy-" + orderNo + suffix + ".txt", visible.map((p) => formatProxy(p, format)).join("\n") + "\n");
+    toast.success(visible.length + " proxy (" + countryLabel + ") diunduh");
+  }
+
+  function changeCountry(next: string) {
+    setCountry(next);
+    setPage(1);
+  }
+
+  function onCredentialsChanged() {
+    setCredentialsOpen(false);
+    void load(true);
   }
 
   function onReplaced(result: ReplaceResponse) {
@@ -141,7 +178,13 @@ export function ProxySection({
       <CardHeader
         title="Daftar"
         accent="Proxy"
-        description={data ? `${proxies.length} proxy · ${validCount} valid` : "Memuat daftar proxy…"}
+        description={
+          data
+            ? country === ALL_COUNTRIES
+              ? proxies.length + " proxy · " + validCount + " valid"
+              : visible.length + " dari " + proxies.length + " proxy · " + validCount + " valid"
+            : "Memuat daftar proxy…"
+        }
         icon={<ServerIcon className="size-5" />}
         action={
           <Button variant="secondary" size="sm" onClick={() => load(true)} disabled={loading} aria-label="Muat ulang daftar proxy">
@@ -153,7 +196,27 @@ export function ProxySection({
 
       {/* Toolbar */}
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div>
+            <label htmlFor="country-filter" className="mb-1.5 block text-xs font-bold tracking-wider text-muted uppercase">
+              Negara
+            </label>
+            <select
+              id="country-filter"
+              value={country}
+              onChange={(event) => changeCountry(event.target.value)}
+              disabled={!data || proxies.length === 0}
+              className={inputClass + " w-full sm:w-52"}
+            >
+              <option value={ALL_COUNTRIES}>Semua negara ({proxies.length})</option>
+              {countryCounts.map(([code, count]) => (
+                <option key={code || "unknown"} value={code}>
+                  {countryFlag(code)} {countryName(code)} ({count})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
           <p className="mb-1.5 text-xs font-bold tracking-wider text-muted uppercase">Format</p>
           <div
             role="radiogroup"
@@ -176,12 +239,21 @@ export function ProxySection({
               </button>
             ))}
           </div>
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex">
-          <Button variant="secondary" size="sm" onClick={copyAll} disabled={disabled || !proxies.length}>
-            <CopyIcon className="size-4" /> Copy semua
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setCredentialsOpen(true)}
+            disabled={disabled || !credentials}
+          >
+            <KeyIcon className="size-4" /> User &amp; pass
           </Button>
-          <Button variant="primary" size="sm" onClick={download} disabled={disabled || !proxies.length}>
+          <Button variant="secondary" size="sm" onClick={copyAll} disabled={disabled || !visible.length}>
+            <CopyIcon className="size-4" /> Copy {country === ALL_COUNTRIES ? "semua" : "hasil filter"}
+          </Button>
+          <Button variant="primary" size="sm" onClick={download} disabled={disabled || !visible.length}>
             <DownloadIcon className="size-4" /> Download .txt
           </Button>
         </div>
@@ -252,7 +324,13 @@ export function ProxySection({
         </p>
       )}
 
-      {data && proxies.length > 0 && (
+      {data && proxies.length > 0 && visible.length === 0 && (
+        <p className="rounded-2xl border-2 border-dashed border-ink/40 bg-paper p-6 text-center text-sm text-muted">
+          Tidak ada proxy untuk {countryName(country)} pada pesanan ini.
+        </p>
+      )}
+
+      {data && visible.length > 0 && (
         <div className="relative">
           <div className={cn(expired && "pointer-events-none blur-[3px] select-none")} aria-hidden={expired}>
             {/* Mobile: kartu */}
@@ -382,6 +460,14 @@ export function ProxySection({
           )}
         </div>
       )}
+
+      <CredentialsModal
+        orderNo={orderNo}
+        open={credentialsOpen}
+        current={credentials}
+        onClose={() => setCredentialsOpen(false)}
+        onChanged={onCredentialsChanged}
+      />
 
       <ReplaceModal
         orderNo={orderNo}

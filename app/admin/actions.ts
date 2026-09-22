@@ -14,7 +14,13 @@ import { orderNoSchema } from "@/lib/order-no";
 import type { AdminActionState } from "@/lib/public-types";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { checkAdminPassword, createAdminSession, destroyAdminSession, isAdmin } from "@/lib/session";
-import { validateApiKey, WebshareError, type ApiKeyInfo } from "@/lib/webshare";
+import {
+  PROXY_CREDENTIAL_PATTERN,
+  updateProxyCredentials,
+  validateApiKey,
+  WebshareError,
+  type ApiKeyInfo,
+} from "@/lib/webshare";
 
 // ---------------------------------------------------------------------------
 // Helper
@@ -483,6 +489,50 @@ export async function releaseOrderAccountAction(orderId: string): Promise<AdminA
   }
   refreshAdmin();
   return ok("Akun dilepas dan kembali berstatus available.");
+}
+
+const proxyCredentialSchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value ? value : undefined))
+  .refine((value) => value === undefined || PROXY_CREDENTIAL_PATTERN.test(value), {
+    error: "Gunakan 8–32 karakter huruf/angka tanpa spasi.",
+  });
+
+const credentialsSchema = z
+  .object({ username: proxyCredentialSchema, password: proxyCredentialSchema })
+  .refine((value) => Boolean(value.username || value.password), {
+    error: "Isi username baru, password baru, atau keduanya.",
+  });
+
+/** Ganti username/password proxy pada akun yang tertaut ke pesanan ini. */
+export async function updateOrderCredentialsAction(orderId: string, formData: FormData): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const parsed = credentialsSchema.safeParse(formObject(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error));
+
+  const repo = db();
+  const order = await repo.getOrder(orderId);
+  if (!order) return fail("Pesanan tidak ditemukan.");
+  if (!order.account_id) return fail("Pesanan belum memiliki akun.");
+  const account = await repo.getAccount(order.account_id);
+  if (!account) return fail("Akun tidak ditemukan.");
+
+  try {
+    const config = await updateProxyCredentials(account.api_key, parsed.data);
+    await invalidate(cacheKeys.proxies(account.id));
+    refreshAdmin();
+    return ok("Username & password proxy diganti.", [
+      `Username: ${config.username}`,
+      `Password: ${config.password}`,
+      "Customer wajib memperbarui aplikasinya dengan kredensial baru.",
+    ]);
+  } catch (error) {
+    return fail(describeUpstream(error));
+  }
 }
 
 export async function toggleOrderActiveAction(orderId: string): Promise<AdminActionState> {

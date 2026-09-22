@@ -7,10 +7,11 @@ import {
   resetReplaceUsedAction,
   toggleOrderActiveAction,
   updateOrderAction,
+  updateOrderCredentialsAction,
 } from "@/app/admin/actions";
 import { AccountBandwidth } from "@/components/admin/AccountBandwidth";
 import { ActionButton } from "@/components/admin/ActionButton";
-import { EditOrderForm, ExtendOrderForm, LinkAccountForm } from "@/components/admin/OrderForms";
+import { CredentialsForm, EditOrderForm, ExtendOrderForm, LinkAccountForm } from "@/components/admin/OrderForms";
 import { ChevronLeftIcon } from "@/components/icons";
 import { Badge, buttonClass, Card } from "@/components/ui";
 import { db } from "@/lib/db";
@@ -154,6 +155,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </Card>
         </div>
       </div>
+
+      {account && (
+        <Card>
+          <h2 className="mb-3 font-semibold text-ink">Username &amp; password proxy</h2>
+          <CredentialsForm action={updateOrderCredentialsAction.bind(null, order.id)} />
+        </Card>
+      )}
 
       <Card>
         <h2 className="mb-3 font-semibold text-ink">

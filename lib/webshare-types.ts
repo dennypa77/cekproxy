@@ -70,6 +70,18 @@ export interface ReplacementJob {
 
 export type ReplaceTarget = { type: "any" } | { type: "country"; country_code: string };
 
+/** Username & password proxy (berlaku untuk seluruh proxy dalam satu akun). */
+export interface ProxyConfigInfo {
+  username: string;
+  password: string;
+  state: string | null;
+}
+
+export interface ProxyCredentialPatch {
+  username?: string;
+  password?: string;
+}
+
 /** Operasi tingkat rendah yang diimplementasikan oleh klien asli dan mock. */
 export interface WebshareTransport {
   getPlans(apiKey: string): Promise<PlanInfo[]>;
@@ -83,4 +95,6 @@ export interface WebshareTransport {
   listIpAuthorizations(apiKey: string): Promise<IpAuthorization[]>;
   addIpAuthorization(apiKey: string, ip: string): Promise<IpAuthorization>;
   deleteIpAuthorization(apiKey: string, id: number): Promise<void>;
+  getProxyConfig(apiKey: string): Promise<ProxyConfigInfo>;
+  updateProxyCredentials(apiKey: string, patch: ProxyCredentialPatch): Promise<ProxyConfigInfo>;
 }
