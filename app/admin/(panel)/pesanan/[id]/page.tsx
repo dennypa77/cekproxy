@@ -18,6 +18,7 @@ import { db } from "@/lib/db";
 import { countryFlag, daysLeft, formatDateTime, jakartaDateInput } from "@/lib/format";
 import { customerPath } from "@/lib/links";
 import { orderState } from "@/lib/order-status";
+import { KIND_TONE, planLabel, proxyKind } from "@/lib/plan-type";
 import { requireAdmin } from "@/lib/session";
 
 export const metadata = { title: "Kelola Pesanan" };
@@ -131,6 +132,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     {account.label}
                   </Link>
                   <p className="text-muted">{account.email ?? "-"}</p>
+                  <p className="mt-2">
+                    <Badge tone={KIND_TONE[proxyKind(account.proxy_subtype)]}>{planLabel(account)}</Badge>
+                  </p>
                   <p className="mt-1">
                     Bandwidth: <AccountBandwidth accountId={account.id} />
                   </p>

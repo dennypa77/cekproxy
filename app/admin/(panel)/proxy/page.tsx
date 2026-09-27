@@ -25,6 +25,7 @@ export default async function AllProxiesPage() {
         email: account.email,
         orderId: order?.id ?? null,
         orderNo: order?.shopee_order_no ?? null,
+        proxySubtype: account.proxy_subtype,
       };
     });
 

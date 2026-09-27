@@ -16,6 +16,7 @@ import { Badge, Button, Card, cn, inputClass, labelClass } from "@/components/ui
 import { apiFetch } from "@/lib/client/api";
 import { copyText, downloadText } from "@/lib/client/clipboard";
 import { countryFlag, countryName } from "@/lib/format";
+import { KIND_SHORT, KIND_TONE, proxyKind, type ProxyKind } from "@/lib/plan-type";
 import { formatProxy, PROXY_FORMATS, type ProxyFormat, type PublicProxy } from "@/lib/public-types";
 
 export interface ProxyAccountInfo {
@@ -24,9 +25,16 @@ export interface ProxyAccountInfo {
   email: string | null;
   orderId: string | null;
   orderNo: string | null;
+  proxySubtype: string | null;
 }
 
-type Row = PublicProxy & { accountId: string; accountLabel: string; orderId: string | null; orderNo: string | null };
+type Row = PublicProxy & {
+  accountId: string;
+  accountLabel: string;
+  orderId: string | null;
+  orderNo: string | null;
+  kind: ProxyKind;
+};
 
 const PAGE_SIZE = 100;
 const CONCURRENCY = 3;
@@ -42,6 +50,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
   const [accountId, setAccountId] = useState(ALL);
   const [country, setCountry] = useState(ALL);
   const [status, setStatus] = useState(ALL);
+  const [kind, setKind] = useState(ALL);
   const [format, setFormat] = useState<ProxyFormat>("ip:port:user:pass");
   const [page, setPage] = useState(1);
 
@@ -70,6 +79,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
                 accountLabel: account.label,
                 orderId: account.orderId,
                 orderNo: account.orderNo,
+                kind: proxyKind(account.proxySubtype),
               });
             }
           } else {
@@ -93,6 +103,12 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
     void load(false);
   }, [load]);
 
+  const kindCounts = useMemo(() => {
+    const counts = new Map<ProxyKind, number>();
+    for (const row of rows) counts.set(row.kind, (counts.get(row.kind) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [rows]);
+
   const countryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const row of rows) {
@@ -106,6 +122,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
     const needle = q.trim().toLowerCase();
     return rows.filter((row) => {
       if (accountId !== ALL && row.accountId !== accountId) return false;
+      if (kind !== ALL && row.kind !== kind) return false;
       if (country !== ALL && (row.country ?? "") !== country) return false;
       if (status === "valid" && !row.valid) return false;
       if (status === "invalid" && row.valid) return false;
@@ -115,10 +132,11 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
         String(row.port).includes(needle) ||
         row.username.toLowerCase().includes(needle) ||
         row.accountLabel.toLowerCase().includes(needle) ||
+        KIND_SHORT[row.kind].toLowerCase().includes(needle) ||
         (row.orderNo ?? "").toLowerCase().includes(needle)
       );
     });
-  }, [rows, q, accountId, country, status]);
+  }, [rows, q, accountId, country, status, kind]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -147,7 +165,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
 
   function downloadCsv() {
     if (!filtered.length) return;
-    const header = "ip,port,username,password,negara,status,akun,pesanan";
+    const header = "ip,port,username,password,negara,status,jenis,akun,pesanan";
     const lines = filtered.map((row) =>
       [
         row.ip,
@@ -156,6 +174,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
         row.password,
         row.country ?? "",
         row.valid ? "valid" : "tidak valid",
+        KIND_SHORT[row.kind],
         row.accountLabel.replaceAll(",", " "),
         row.orderNo ?? "",
       ].join(","),
@@ -183,7 +202,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
           </Button>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <div>
             <label className={labelClass} htmlFor="proxy-q">
               Cari
@@ -234,6 +253,25 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
               {countryCounts.map(([code, count]) => (
                 <option key={code || "unknown"} value={code}>
                   {countryFlag(code)} {countryName(code)} ({count})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="proxy-kind">
+              Jenis proxy
+            </label>
+            <select
+              id="proxy-kind"
+              value={kind}
+              onChange={(event) => reset(setKind)(event.target.value)}
+              className={inputClass}
+            >
+              <option value={ALL}>Semua jenis</option>
+              {kindCounts.map(([value, count]) => (
+                <option key={value} value={value}>
+                  {KIND_SHORT[value]} ({count})
                 </option>
               ))}
             </select>
@@ -321,7 +359,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
         {filtered.length > 0 && (
           <>
             <div className="overflow-x-auto rounded-2xl border-2 border-ink">
-              <table className="w-full min-w-[980px] text-left text-sm">
+              <table className="w-full min-w-[1100px] text-left text-sm">
                 <thead className="bg-ink text-xs font-bold tracking-wider text-white uppercase">
                   <tr>
                     <th className="px-3 py-2.5">#</th>
@@ -331,6 +369,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
                     <th className="px-3 py-2.5">Password</th>
                     <th className="px-3 py-2.5">Negara</th>
                     <th className="px-3 py-2.5">Status</th>
+                    <th className="px-3 py-2.5">Jenis</th>
                     <th className="px-3 py-2.5">Akun</th>
                     <th className="px-3 py-2.5">Pesanan</th>
                   </tr>
@@ -350,6 +389,9 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
                       </td>
                       <td className="px-3 py-2">
                         {row.valid ? <Badge tone="green">✓ Valid</Badge> : <Badge tone="red">✕ Tidak valid</Badge>}
+                      </td>
+                      <td className="px-3 py-2">
+                        <Badge tone={KIND_TONE[row.kind]}>{KIND_SHORT[row.kind]}</Badge>
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
                         <Link href={`/admin/akun/${row.accountId}`} className="text-brand-deep hover:underline">

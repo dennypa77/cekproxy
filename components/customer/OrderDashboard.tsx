@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 import { LogoTab, ServicePill } from "@/components/Brand";
 import { Decor } from "@/components/Decor";
-import { ChevronLeftIcon, ClockIcon, ShopIcon, UserIcon, WhatsAppIcon } from "@/components/icons";
+import { ChevronLeftIcon, ClockIcon, ServerIcon, ShopIcon, UserIcon, WhatsAppIcon } from "@/components/icons";
 import { buttonClass, Card, CardHeader, cn, Pill } from "@/components/ui";
 import { SHOPEE_STORE_URL, waExtendLink, waHelpLink } from "@/lib/links";
 import { BandwidthCard } from "./BandwidthCard";
@@ -20,6 +20,7 @@ export interface OrderDashboardProps {
   graceEndsLabel: string;
   daysLeft: number;
   expired: boolean;
+  jenisProxy: string | null;
   initialReplaceUsed: number;
   initialReplaceQuota: number;
 }
@@ -27,7 +28,7 @@ export interface OrderDashboardProps {
 export const WARNING_DAYS = 3;
 
 export function OrderDashboard(props: OrderDashboardProps) {
-  const { orderNo, namaCustomer, expiresAtLabel, expiresDateShort, graceEndsLabel, daysLeft, expired } = props;
+  const { orderNo, namaCustomer, expiresAtLabel, expiresDateShort, graceEndsLabel, daysLeft, expired, jenisProxy } = props;
   const [quota, setQuota] = useState({ used: props.initialReplaceUsed, total: props.initialReplaceQuota });
   const onQuotaChange = useCallback((used: number, total: number) => setQuota({ used, total }), []);
   const expiringSoon = !expired && daysLeft <= WARNING_DAYS;
@@ -59,6 +60,11 @@ export function OrderDashboard(props: OrderDashboardProps) {
           >
             {expired ? "Expired" : expiringSoon ? "Segera expired" : "Aktif"}
           </Pill>
+          {jenisProxy && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-brand-soft px-3 py-1 text-xs font-bold">
+              <ServerIcon className="size-3.5" /> {jenisProxy}
+            </span>
+          )}
           {namaCustomer && (
             <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-white px-3 py-1 text-xs font-bold">
               <UserIcon className="size-3.5" /> {namaCustomer}

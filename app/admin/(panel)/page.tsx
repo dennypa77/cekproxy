@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { daysLeft, formatDateTime } from "@/lib/format";
 import { customerPath } from "@/lib/links";
 import { orderState } from "@/lib/order-status";
+import { KIND_LABEL, KIND_TONE, proxyKind, type ProxyKind } from "@/lib/plan-type";
 import { requireAdmin } from "@/lib/session";
 
 export const metadata = { title: "Dashboard" };
@@ -21,6 +22,16 @@ export default async function AdminDashboardPage() {
     .filter((o) => orderState(o, now) === "akan_expired")
     .sort((a, b) => a.expires_at.localeCompare(b.expires_at));
   const accountLabel = new Map(accounts.map((a) => [a.id, a.label]));
+
+  // Rekap jenis proxy di pool (dari info plan yang tersimpan).
+  const kindOrder: ProxyKind[] = ["residential", "isp", "datacenter", "mixed", "unknown"];
+  const kindCounts = new Map<ProxyKind, number>();
+  let totalProxies = 0;
+  for (const account of accounts) {
+    const kind = proxyKind(account.proxy_subtype);
+    kindCounts.set(kind, (kindCounts.get(kind) ?? 0) + 1);
+    if (typeof account.proxy_count === "number") totalProxies += account.proxy_count;
+  }
 
   const stats = [
     { label: "Akun available", value: availableAccounts, href: "/admin/akun" },
@@ -46,6 +57,33 @@ export default async function AdminDashboardPage() {
           </Link>
         ))}
       </div>
+
+      <Card>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-semibold text-ink">Jenis proxy di pool</h2>
+          <p className="text-sm text-muted">
+            {accounts.length} akun · {totalProxies > 0 ? `${totalProxies} proxy` : "jumlah proxy belum dicek"}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {kindOrder.map((kind) => {
+            const count = kindCounts.get(kind) ?? 0;
+            if (count === 0) return null;
+            return (
+              <span key={kind} className="inline-flex items-center gap-2">
+                <Badge tone={KIND_TONE[kind]}>
+                  {KIND_LABEL[kind]}: {count} akun
+                </Badge>
+              </span>
+            );
+          })}
+        </div>
+        {(kindCounts.get("unknown") ?? 0) > 0 && (
+          <p className="mt-3 text-sm text-muted">
+            Akun yang belum diketahui jenisnya bisa diperbarui lewat tombol <b>Sinkronkan info plan</b> di halaman Pool Akun.
+          </p>
+        )}
+      </Card>
 
       <Card>
         <h2 className="mb-1 font-semibold text-ink">Perlu follow-up: akan expired dalam 3 hari</h2>

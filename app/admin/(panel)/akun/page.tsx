@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { deleteAccountAction, toggleAccountDisabledAction } from "@/app/admin/actions";
+import { deleteAccountAction, syncPlansAction, toggleAccountDisabledAction } from "@/app/admin/actions";
 import { AccountBandwidth } from "@/components/admin/AccountBandwidth";
 import { AddAccountForm, BulkImportForm } from "@/components/admin/AccountForms";
 import { ActionButton } from "@/components/admin/ActionButton";
 import { Badge, buttonClass, Card } from "@/components/ui";
 import { db, type AccountStatus } from "@/lib/db";
 import { maskSecret } from "@/lib/format";
+import { KIND_SHORT, KIND_TONE, planDetail, planLabel, proxyKind } from "@/lib/plan-type";
 import { requireAdmin } from "@/lib/session";
 
 export const metadata = { title: "Pool Akun" };
@@ -40,18 +41,24 @@ export default async function AccountsPage() {
       </div>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-ink">
-          Daftar akun <span className="font-normal text-muted">({accounts.length})</span>
-        </h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold text-ink">
+            Daftar akun <span className="font-normal text-muted">({accounts.length})</span>
+          </h2>
+          <ActionButton action={syncPlansAction} size="sm">
+            Sinkronkan info plan
+          </ActionButton>
+        </div>
         {accounts.length === 0 ? (
           <p className="rounded-lg bg-paper p-3 text-sm text-muted">Belum ada akun.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-[880px] text-left text-sm">
               <thead className="border-b border-line text-xs text-muted uppercase">
                 <tr>
                   <th className="py-2 pr-3 font-medium">Label</th>
                   <th className="py-2 pr-3 font-medium">API key</th>
+                  <th className="py-2 pr-3 font-medium">Jenis</th>
                   <th className="py-2 pr-3 font-medium">Status</th>
                   <th className="py-2 pr-3 font-medium">Pesanan</th>
                   <th className="py-2 pr-3 font-medium">Bandwidth</th>
@@ -70,6 +77,12 @@ export default async function AccountsPage() {
                         {account.catatan && <p className="mt-0.5 max-w-xs text-xs text-muted">{account.catatan}</p>}
                       </td>
                       <td className="py-2.5 pr-3 font-mono text-xs">{maskSecret(account.api_key)}</td>
+                      <td className="py-2.5 pr-3">
+                        <Badge tone={KIND_TONE[proxyKind(account.proxy_subtype)]}>
+                          {KIND_SHORT[proxyKind(account.proxy_subtype)]}
+                        </Badge>
+                        <p className="mt-0.5 text-xs text-muted">{planDetail(account) ?? "belum dicek"}</p>
+                      </td>
                       <td className="py-2.5 pr-3">
                         <Badge tone={badge.tone}>{badge.label}</Badge>
                       </td>

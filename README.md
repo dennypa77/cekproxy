@@ -76,6 +76,7 @@ Di mode test, API key tidak dikirim ke Webshare. Beberapa pola API key memicu pe
 1. Daftar/login di https://supabase.com, lalu klik **New project**. Pilih region **Southeast Asia (Singapore)** agar dekat dengan Indonesia. Simpan password database-nya.
 2. Setelah project jadi, buka menu **SQL Editor**, lalu klik **New query**.
 3. Buka file [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), salin seluruh isinya, tempel ke SQL Editor, lalu klik **Run**. Pastikan hasilnya "Success".
+   Lakukan hal yang sama untuk [`supabase/migrations/0002_plan_info.sql`](supabase/migrations/0002_plan_info.sql) (kolom jenis proxy). Kedua file aman dijalankan ulang.
 4. *(Opsional, hanya untuk uji coba)* Jalankan juga [`supabase/seed.sql`](supabase/seed.sql) dengan cara yang sama. Data ini hanya bekerja jika `WEBSHARE_TEST_MODE=true`. **Jangan jalankan di database produksi.**
 5. Buka **Project Settings → API** (atau **API Keys**), lalu salin dua nilai berikut:
    - **Project URL** untuk `SUPABASE_URL`
@@ -142,6 +143,8 @@ Buka `/admin` dan login dengan `ADMIN_PASSWORD`.
 - **Lepas akun**: akun kembali *available*. Sebelum dipakai customer lain, disarankan menghapus IP whitelist dan mengganti password proxy di dashboard Webshare.
 - **Nonaktifkan**: customer tidak bisa membuka halaman pesanan.
 - **Log replace**: semua percobaan replace beserta error teknisnya (hanya terlihat oleh admin).
+
+**Jenis proxy (datacenter / residential / ISP)** diambil otomatis dari plan Webshare saat API key divalidasi, lalu disimpan di database. Jenisnya tampil di kolom **Jenis** pada Pool Akun, di rekap **Jenis proxy di pool** pada Dashboard, di halaman Semua Proxy (kolom + filter), dan sebagai label di halaman customer. Untuk akun lama yang ditambahkan sebelum fitur ini ada, klik **Sinkronkan info plan** di halaman Pool Akun, atau **Cek ulang API key** pada satu akun.
 
 **Semua Proxy** menggabungkan seluruh proxy dari semua akun di pool dalam satu tabel: IP, port, username, password, negara, status valid, akun asal, dan nomor pesanan pemakainya. Ada pencarian, filter akun/negara/status, serta tombol Copy, Download .txt, dan Download .csv lengkap.
 

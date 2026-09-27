@@ -11,6 +11,7 @@ import { endOfJakartaDay, formatDateTime, maskSecret } from "@/lib/format";
 import { getClientIp } from "@/lib/ip";
 import { customerPath } from "@/lib/links";
 import { orderNoSchema } from "@/lib/order-no";
+import { planLabel } from "@/lib/plan-type";
 import type { AdminActionState } from "@/lib/public-types";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { checkAdminPassword, createAdminSession, destroyAdminSession, isAdmin } from "@/lib/session";
@@ -101,10 +102,22 @@ function describeDb(error: unknown, duplicateMessage = "Data sudah ada."): strin
   return "Terjadi kesalahan database. Cek log server.";
 }
 
+/** Kolom info plan yang disimpan ke database saat API key divalidasi. */
+function planFields(info: ApiKeyInfo) {
+  return {
+    proxy_type: info.plan.proxy_type,
+    proxy_subtype: info.plan.proxy_subtype,
+    proxy_count: info.plan.proxy_count,
+    bandwidth_limit_gb: info.plan.bandwidth_limit,
+    plan_synced_at: new Date().toISOString(),
+  };
+}
+
 function planSummary(info: ApiKeyInfo): string[] {
   const { plan } = info;
   const type = [plan.proxy_type, plan.proxy_subtype].filter(Boolean).join(" / ") || "-";
   return [
+    `Jenis: ${planLabel(plan)}`,
     `Email: ${info.email ?? "-"}`,
     `Plan: ${type} · ${plan.proxy_count ?? "?"} proxy · bandwidth ${
       plan.bandwidth_limit > 0 ? `${plan.bandwidth_limit} GB` : "Unlimited"
@@ -169,7 +182,7 @@ export async function addAccountAction(formData: FormData): Promise<AdminActionS
   }
 
   try {
-    await repo.createAccount({ ...input, email: input.email ?? info.email });
+    await repo.createAccount({ ...input, email: input.email ?? info.email, ...planFields(info) });
   } catch (error) {
     return fail(describeDb(error, "API key ini sudah ada di pool."));
   }
@@ -221,6 +234,7 @@ export async function bulkImportAccountsAction(formData: FormData): Promise<Admi
           email: info.email,
           api_key: key,
           catatan: null,
+          ...planFields(info),
         });
         success++;
         details[index] = `✓ ${label} — ${planSummary(info).join(" · ")}`;
@@ -271,6 +285,7 @@ export async function updateAccountAction(accountId: string, formData: FormData)
       details = planSummary(info);
       patch.api_key = api_key;
       patch.email = email ?? info.email;
+      Object.assign(patch, planFields(info));
     } catch (error) {
       return fail(describeUpstream(error));
     }
@@ -298,12 +313,49 @@ export async function checkAccountAction(accountId: string): Promise<AdminAction
   if (!account) return fail("Akun tidak ditemukan.");
   try {
     const info = await validateApiKey(account.api_key);
-    if (!account.email && info.email) await repo.updateAccount(accountId, { email: info.email });
+    await repo.updateAccount(accountId, {
+      ...planFields(info),
+      ...(account.email ? {} : { email: info.email }),
+    });
     refreshAdmin();
-    return ok("API key valid.", planSummary(info));
+    return ok("API key valid, info plan diperbarui.", planSummary(info));
   } catch (error) {
     return fail(describeUpstream(error));
   }
+}
+
+/** Ambil ulang info plan (jenis proxy) semua akun aktif dari Webshare. */
+export async function syncPlansAction(): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const repo = db();
+  const accounts = (await repo.listAccounts()).filter((account) => account.status !== "disabled");
+  if (accounts.length === 0) return fail("Belum ada akun aktif di pool.");
+
+  const details: string[] = new Array(accounts.length);
+  let success = 0;
+  let cursor = 0;
+
+  async function worker() {
+    while (cursor < accounts.length) {
+      const index = cursor++;
+      const account = accounts[index];
+      try {
+        const info = await validateApiKey(account.api_key);
+        await repo.updateAccount(account.id, planFields(info));
+        success++;
+        details[index] = `✓ ${account.label} — ${planLabel(info.plan)}`;
+      } catch (error) {
+        details[index] = `✗ ${account.label} — ${describeUpstream(error)}`;
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(5, accounts.length) }, worker));
+  refreshAdmin();
+  const message = `${success} dari ${accounts.length} akun tersinkron.`;
+  return success > 0 ? ok(message, details) : fail(message, details);
 }
 
 export async function toggleAccountDisabledAction(accountId: string): Promise<AdminActionState> {

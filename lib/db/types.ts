@@ -9,6 +9,12 @@ export interface WebshareAccount {
   status: AccountStatus;
   catatan: string | null;
   created_at: string;
+  /** Info plan Webshare (diisi saat API key divalidasi). */
+  proxy_type: string | null;
+  proxy_subtype: string | null;
+  proxy_count: number | null;
+  bandwidth_limit_gb: number | null;
+  plan_synced_at: string | null;
 }
 
 export interface Order {
@@ -57,9 +63,28 @@ export interface NewAccountInput {
   email: string | null;
   api_key: string;
   catatan: string | null;
+  proxy_type?: string | null;
+  proxy_subtype?: string | null;
+  proxy_count?: number | null;
+  bandwidth_limit_gb?: number | null;
+  plan_synced_at?: string | null;
 }
 
-export type AccountPatch = Partial<Pick<WebshareAccount, "label" | "email" | "api_key" | "status" | "catatan">>;
+export type AccountPatch = Partial<
+  Pick<
+    WebshareAccount,
+    | "label"
+    | "email"
+    | "api_key"
+    | "status"
+    | "catatan"
+    | "proxy_type"
+    | "proxy_subtype"
+    | "proxy_count"
+    | "bandwidth_limit_gb"
+    | "plan_synced_at"
+  >
+>;
 
 export interface NewOrderInput {
   shopee_order_no: string;

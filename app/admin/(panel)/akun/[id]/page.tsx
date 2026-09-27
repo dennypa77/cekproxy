@@ -8,6 +8,7 @@ import { ChevronLeftIcon } from "@/components/icons";
 import { Badge, Card } from "@/components/ui";
 import { db } from "@/lib/db";
 import { formatDateTime, maskSecret } from "@/lib/format";
+import { planDetail, planLabel } from "@/lib/plan-type";
 import { requireAdmin } from "@/lib/session";
 
 export const metadata = { title: "Edit Akun" };
@@ -43,6 +44,10 @@ export default async function EditAccountPage({ params }: { params: Promise<{ id
               ) : (
                 "-"
               )}
+            </p>
+            <p className="mt-1 text-sm">
+              Jenis: <b>{planLabel(account)}</b>
+              {planDetail(account) ? ` · ${planDetail(account)}` : ""}
             </p>
             <p className="mt-1 text-sm">
               Bandwidth: <AccountBandwidth accountId={account.id} />

@@ -29,6 +29,11 @@ function seed(): MemoryState {
         status: "assigned",
         catatan: "Data contoh mode test: 150 proxy, bandwidth 84%",
         created_at: created,
+        proxy_type: "dedicated",
+        proxy_subtype: "default",
+        proxy_count: 150,
+        bandwidth_limit_gb: 250,
+        plan_synced_at: created,
       },
       {
         id: "00000000-0000-4000-8000-000000000002",
@@ -38,6 +43,11 @@ function seed(): MemoryState {
         status: "assigned",
         catatan: "Data contoh mode test: 10 proxy, bandwidth 97%",
         created_at: created,
+        proxy_type: "dedicated",
+        proxy_subtype: "residential",
+        proxy_count: 10,
+        bandwidth_limit_gb: 100,
+        plan_synced_at: created,
       },
       {
         id: "00000000-0000-4000-8000-000000000003",
@@ -47,6 +57,11 @@ function seed(): MemoryState {
         status: "available",
         catatan: 'Data contoh mode test: akun kosong untuk mencoba "Tambah pesanan"',
         created_at: created,
+        proxy_type: "dedicated",
+        proxy_subtype: "isp",
+        proxy_count: 25,
+        bandwidth_limit_gb: 50,
+        plan_synced_at: created,
       },
     ],
     orders: [
@@ -123,6 +138,11 @@ export function createMemoryRepo(): Repo {
         id: randomUUID(),
         status: "available",
         created_at: new Date().toISOString(),
+        proxy_type: null,
+        proxy_subtype: null,
+        proxy_count: null,
+        bandwidth_limit_gb: null,
+        plan_synced_at: null,
         ...input,
       };
       state().accounts.push(account);

@@ -104,12 +104,19 @@ function accountFor(apiKey: string): MockAccount {
   const random = mulberry32(seed);
   const profile =
     apiKey === "mock-key-1"
-      ? { count: 150, limit: 250, used: 210.4, email: "demo1@example.com" }
+      ? { count: 150, limit: 250, used: 210.4, email: "demo1@example.com", type: "dedicated", subtype: "default" }
       : apiKey === "mock-key-2"
-        ? { count: 10, limit: 100, used: 97.2, email: "demo2@example.com" }
+        ? { count: 10, limit: 100, used: 97.2, email: "demo2@example.com", type: "dedicated", subtype: "residential" }
         : apiKey === "mock-key-3"
-          ? { count: 25, limit: 50, used: 3.1, email: "demo3@example.com" }
-          : { count: 10, limit: 0, used: 12.3, email: `mock-${seed.toString(16).slice(0, 6)}@example.com` };
+          ? { count: 25, limit: 50, used: 3.1, email: "demo3@example.com", type: "dedicated", subtype: "isp" }
+          : {
+              count: 10,
+              limit: 0,
+              used: 12.3,
+              email: `mock-${seed.toString(16).slice(0, 6)}@example.com`,
+              type: apiKey.includes("residential") ? "shared" : "dedicated",
+              subtype: apiKey.includes("residential") ? "residential" : "default",
+            };
 
   const username = `dm${seed.toString(36).slice(0, 6)}`;
   const password = randomPassword(random);
@@ -120,8 +127,8 @@ function accountFor(apiKey: string): MockAccount {
       id: 100000 + (seed % 900000),
       status: "active",
       bandwidth_limit: profile.limit,
-      proxy_type: "dedicated",
-      proxy_subtype: "default",
+      proxy_type: profile.type,
+      proxy_subtype: profile.subtype,
       proxy_count: profile.count,
       proxy_replacements_available: 1000,
     },
