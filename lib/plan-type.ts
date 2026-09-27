@@ -77,6 +77,24 @@ export function planLabel(fields: PlanFields | null | undefined): string {
   return ownership ? `${kind} · ${ownership}` : kind;
 }
 
+/**
+ * Label untuk customer: cukup Datacenter atau Residential.
+ * ISP (static residential) tetap dihitung Residential, dan tingkat eksklusivitas
+ * (shared / dedicated) sengaja tidak ditampilkan ke customer.
+ */
+export function customerPlanLabel(fields: PlanFields | null | undefined): string | null {
+  switch (proxyKind(fields?.proxy_subtype)) {
+    case "residential":
+    case "isp":
+      return "Residential";
+    case "datacenter":
+    case "mixed":
+      return "Datacenter";
+    default:
+      return null;
+  }
+}
+
 /** Ringkasan tambahan: "100 proxy · 250 GB". */
 export function planDetail(fields: PlanFields | null | undefined): string | null {
   if (!fields) return null;

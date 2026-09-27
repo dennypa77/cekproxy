@@ -8,7 +8,7 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { getClientIp } from "@/lib/ip";
 import { customerPath } from "@/lib/links";
 import { normalizeOrderNo, ORDER_NO_PATTERN, safeDecode } from "@/lib/order-no";
-import { planLabel, proxyKind } from "@/lib/plan-type";
+import { customerPlanLabel } from "@/lib/plan-type";
 import { hitRateLimit, isRateLimited, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import { ACCESS_MESSAGES, GRACE_DAYS, resolveCustomerOrder } from "@/lib/services/customer";
 
@@ -58,8 +58,8 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
   }
 
   const { order, account, expired, daysLeft } = access.ctx;
-  // Jenis proxy hanya ditampilkan kalau info plan sudah tersinkron.
-  const jenisProxy = proxyKind(account.proxy_subtype) === "unknown" ? null : planLabel(account);
+  // Customer cukup melihat Datacenter atau Residential (null jika info plan belum tersinkron).
+  const jenisProxy = customerPlanLabel(account);
   const graceEndsAt = new Date(new Date(order.expires_at).getTime() + GRACE_DAYS * 86_400_000).toISOString();
 
   return (
