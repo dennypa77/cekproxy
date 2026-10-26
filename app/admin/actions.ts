@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "@/lib/zod";
+import { generateRotatingKey } from "@/lib/api-key";
 import { cacheKeys, invalidate } from "@/lib/cache";
 import { db, DbError } from "@/lib/db";
 import { getAdminPassword } from "@/lib/env";
@@ -14,6 +15,7 @@ import { orderNoSchema } from "@/lib/order-no";
 import { planLabel } from "@/lib/plan-type";
 import type { AdminActionState } from "@/lib/public-types";
 import { hitRateLimit } from "@/lib/rate-limit";
+import { invalidateRotatingPool } from "@/lib/services/rotating";
 import { checkAdminPassword, createAdminSession, destroyAdminSession, isAdmin } from "@/lib/session";
 import {
   PROXY_CREDENTIAL_PATTERN,
@@ -250,8 +252,22 @@ export async function bulkImportAccountsAction(formData: FormData): Promise<Admi
   return success > 0 ? ok(message, details) : fail(message, details);
 }
 
+const reserveSchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value ? value : null))
+  .refine((value) => value === null || !Number.isNaN(Number(value)), { error: "Cadangan GB harus angka." })
+  .transform((value) => (value === null ? null : Number(value)))
+  .refine((value) => value === null || (value >= 0 && value <= 100000), { error: "Cadangan GB di luar batas wajar." });
+
 const updateAccountSchema = z.object({
   label: labelSchema,
+  rotating_enabled: z
+    .string()
+    .optional()
+    .transform((value) => value === "on" || value === "true"),
+  rotating_reserve_gb: reserveSchema,
   api_key: z
     .string()
     .trim()
@@ -268,13 +284,19 @@ export async function updateAccountAction(accountId: string, formData: FormData)
 
   const parsed = updateAccountSchema.safeParse(formObject(formData));
   if (!parsed.success) return fail(firstIssue(parsed.error));
-  const { label, api_key, email, catatan } = parsed.data;
+  const { label, api_key, email, catatan, rotating_enabled, rotating_reserve_gb } = parsed.data;
 
   const repo = db();
   const account = await repo.getAccount(accountId);
   if (!account) return fail("Akun tidak ditemukan.");
 
-  const patch: Parameters<typeof repo.updateAccount>[1] = { label, email, catatan };
+  const patch: Parameters<typeof repo.updateAccount>[1] = {
+    label,
+    email,
+    catatan,
+    rotating_enabled,
+    rotating_reserve_gb,
+  };
   let details: string[] | undefined;
 
   if (api_key && api_key !== account.api_key) {
@@ -301,6 +323,7 @@ export async function updateAccountAction(accountId: string, formData: FormData)
       [cacheKeys.proxies, cacheKeys.countries, cacheKeys.bandwidth].map((key) => invalidate(key(accountId))),
     );
   }
+  await invalidateRotatingPool();
   refreshAdmin();
   return ok("Akun diperbarui.", details);
 }
@@ -356,6 +379,30 @@ export async function syncPlansAction(): Promise<AdminActionState> {
   refreshAdmin();
   const message = `${success} dari ${accounts.length} akun tersinkron.`;
   return success > 0 ? ok(message, details) : fail(message, details);
+}
+
+/** Aktif/nonaktifkan keikutsertaan akun di pool rotating. */
+export async function toggleAccountRotatingAction(accountId: string): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const repo = db();
+  const account = await repo.getAccount(accountId);
+  if (!account) return fail("Akun tidak ditemukan.");
+  if (account.status === "disabled") return fail("Akun nonaktif tidak bisa ikut pool rotating.");
+
+  const next = !account.rotating_enabled;
+  await repo.updateAccount(accountId, { rotating_enabled: next });
+  await invalidateRotatingPool();
+  refreshAdmin();
+  return ok(
+    next
+      ? `Akun "${account.label}" ikut pool rotating.`
+      : `Akun "${account.label}" dikeluarkan dari pool rotating.`,
+    next && account.rotating_reserve_gb === null
+      ? ["Catatan: akun ini belum punya cadangan GB, jadi bisa terpakai sampai limit akun."]
+      : undefined,
+  );
 }
 
 export async function toggleAccountDisabledAction(accountId: string): Promise<AdminActionState> {
@@ -429,6 +476,87 @@ export async function createOrderAction(formData: FormData): Promise<AdminAction
   } catch (error) {
     return fail(describeDb(error, "Nomor pesanan sudah terdaftar."));
   }
+}
+
+const ratePerMinuteSchema = z.coerce
+  .number({ error: "Batas permintaan harus angka." })
+  .int({ error: "Batas permintaan harus bilangan bulat." })
+  .min(1, { error: "Batas permintaan minimal 1." })
+  .max(100_000, { error: "Batas permintaan terlalu besar." });
+
+const rotatingOrderSchema = z.object({
+  shopee_order_no: orderNoSchema,
+  nama_customer: optionalText(100),
+  expires_date: dateInputSchema,
+  rate_per_minute: ratePerMinuteSchema,
+  catatan: optionalText(2000),
+});
+
+/** Buat pesanan rotating (pool gabungan, akses lewat kunci API). */
+export async function createRotatingOrderAction(formData: FormData): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const parsed = rotatingOrderSchema.safeParse(formObject(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error));
+  const input = parsed.data;
+
+  try {
+    const order = await db().createRotatingOrder({
+      shopee_order_no: input.shopee_order_no,
+      nama_customer: input.nama_customer,
+      expires_at: endOfJakartaDay(input.expires_date),
+      api_key: generateRotatingKey(),
+      rate_per_minute: input.rate_per_minute,
+      catatan: input.catatan,
+    });
+    refreshAdmin();
+    return ok(`Pesanan rotating ${order.shopee_order_no} dibuat.`, [
+      `Kunci API: ${order.api_key}`,
+      `Batas: ${order.rate_per_minute} permintaan/menit`,
+      `Expired: ${formatDateTime(order.expires_at)}`,
+      `Halaman customer: ${customerPath(order.shopee_order_no)}`,
+    ]);
+  } catch (error) {
+    return fail(describeDb(error, "Nomor pesanan sudah terdaftar."));
+  }
+}
+
+/** Ganti kunci API (kunci lama langsung tidak berlaku). */
+export async function regenerateRotatingKeyAction(orderId: string): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const repo = db();
+  const order = await repo.getOrder(orderId);
+  if (!order) return fail("Pesanan tidak ditemukan.");
+  if (order.order_type !== "rotating") return fail("Pesanan ini bukan tipe rotating.");
+
+  const api_key = generateRotatingKey();
+  try {
+    await repo.updateOrder(orderId, { api_key });
+  } catch (error) {
+    return fail(describeDb(error));
+  }
+  refreshAdmin();
+  return ok("Kunci API diganti. Kunci lama sudah tidak berlaku.", [`Kunci baru: ${api_key}`]);
+}
+
+/** Ubah batas permintaan per menit pesanan rotating. */
+export async function updateRotatingLimitAction(orderId: string, formData: FormData): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const parsed = z.object({ rate_per_minute: ratePerMinuteSchema }).safeParse(formObject(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error));
+
+  try {
+    await db().updateOrder(orderId, { rate_per_minute: parsed.data.rate_per_minute });
+  } catch (error) {
+    return fail(describeDb(error));
+  }
+  refreshAdmin();
+  return ok(`Batas diubah menjadi ${parsed.data.rate_per_minute} permintaan/menit.`);
 }
 
 const updateOrderSchema = z.object({

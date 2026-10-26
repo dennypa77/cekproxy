@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { NotAvailable } from "@/components/customer/NotAvailable";
 import { OrderDashboard } from "@/components/customer/OrderDashboard";
+import { RotatingDashboard } from "@/components/customer/RotatingDashboard";
 import { devConfigHint } from "@/lib/env";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { getClientIp } from "@/lib/ip";
@@ -11,6 +12,7 @@ import { normalizeOrderNo, ORDER_NO_PATTERN, safeDecode } from "@/lib/order-no";
 import { customerPlanLabel } from "@/lib/plan-type";
 import { hitRateLimit, isRateLimited, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import { ACCESS_MESSAGES, GRACE_DAYS, resolveCustomerOrder } from "@/lib/services/customer";
+import { getRotatingPool, poolCountries } from "@/lib/services/rotating";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +26,8 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
   const orderNo = normalizeOrderNo(raw);
   if (orderNo !== raw && ORDER_NO_PATTERN.test(orderNo)) redirect(customerPath(orderNo));
 
-  const ip = getClientIp(await headers());
+  const requestHeaders = await headers();
+  const ip = getClientIp(requestHeaders);
   if (await isRateLimited("search", ip)) {
     return <NotAvailable icon="slow" title="Terlalu banyak percobaan" body={RATE_LIMIT_MESSAGE} />;
   }
@@ -58,9 +61,43 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
   }
 
   const { order, account, expired, daysLeft } = access.ctx;
+  const graceEndsAt = new Date(new Date(order.expires_at).getTime() + GRACE_DAYS * 86_400_000).toISOString();
+
+  // Pesanan rotating: tampilkan endpoint + kunci API, bukan daftar proxy tetap.
+  if (order.order_type === "rotating" && order.api_key) {
+    const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
+    const proto = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+
+    let poolSize = 0;
+    let countries: { code: string; count: number }[] = [];
+    try {
+      const pool = await getRotatingPool();
+      poolSize = pool.proxies.length;
+      countries = poolCountries(pool);
+    } catch (error) {
+      console.error("[pesanan] pool rotating gagal dimuat", error);
+    }
+
+    return (
+      <RotatingDashboard
+        orderNo={order.shopee_order_no}
+        namaCustomer={order.nama_customer}
+        expiresAtLabel={formatDateTime(order.expires_at)}
+        expiresDateShort={formatDate(order.expires_at)}
+        graceEndsLabel={formatDate(graceEndsAt)}
+        daysLeft={daysLeft}
+        expired={expired}
+        apiKey={order.api_key}
+        baseUrl={`${proto}://${host}`}
+        ratePerMinute={order.rate_per_minute}
+        poolSize={poolSize}
+        countries={countries}
+      />
+    );
+  }
+
   // Customer cukup melihat Datacenter atau Residential (null jika info plan belum tersinkron).
   const jenisProxy = customerPlanLabel(account);
-  const graceEndsAt = new Date(new Date(order.expires_at).getTime() + GRACE_DAYS * 86_400_000).toISOString();
 
   return (
     <OrderDashboard

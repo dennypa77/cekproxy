@@ -37,7 +37,11 @@ function jobError(job: ReplacementJob): string {
   return `state=${job.state} error_code=${job.error_code ?? "-"} error=${job.error ?? "-"} removed=${job.proxies_removed ?? "-"}`;
 }
 
-export async function performReplace(ctx: CustomerContext, ip: string, country: string): Promise<ReplaceResult> {
+export async function performReplace(
+  ctx: CustomerContext & { account: WebshareAccount },
+  ip: string,
+  country: string,
+): Promise<ReplaceResult> {
   const repo = db();
   const { order, account } = ctx;
 

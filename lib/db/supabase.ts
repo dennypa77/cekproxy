@@ -22,6 +22,17 @@ function check<T>(result: { data: T; error: PostgrestError | null }): T {
   return result.data;
 }
 
+/** PostgREST bisa mengirim kolom numeric sebagai string; samakan ke number. */
+function normalizeAccount<T>(row: T): T {
+  const account = row as unknown as Record<string, unknown> | null;
+  if (!account) return row;
+  for (const field of ["bandwidth_limit_gb", "rotating_reserve_gb"]) {
+    const value = account[field];
+    if (typeof value === "string" && value !== "") account[field] = Number(value);
+  }
+  return row;
+}
+
 export function createSupabaseRepo(url: string, serviceRoleKey: string): Repo {
   const sb = createClient(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -31,14 +42,15 @@ export function createSupabaseRepo(url: string, serviceRoleKey: string): Repo {
   return {
     async listAccounts() {
       const res = await sb.from("webshare_accounts").select("*").order("created_at", { ascending: false });
-      return check(res) as WebshareAccount[];
+      return (check(res) as WebshareAccount[]).map(normalizeAccount);
     },
     async getAccount(id) {
-      return check(await sb.from("webshare_accounts").select("*").eq("id", id).maybeSingle()) as WebshareAccount | null;
+      const res = await sb.from("webshare_accounts").select("*").eq("id", id).maybeSingle();
+      return normalizeAccount(check(res) as WebshareAccount | null);
     },
     async findAccountByApiKey(apiKey) {
       const res = await sb.from("webshare_accounts").select("*").eq("api_key", apiKey).maybeSingle();
-      return check(res) as WebshareAccount | null;
+      return normalizeAccount(check(res) as WebshareAccount | null);
     },
     async createAccount(input) {
       return check(await sb.from("webshare_accounts").insert(input).select("*").single()) as WebshareAccount;
@@ -59,6 +71,18 @@ export function createSupabaseRepo(url: string, serviceRoleKey: string): Repo {
     async getOrderByNo(orderNo) {
       const res = await sb.from("orders").select("*").eq("shopee_order_no", orderNo).maybeSingle();
       return check(res) as Order | null;
+    },
+    async getOrderByApiKey(apiKey) {
+      const res = await sb.from("orders").select("*").eq("api_key", apiKey).maybeSingle();
+      return check(res) as Order | null;
+    },
+    async createRotatingOrder(input) {
+      const res = await sb
+        .from("orders")
+        .insert({ ...input, order_type: "rotating", account_id: null, replace_quota: 0 })
+        .select("*")
+        .single();
+      return check(res) as Order;
     },
     async createOrder(input) {
       const res = await sb

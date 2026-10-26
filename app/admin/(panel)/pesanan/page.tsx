@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AddRotatingOrderForm } from "@/components/admin/AddRotatingOrderForm";
 import { AddOrderForm } from "@/components/admin/OrderForms";
 import { SearchIcon } from "@/components/icons";
 import { Badge, Button, buttonClass, Card, cn, inputClass } from "@/components/ui";
@@ -52,10 +53,16 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-ink">Pesanan</h1>
 
-      <Card>
-        <h2 className="mb-3 font-semibold text-ink">Tambah pesanan</h2>
-        <AddOrderForm accounts={availableAccounts} defaultDate={jakartaDateInput(30)} />
-      </Card>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card>
+          <h2 className="mb-3 font-semibold text-ink">Tambah pesanan statis (1 akun)</h2>
+          <AddOrderForm accounts={availableAccounts} defaultDate={jakartaDateInput(30)} />
+        </Card>
+        <Card>
+          <h2 className="mb-3 font-semibold text-ink">Tambah pesanan rotating (pool)</h2>
+          <AddRotatingOrderForm defaultDate={jakartaDateInput(30)} />
+        </Card>
+      </div>
 
       <Card>
         <form className="mb-4 flex flex-col gap-2 sm:flex-row" method="get">
@@ -99,7 +106,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                   <th className="py-2 pr-3 font-medium">Customer</th>
                   <th className="py-2 pr-3 font-medium">Akun</th>
                   <th className="py-2 pr-3 font-medium">Expired</th>
-                  <th className="py-2 pr-3 font-medium">Replace</th>
+                  <th className="py-2 pr-3 font-medium">Replace / Batas</th>
                   <th className="py-2 pr-3 font-medium">Status</th>
                   <th className="py-2 text-right font-medium">Aksi</th>
                 </tr>
@@ -109,15 +116,29 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                   const state = orderState(order, now);
                   const badge = STATE_BADGE[state];
                   const account = order.account_id ? accountById.get(order.account_id) : undefined;
+                  const rotating = order.order_type === "rotating";
                   return (
                     <tr key={order.id}>
                       <td className="py-2.5 pr-3 font-mono">
                         <Link href={`/admin/pesanan/${order.id}`} className="text-brand-deep hover:underline">
                           {order.shopee_order_no}
                         </Link>
+                        {rotating && (
+                          <span className="ml-2 align-middle">
+                            <Badge tone="blue">Rotating</Badge>
+                          </span>
+                        )}
                       </td>
                       <td className="py-2.5 pr-3">{order.nama_customer ?? "-"}</td>
-                      <td className="py-2.5 pr-3">{account ? account.label : <span className="text-bad">Belum ditautkan</span>}</td>
+                      <td className="py-2.5 pr-3">
+                        {rotating ? (
+                          <span className="text-muted">Pool rotating</span>
+                        ) : account ? (
+                          account.label
+                        ) : (
+                          <span className="text-bad">Belum ditautkan</span>
+                        )}
+                      </td>
                       <td className="py-2.5 pr-3 whitespace-nowrap">
                         {formatDateTime(order.expires_at)}
                         {state !== "expired" && state !== "nonaktif" && (
@@ -125,7 +146,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                         )}
                       </td>
                       <td className="py-2.5 pr-3">
-                        {order.replace_used} / {order.replace_quota}
+                        {rotating ? (
+                          <span className="text-muted">{order.rate_per_minute}/menit</span>
+                        ) : (
+                          `${order.replace_used} / ${order.replace_quota}`
+                        )}
                       </td>
                       <td className="py-2.5 pr-3">
                         <Badge tone={badge.tone}>{badge.label}</Badge>

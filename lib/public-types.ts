@@ -54,6 +54,15 @@ export interface ReplaceResponse {
   replaceQuota: number;
 }
 
+/** Ringkasan pool rotating untuk halaman customer. */
+export interface RotatingInfo {
+  poolSize: number;
+  countries: { code: string; count: number }[];
+  ratePerMinute: number;
+  expiresAt: string;
+  updatedAt: string;
+}
+
 export interface MyIpResponse {
   ip: string | null;
   isIPv4: boolean;
@@ -62,7 +71,7 @@ export interface MyIpResponse {
 export const PROXY_FORMATS = ["ip:port:user:pass", "user:pass@ip:port", "ip:port"] as const;
 export type ProxyFormat = (typeof PROXY_FORMATS)[number];
 
-export function formatProxy(p: PublicProxy, format: ProxyFormat): string {
+export function formatProxy(p: Pick<PublicProxy, "ip" | "port" | "username" | "password">, format: ProxyFormat): string {
   switch (format) {
     case "user:pass@ip:port":
       return `${p.username}:${p.password}@${p.ip}:${p.port}`;

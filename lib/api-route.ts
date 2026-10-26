@@ -4,6 +4,7 @@ import { getClientIp } from "./ip";
 import { safeDecode } from "./order-no";
 import { hitRateLimit, isRateLimited, RATE_LIMIT_MESSAGE, type RateLimitBucket } from "./rate-limit";
 import { ACCESS_MESSAGES, resolveCustomerOrder, type CustomerContext } from "./services/customer";
+import type { WebshareAccount } from "./db";
 
 export function jsonOk<T>(data: T, status = 200): NextResponse {
   return NextResponse.json({ ok: true, data }, { status, headers: { "Cache-Control": "no-store" } });
@@ -15,7 +16,10 @@ export function jsonError(error: string, status: number): NextResponse {
 
 export const EXPIRED_MESSAGE = "Masa aktif proxy sudah berakhir. Perpanjang pesanan untuk menggunakan fitur ini.";
 
-type RouteLoad = { ok: true; ctx: CustomerContext; ip: string } | { ok: false; response: NextResponse };
+/** Semua API customer di bawah /api/pesanan butuh akun yang tertaut. */
+type RouteLoad =
+  | { ok: true; ctx: CustomerContext & { account: WebshareAccount }; ip: string }
+  | { ok: false; response: NextResponse };
 
 /**
  * Validasi request API customer: rate limit per IP, lalu cari pesanan.
@@ -50,5 +54,10 @@ export async function loadCustomerRoute(
   if (options.requireNotExpired && access.ctx.expired) {
     return { ok: false, response: jsonError(EXPIRED_MESSAGE, 403) };
   }
-  return { ok: true, ctx: access.ctx, ip };
+  const account = access.ctx.account;
+  if (!account) {
+    // Pesanan rotating tidak punya akun; endpoint ini khusus pesanan statis.
+    return { ok: false, response: jsonError(ACCESS_MESSAGES.no_account.title, 404) };
+  }
+  return { ok: true, ctx: { ...access.ctx, account }, ip };
 }

@@ -65,6 +65,8 @@ export default async function EditAccountPage({ params }: { params: Promise<{ id
             email: account.email,
             catatan: account.catatan,
             maskedKey: maskSecret(account.api_key),
+            rotating_enabled: account.rotating_enabled,
+            rotating_reserve_gb: account.rotating_reserve_gb,
           }}
         />
       </Card>

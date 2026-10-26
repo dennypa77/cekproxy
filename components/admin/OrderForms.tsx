@@ -132,6 +132,7 @@ export function AddOrderForm({ accounts, defaultDate }: { accounts: AccountOptio
 export function EditOrderForm({
   action,
   order,
+  hideReplace = false,
 }: {
   action: (formData: FormData) => Promise<AdminActionState>;
   order: {
@@ -142,6 +143,8 @@ export function EditOrderForm({
     replace_used: number;
     catatan: string | null;
   };
+  /** Pesanan rotating tidak memakai kuota replace, jadi kolomnya disembunyikan. */
+  hideReplace?: boolean;
 }) {
   const [date, setDate] = useState(order.expiresDate);
   const { pending, state, onSubmit } = useServerForm(action);
@@ -174,6 +177,12 @@ export function EditOrderForm({
         </label>
         <DateWithShortcuts name="expires_date" value={date} onChange={setDate} shortcuts={[7, 30]} />
       </div>
+      {hideReplace ? (
+        <>
+          <input type="hidden" name="replace_quota" value={order.replace_quota} />
+          <input type="hidden" name="replace_used" value={order.replace_used} />
+        </>
+      ) : (
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass} htmlFor="edit_quota">
@@ -204,6 +213,7 @@ export function EditOrderForm({
           />
         </div>
       </div>
+      )}
       <div>
         <label className={labelClass} htmlFor="edit_catatan">
           Catatan

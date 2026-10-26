@@ -29,6 +29,16 @@ export async function hitRateLimit(bucket: RateLimitBucket, ip: string): Promise
   }
 }
 
+/** Batas dengan angka bebas, misalnya kuota per pesanan rotating. */
+export async function hitCustomRateLimit(key: string, max: number, windowSeconds: number): Promise<boolean> {
+  try {
+    return (await db().rateLimitHit(key, windowSeconds)) <= max;
+  } catch (error) {
+    console.error("[rate-limit] gagal mencatat batas khusus", error);
+    return true;
+  }
+}
+
 /** Cek tanpa menambah hitungan. true jika sudah terblokir. */
 export async function isRateLimited(bucket: RateLimitBucket, ip: string): Promise<boolean> {
   try {

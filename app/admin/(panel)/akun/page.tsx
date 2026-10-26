@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { deleteAccountAction, syncPlansAction, toggleAccountDisabledAction } from "@/app/admin/actions";
+import {
+  deleteAccountAction,
+  syncPlansAction,
+  toggleAccountDisabledAction,
+  toggleAccountRotatingAction,
+} from "@/app/admin/actions";
 import { AccountBandwidth } from "@/components/admin/AccountBandwidth";
 import { AddAccountForm, BulkImportForm } from "@/components/admin/AccountForms";
 import { ActionButton } from "@/components/admin/ActionButton";
@@ -53,12 +58,13 @@ export default async function AccountsPage() {
           <p className="rounded-lg bg-paper p-3 text-sm text-muted">Belum ada akun.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[880px] text-left text-sm">
+            <table className="w-full min-w-[1020px] text-left text-sm">
               <thead className="border-b border-line text-xs text-muted uppercase">
                 <tr>
                   <th className="py-2 pr-3 font-medium">Label</th>
                   <th className="py-2 pr-3 font-medium">API key</th>
                   <th className="py-2 pr-3 font-medium">Jenis</th>
+                  <th className="py-2 pr-3 font-medium">Pool rotating</th>
                   <th className="py-2 pr-3 font-medium">Status</th>
                   <th className="py-2 pr-3 font-medium">Pesanan</th>
                   <th className="py-2 pr-3 font-medium">Bandwidth</th>
@@ -82,6 +88,29 @@ export default async function AccountsPage() {
                           {KIND_SHORT[proxyKind(account.proxy_subtype)]}
                         </Badge>
                         <p className="mt-0.5 text-xs text-muted">{planDetail(account) ?? "belum dicek"}</p>
+                      </td>
+                      <td className="py-2.5 pr-3">
+                        {account.rotating_enabled ? (
+                          <>
+                            <Badge tone="blue">ikut pool</Badge>
+                            <p className="mt-0.5 text-xs whitespace-nowrap text-muted">
+                              {account.rotating_reserve_gb === null
+                                ? "tanpa cadangan"
+                                : `cadangan ${account.rotating_reserve_gb} GB`}
+                            </p>
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted">tidak ikut</span>
+                        )}
+                        <div className="mt-1">
+                          <ActionButton
+                            action={toggleAccountRotatingAction.bind(null, account.id)}
+                            disabled={account.status === "disabled"}
+                            title={account.status === "disabled" ? "Akun nonaktif tidak bisa ikut pool" : undefined}
+                          >
+                            {account.rotating_enabled ? "Keluarkan" : "Ikutkan"}
+                          </ActionButton>
+                        </div>
                       </td>
                       <td className="py-2.5 pr-3">
                         <Badge tone={badge.tone}>{badge.label}</Badge>

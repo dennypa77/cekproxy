@@ -22,6 +22,10 @@ export default async function AdminDashboardPage() {
     .filter((o) => orderState(o, now) === "akan_expired")
     .sort((a, b) => a.expires_at.localeCompare(b.expires_at));
   const accountLabel = new Map(accounts.map((a) => [a.id, a.label]));
+  const rotatingAccounts = accounts.filter((a) => a.rotating_enabled && a.status !== "disabled").length;
+  const rotatingOrders = orders.filter(
+    (o) => o.order_type === "rotating" && ["aktif", "akan_expired"].includes(orderState(o, now)),
+  ).length;
 
   // Rekap jenis proxy di pool (dari info plan yang tersimpan).
   const kindOrder: ProxyKind[] = ["residential", "isp", "datacenter", "mixed", "unknown"];
@@ -78,6 +82,12 @@ export default async function AdminDashboardPage() {
             );
           })}
         </div>
+        <p className="mt-3 border-t border-line pt-3 text-sm text-muted">
+          Pool rotating: <b>{rotatingAccounts}</b> akun ditandai · <b>{rotatingOrders}</b> pesanan rotating aktif ·{" "}
+          <Link href="/admin/akun" className="text-brand-deep hover:underline">
+            atur di Pool Akun
+          </Link>
+        </p>
         {(kindCounts.get("unknown") ?? 0) > 0 && (
           <p className="mt-3 text-sm text-muted">
             Akun yang belum diketahui jenisnya bisa diperbarui lewat tombol <b>Sinkronkan info plan</b> di halaman Pool Akun.

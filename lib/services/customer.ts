@@ -11,7 +11,8 @@ export type AccessDeniedReason = "not_found" | "inactive" | "expired_long" | "no
 
 export interface CustomerContext {
   order: Order;
-  account: WebshareAccount;
+  /** null untuk pesanan rotating (tidak menempel ke satu akun). */
+  account: WebshareAccount | null;
   expired: boolean;
   daysLeft: number;
 }
@@ -31,14 +32,18 @@ export async function resolveCustomerOrder(rawOrderNo: string): Promise<Customer
   const now = Date.now();
   if (now > expiresAt + GRACE_DAYS * DAY_MS) return { ok: false, reason: "expired_long" };
 
+  const timing = { expired: now >= expiresAt, daysLeft: computeDaysLeft(order.expires_at, now) };
+
+  // Pesanan rotating memakai pool gabungan, jadi tidak perlu akun tertaut.
+  if (order.order_type === "rotating") {
+    return { ok: true, ctx: { order, account: null, ...timing } };
+  }
+
   if (!order.account_id) return { ok: false, reason: "no_account" };
   const account = await repo.getAccount(order.account_id);
   if (!account || account.status === "disabled") return { ok: false, reason: "no_account" };
 
-  return {
-    ok: true,
-    ctx: { order, account, expired: now >= expiresAt, daysLeft: computeDaysLeft(order.expires_at, now) },
-  };
+  return { ok: true, ctx: { order, account, ...timing } };
 }
 
 export const ACCESS_MESSAGES: Record<AccessDeniedReason, { title: string; body: string; icon: StatusIconName }> = {

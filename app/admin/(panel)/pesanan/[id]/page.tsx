@@ -3,15 +3,18 @@ import { notFound } from "next/navigation";
 import {
   extendOrderAction,
   linkOrderAccountAction,
+  regenerateRotatingKeyAction,
   releaseOrderAccountAction,
   resetReplaceUsedAction,
   toggleOrderActiveAction,
   updateOrderAction,
   updateOrderCredentialsAction,
+  updateRotatingLimitAction,
 } from "@/app/admin/actions";
 import { AccountBandwidth } from "@/components/admin/AccountBandwidth";
 import { ActionButton } from "@/components/admin/ActionButton";
 import { CredentialsForm, EditOrderForm, ExtendOrderForm, LinkAccountForm } from "@/components/admin/OrderForms";
+import { RotatingOrderCard } from "@/components/admin/RotatingOrderCard";
 import { ChevronLeftIcon } from "@/components/icons";
 import { Badge, buttonClass, Card } from "@/components/ui";
 import { db } from "@/lib/db";
@@ -47,6 +50,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const now = Date.now();
   const state = orderState(order, now);
   const expiresDate = jakartaDateInput(0, new Date(order.expires_at).getTime());
+  const rotating = order.order_type === "rotating";
 
   return (
     <div className="space-y-4">
@@ -66,13 +70,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               >
                 {state.replace("_", " ")}
               </Badge>
+              <Badge tone={rotating ? "blue" : "gray"}>{rotating ? "Rotating" : "Statis"}</Badge>
               <span>
                 Expired {formatDateTime(order.expires_at)}
                 {state === "aktif" || state === "akan_expired" ? ` (${daysLeft(order.expires_at, now)} hari lagi)` : ""}
               </span>
             </div>
             <p className="mt-1 text-sm">
-              Replace: {order.replace_used} / {order.replace_quota}
+              {rotating
+                ? `Batas permintaan: ${order.rate_per_minute}/menit`
+                : `Replace: ${order.replace_used} / ${order.replace_quota}`}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -104,7 +111,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               replace_used: order.replace_used,
               catatan: order.catatan,
             }}
+            hideReplace={rotating}
           />
+          {!rotating && (
           <div className="mt-3 border-t border-line pt-3">
             <ActionButton
               action={resetReplaceUsedAction.bind(null, order.id)}
@@ -115,6 +124,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               Reset replace terpakai ke 0
             </ActionButton>
           </div>
+          )}
         </Card>
 
         <div className="space-y-4">
@@ -123,6 +133,24 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <ExtendOrderForm action={extendOrderAction.bind(null, order.id)} />
           </Card>
 
+          {rotating ? (
+            <Card>
+              <h2 className="mb-1 font-semibold text-ink">Akses rotating</h2>
+              <p className="mb-3 text-sm text-muted">
+                Proxy diambil acak dari semua akun yang ditandai ikut pool rotating di halaman Pool Akun.
+              </p>
+              {order.api_key ? (
+                <RotatingOrderCard
+                  apiKey={order.api_key}
+                  ratePerMinute={order.rate_per_minute}
+                  regenerateAction={regenerateRotatingKeyAction.bind(null, order.id)}
+                  limitAction={updateRotatingLimitAction.bind(null, order.id)}
+                />
+              ) : (
+                <p className="text-sm text-bad">Pesanan rotating ini belum punya kunci API.</p>
+              )}
+            </Card>
+          ) : (
           <Card>
             <h2 className="mb-3 font-semibold text-ink">Akun tertaut</h2>
             {account ? (
@@ -157,6 +185,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               </div>
             )}
           </Card>
+          )}
         </div>
       </div>
 
@@ -167,6 +196,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </Card>
       )}
 
+      {!rotating && (
       <Card>
         <h2 className="mb-3 font-semibold text-ink">
           Log replace <span className="font-normal text-muted">({logs.length} terakhir)</span>
@@ -207,6 +237,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }

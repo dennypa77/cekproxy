@@ -34,6 +34,8 @@ function seed(): MemoryState {
         proxy_count: 150,
         bandwidth_limit_gb: 250,
         plan_synced_at: created,
+        rotating_enabled: true,
+        rotating_reserve_gb: 20,
       },
       {
         id: "00000000-0000-4000-8000-000000000002",
@@ -48,6 +50,8 @@ function seed(): MemoryState {
         proxy_count: 10,
         bandwidth_limit_gb: 100,
         plan_synced_at: created,
+        rotating_enabled: false,
+        rotating_reserve_gb: null,
       },
       {
         id: "00000000-0000-4000-8000-000000000003",
@@ -62,12 +66,17 @@ function seed(): MemoryState {
         proxy_count: 25,
         bandwidth_limit_gb: 50,
         plan_synced_at: created,
+        rotating_enabled: true,
+        rotating_reserve_gb: null,
       },
     ],
     orders: [
       {
         id: "00000000-0000-4000-8000-000000000011",
         shopee_order_no: "DEMOAKTIF001",
+        order_type: "static",
+        api_key: null,
+        rate_per_minute: 60,
         account_id: "00000000-0000-4000-8000-000000000001",
         nama_customer: "Budi (contoh)",
         expires_at: new Date(now + 30 * DAY).toISOString(),
@@ -81,6 +90,9 @@ function seed(): MemoryState {
       {
         id: "00000000-0000-4000-8000-000000000012",
         shopee_order_no: "DEMOEXPIRE002",
+        order_type: "static",
+        api_key: null,
+        rate_per_minute: 60,
         account_id: "00000000-0000-4000-8000-000000000002",
         nama_customer: "Siti (contoh)",
         expires_at: new Date(now + 2 * DAY).toISOString(),
@@ -89,6 +101,38 @@ function seed(): MemoryState {
         replace_lock_until: null,
         is_active: true,
         catatan: "Pesanan contoh: expired 2 hari lagi, kuota replace habis",
+        created_at: created,
+      },
+      {
+        id: "00000000-0000-4000-8000-000000000013",
+        shopee_order_no: "DEMOROTATE003",
+        order_type: "rotating",
+        api_key: "dmr_11112222333344445555666677778888",
+        rate_per_minute: 60,
+        account_id: null,
+        nama_customer: "Rudi (contoh)",
+        expires_at: new Date(now + 30 * DAY).toISOString(),
+        replace_quota: 0,
+        replace_used: 0,
+        replace_lock_until: null,
+        is_active: true,
+        catatan: "Pesanan contoh: produk rotating (API)",
+        created_at: created,
+      },
+      {
+        id: "00000000-0000-4000-8000-000000000014",
+        shopee_order_no: "DEMOROTEXP004",
+        order_type: "rotating",
+        api_key: "dmr_99998888777766665555444433332222",
+        rate_per_minute: 30,
+        account_id: null,
+        nama_customer: "Tia (contoh)",
+        expires_at: new Date(now - DAY).toISOString(),
+        replace_quota: 0,
+        replace_used: 0,
+        replace_lock_until: null,
+        is_active: true,
+        catatan: "Pesanan contoh: rotating yang sudah expired",
         created_at: created,
       },
     ],
@@ -138,6 +182,8 @@ export function createMemoryRepo(): Repo {
         id: randomUUID(),
         status: "available",
         created_at: new Date().toISOString(),
+        rotating_enabled: false,
+        rotating_reserve_gb: null,
         proxy_type: null,
         proxy_subtype: null,
         proxy_count: null,
@@ -172,6 +218,28 @@ export function createMemoryRepo(): Repo {
     async getOrderByNo(orderNo) {
       return clone(state().orders.find((o) => o.shopee_order_no === orderNo) ?? null);
     },
+    async getOrderByApiKey(apiKey) {
+      return clone(state().orders.find((o) => o.api_key === apiKey) ?? null);
+    },
+    async createRotatingOrder(input) {
+      const s = state();
+      if (s.orders.some((o) => o.shopee_order_no === input.shopee_order_no)) {
+        throw new DbError("DUPLICATE", "nomor pesanan sudah ada");
+      }
+      const order: Order = {
+        id: randomUUID(),
+        order_type: "rotating",
+        account_id: null,
+        replace_quota: 0,
+        replace_used: 0,
+        replace_lock_until: null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        ...input,
+      };
+      s.orders.push(order);
+      return clone(order);
+    },
     async createOrder(input) {
       const s = state();
       const account = s.accounts.find((a) => a.id === input.account_id);
@@ -183,6 +251,9 @@ export function createMemoryRepo(): Repo {
       }
       const order: Order = {
         id: randomUUID(),
+        order_type: "static",
+        api_key: null,
+        rate_per_minute: 60,
         replace_used: 0,
         replace_lock_until: null,
         is_active: true,
