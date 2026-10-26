@@ -1,8 +1,13 @@
 import { Crosses, FeatureBadges, LogoTab, ServicePill } from "@/components/Brand";
+import { AnnouncementBar } from "@/components/customer/AnnouncementBar";
 import { SearchForm } from "@/components/customer/SearchForm";
 import { Decor } from "@/components/Decor";
 import { ShopIcon, WhatsAppIcon } from "@/components/icons";
 import { SHOPEE_STORE_URL, waHelpLink } from "@/lib/links";
+
+// Dirender per permintaan supaya pita PENGUMUMAN (dan tanggal kedaluwarsanya)
+// langsung berlaku tanpa perlu deploy ulang.
+export const dynamic = "force-dynamic";
 
 const STEPS = [
   <>
@@ -18,6 +23,8 @@ const STEPS = [
 
 export default function HomePage() {
   return (
+    <>
+      <AnnouncementBar />
     <main className="relative mx-auto flex min-h-dvh w-full max-w-xl flex-col px-4 pb-10">
       <Decor />
 
@@ -79,5 +86,6 @@ export default function HomePage() {
         </div>
       </footer>
     </main>
+    </>
   );
 }
