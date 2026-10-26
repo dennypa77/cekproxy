@@ -8,6 +8,8 @@ Portal self-service untuk customer yang membeli proxy lewat Shopee. Customer cuk
 - mengganti IP (replace) sesuai kuota,
 - mengelola IP whitelist.
 
+Selain paket **statis** (1 pesanan = 1 akun), aplikasi ini juga melayani paket **rotating**: customer mendapat satu kunci API untuk menarik proxy acak dari pool akun yang ditandai admin. Lihat [Produk rotating](#produk-rotating-api).
+
 Aplikasi ini **tidak menjual apa pun** dan tidak ada pembayaran. Admin mengelola pool akun Webshare dan pesanan di `/admin`.
 
 **Stack:** Next.js 16 (App Router) + TypeScript + Tailwind CSS 4 · Supabase Postgres · Deploy di Vercel.
@@ -76,7 +78,7 @@ Di mode test, API key tidak dikirim ke Webshare. Beberapa pola API key memicu pe
 1. Daftar/login di https://supabase.com, lalu klik **New project**. Pilih region **Southeast Asia (Singapore)** agar dekat dengan Indonesia. Simpan password database-nya.
 2. Setelah project jadi, buka menu **SQL Editor**, lalu klik **New query**.
 3. Buka file [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), salin seluruh isinya, tempel ke SQL Editor, lalu klik **Run**. Pastikan hasilnya "Success".
-   Lakukan hal yang sama untuk [`supabase/migrations/0002_plan_info.sql`](supabase/migrations/0002_plan_info.sql) (kolom jenis proxy). Kedua file aman dijalankan ulang.
+   Lakukan hal yang sama untuk [`supabase/migrations/0002_plan_info.sql`](supabase/migrations/0002_plan_info.sql) (kolom jenis proxy) dan [`supabase/migrations/0003_rotating.sql`](supabase/migrations/0003_rotating.sql) (produk rotating). Ketiga file aman dijalankan ulang dan tidak mengubah data lama.
 4. *(Opsional, hanya untuk uji coba)* Jalankan juga [`supabase/seed.sql`](supabase/seed.sql) dengan cara yang sama. Data ini hanya bekerja jika `WEBSHARE_TEST_MODE=true`. **Jangan jalankan di database produksi.**
 5. Buka **Project Settings → API** (atau **API Keys**), lalu salin dua nilai berikut:
    - **Project URL** untuk `SUPABASE_URL`
@@ -108,9 +110,31 @@ Semua tabel memakai Row Level Security tanpa policy, jadi kunci publik (`anon`) 
    - atau di Node: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
 5. Klik **Deploy**. Setelah selesai, buka `https://nama-proyek.vercel.app`.
-6. *(Opsional)* Hubungkan domain sendiri di **Settings → Domains**.
+6. *(Opsional)* Hubungkan domain sendiri di **Settings → Domains** — lihat bagian berikutnya.
 
 Setiap perubahan environment variable baru berlaku setelah **Redeploy** (menu Deployments, lalu ⋯ → Redeploy).
+
+### Memasang domain sendiri
+
+1. Beli domain, lalu tambahkan di **Vercel → Settings → Domains**. Ikuti instruksi DNS yang ditampilkan (ganti nameserver, atau tambah record A + CNAME). Sertifikat HTTPS dibuat otomatis.
+2. Set env `SITE_URL` ke domain itu, mis. `https://dmproxy.xyz`, lalu **Redeploy**. Ini membuat judul dan gambar preview link memakai domain baru.
+3. Alamat `*.vercel.app` tetap hidup dan tidak otomatis mengalihkan. Kalau ingin dialihkan, isi env `LEGACY_HOST` dengan alamat lama (mis. `namaproject.vercel.app`); semua kunjungan ke alamat lama diarahkan ke `SITE_URL` dengan path yang sama.
+   Redirect-nya **sementara (307)**. Setelah yakin lancar, ubah `permanent: false` → `true` di [`next.config.ts`](next.config.ts) agar browser menyimpannya.
+4. Endpoint rotating mengikuti alamat yang sedang dibuka customer, jadi halaman pesanan otomatis menampilkan `https://domain-baru/api/rotating?key=…` tanpa perubahan kode.
+5. Untuk memberi tahu customer, isi env `PENGUMUMAN` (dan opsional `PENGUMUMAN_SAMPAI`) — lihat bagian berikutnya.
+
+### Pita pengumuman untuk customer
+
+Isi env `PENGUMUMAN` dengan satu kalimat, lalu redeploy. Pita biru muda akan muncul di halaman depan dan semua halaman pesanan.
+
+```
+PENGUMUMAN=Alamat baru layanan: dmproxy.xyz — simpan link ini ya.
+PENGUMUMAN_SAMPAI=2026-12-31
+```
+
+- Customer bisa menutup pita; pilihan itu diingat di browser mereka.
+- Mengganti teksnya membuat pita muncul lagi, walau sebelumnya sudah ditutup.
+- Lewat 23:59 WIB tanggal `PENGUMUMAN_SAMPAI`, pita hilang sendiri tanpa perlu deploy ulang. Kosongkan `PENGUMUMAN` untuk mematikannya kapan saja.
 
 ---
 
@@ -148,7 +172,33 @@ Buka `/admin` dan login dengan `ADMIN_PASSWORD`.
 
 **Semua Proxy** menggabungkan seluruh proxy dari semua akun di pool dalam satu tabel: IP, port, username, password, negara, status valid, akun asal, dan nomor pesanan pemakainya. Ada pencarian, filter akun/negara/status, serta tombol Copy, Download .txt, dan Download .csv lengkap.
 
-**Dashboard** menampilkan jumlah akun available, pesanan aktif, dan daftar pesanan yang akan expired dalam 3 hari untuk di-follow-up di Shopee.
+**Dashboard** menampilkan jumlah akun available, pesanan aktif, ringkasan pool rotating, dan daftar pesanan yang akan expired dalam 3 hari untuk di-follow-up di Shopee.
+
+### Produk rotating (API)
+
+Paket rotating memakai **pool gabungan**: sisa bandwidth dari akun-akun yang sudah dipakai customer statis bisa dijual lagi sebagai proxy rotating, tanpa server tambahan.
+
+1. **Pool Akun → kolom Pool rotating**: klik **Ikutkan** pada akun yang boleh menyumbang proxy. Lewat tombol **Edit** Anda juga bisa mengisi **cadangan bandwidth (GB)**, yaitu jatah yang disisakan untuk pemilik akun. Contoh: akun 250 GB dengan cadangan 200 GB hanya menyumbang sampai pemakaian mencapai 50 GB, setelah itu akun otomatis keluar dari pool. Kosongkan cadangan jika akun boleh dipakai sampai limitnya.
+2. **Pesanan → Tambah pesanan rotating (pool)**: isi nomor pesanan Shopee, tanggal expired, dan **batas permintaan per menit**. Pesanan rotating tidak menempel ke satu akun, jadi tidak perlu memilih akun.
+3. Setelah tersimpan, kunci API (`dmr_...`) langsung tampil. Kirim link `https://domain-anda/pesanan/NOMORPESANAN` ke customer — halaman itu berisi kunci, alamat endpoint, contoh `curl`, dan daftar parameter.
+4. Di halaman **Kelola pesanan** rotating ada kartu **Akses rotating**: salin kunci/endpoint, ubah batas per menit, atau **Ganti kunci API** kalau kuncinya bocor (kunci lama langsung berhenti bekerja).
+
+Batas paket rotating = **masa aktif + jumlah permintaan per menit**. Saat pesanan expired atau dinonaktifkan, kunci API langsung ditolak.
+
+**Cara pakai untuk customer:**
+
+```
+GET https://domain-anda/api/rotating?key=dmr_xxx&count=5&country=US&format=ip:port:user:pass
+```
+
+| Parameter | Isi | Keterangan |
+| --- | --- | --- |
+| `key` | `dmr_...` | Wajib. Bisa juga dikirim sebagai header `x-api-key` atau `Authorization: Bearer`. |
+| `count` | 1–50 | Jumlah proxy sekali ambil. Default 1. |
+| `country` | `US`, `SG`, `ID`, … | Opsional. Kosongkan untuk acak dari semua negara. |
+| `format` | `ip:port:user:pass`, `user:pass@ip:port`, `ip:port`, `json` | Default `ip:port:user:pass`. |
+
+Endpoint `GET /api/rotating/info?key=dmr_xxx` mengembalikan ukuran pool, daftar negara beserta jumlahnya, batas per menit, dan tanggal expired.
 
 ---
 
@@ -161,6 +211,10 @@ Buka `/admin` dan login dengan `ADMIN_PASSWORD`.
 | `ADMIN_PASSWORD` | Ya | Password login `/admin`. Mengganti password otomatis mengeluarkan semua sesi admin. |
 | `SESSION_SECRET` | Ya (produksi) | Kunci tanda tangan cookie sesi, minimal 32 karakter |
 | `WEBSHARE_TEST_MODE` | Tidak | `true` = data proxy palsu. Jika `true` dan Supabase kosong, memakai DB memori. |
+| `SITE_URL` | Tidak | Alamat publik aplikasi, mis. `https://dmproxy.xyz`. Dipakai untuk kartu preview link. Default `https://dmproxy.xyz`. |
+| `LEGACY_HOST` | Tidak | Alamat lama yang dialihkan ke `SITE_URL`, mis. `namaproject.vercel.app`. Kosong = tidak ada redirect. |
+| `PENGUMUMAN` | Tidak | Teks pita pengumuman di halaman customer. Kosong = pita tidak tampil. |
+| `PENGUMUMAN_SAMPAI` | Tidak | `YYYY-MM-DD`. Lewat 23:59 WIB tanggal itu, pita pengumuman hilang sendiri. |
 
 `DATABASE_URL` tidak diperlukan karena aplikasi terhubung ke Supabase lewat `SUPABASE_URL` + service role key.
 
@@ -181,6 +235,8 @@ Buka `/admin` dan login dengan `ADMIN_PASSWORD`.
   | Replace IP | 5 / menit |
   | Tambah/hapus IP whitelist | 10 / menit |
   | Semua API customer | 90 / menit |
+  | API rotating dengan kunci salah | 90 / menit (anti coba-coba kunci) |
+  | API rotating dengan kunci benar | sesuai batas per menit pesanan tersebut |
   | Login admin | 5 / 5 menit |
 - Tidak ada daftar atau auto-suggest nomor pesanan di sisi customer. Halaman `/pesanan/*` dan `/admin` diberi `noindex`.
 
@@ -218,6 +274,15 @@ Semua endpoint diakhiri `/` dan memakai header `Authorization: Token <API_KEY>`.
    - **Belum selesai dalam 25 detik**: log `pending` dan kuota tetap terpakai sementara. Saat halaman customer dibuka lagi, status dicek ulang (rekonsiliasi). Jika ternyata gagal, kuota dikembalikan.
 5. Route replace memakai `maxDuration = 60` detik.
 
+### Pool rotating ([`lib/services/rotating.ts`](lib/services/rotating.ts))
+
+- Pool dibangun dari akun dengan `rotating_enabled = true` dan status bukan `disabled`, maksimal 3 akun diproses bersamaan.
+- Jika akun punya **cadangan bandwidth** (`rotating_reserve_gb`), pemakaiannya dicek lebih dulu. Akun dikeluarkan dari pool bila `terpakai >= limit - cadangan`, atau bila data bandwidth-nya gagal dibaca (tidak ada asumsi diam-diam bahwa pemakaiannya 0).
+- Hanya proxy berstatus `valid` yang masuk pool. Hasilnya di-cache 60 detik, dan cache langsung dibuang saat admin mengubah akun atau menyalakan/mematikan keikutsertaan pool.
+- Kunci API dibuat acak 128-bit (`dmr_` + 32 hex, lihat [`lib/api-key.ts`](lib/api-key.ts)) dan disimpan unik di tabel `orders`. Pesanan rotating tidak memakai `account_id` maupun kuota replace.
+- Validasi akses ada di [`lib/services/rotating-access.ts`](lib/services/rotating-access.ts): format kunci → pesanan rotating → aktif → belum expired → batas permintaan per menit (tabel `rate_limits`, kunci `rotating:<order_id>`, jadi batasnya berlaku lintas instance Vercel).
+- Semua balasan API rotating memakai `cache-control: no-store`.
+
 ### Aturan masa aktif
 
 - **Sisa hari ≤ 3**: banner kuning dengan tombol perpanjang.
@@ -231,6 +296,7 @@ app/
   page.tsx                     halaman utama (cari nomor pesanan)
   pesanan/[no]/page.tsx        detail pesanan customer
   api/pesanan/[no]/…           API customer (bandwidth, proxies, countries, replace, whitelist)
+  api/rotating/                API rotating (ambil proxy acak) + /info
   api/my-ip/                   deteksi IP pengunjung dari header request
   admin/login/                 login admin
   admin/(panel)/…              dashboard, pool akun, pesanan
@@ -239,10 +305,13 @@ components/                    UI (customer/, admin/, ui.tsx, icons.tsx)
 lib/
   webshare.ts                  klien API Webshare (+ webshare-mock.ts untuk mode test)
   db/                          repository Supabase & memori
-  services/                    logika pesanan, cache data proxy, replace
+  services/                    logika pesanan, cache data proxy, replace, pool rotating
+  api-key.ts                   pembuatan & pola kunci API rotating
   rate-limit.ts, session.ts, cache.ts, …
 supabase/
   migrations/0001_init.sql     skema + fungsi atomik
+  migrations/0002_plan_info.sql info plan (jenis proxy)
+  migrations/0003_rotating.sql pool rotating + pesanan rotating
   seed.sql                     data contoh mode test
 ```
 
