@@ -33,7 +33,7 @@ export function SearchForm() {
   return (
     <form onSubmit={onSubmit} className="rounded-3xl border-2 border-ink bg-white p-5 sm:p-7" noValidate>
       <label htmlFor="order-no" className={labelClass}>
-        Nomor Pesanan Shopee
+        Nomor Pesanan
       </label>
       <input
         id="order-no"
