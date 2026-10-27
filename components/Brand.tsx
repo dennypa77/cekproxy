@@ -2,15 +2,14 @@ import { cn, IconCircle } from "./ui";
 import { ShieldCheckIcon, StopwatchIcon, ThumbUpIcon, XIcon } from "./icons";
 
 /**
- * Logo DM Digital (digambar ulang sebagai SVG): cincin + monogram "DM".
+ * Logo dmproxy (digambar ulang sebagai SVG): cincin + monogram "DM".
  * Jika punya file logo asli, ganti isi komponen ini dengan <img src="/logo.svg" />.
  */
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" className={className ?? "size-10"} role="img" aria-label="Logo DM Digital">
-      <circle cx="50" cy="50" r="41" strokeWidth="6" />
-      <path d="M28 32 L50 65 L72 32 V72" strokeWidth="10" strokeLinejoin="miter" />
-      <path d="M28 32 V60" strokeWidth="10" />
+    <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" className={className ?? "size-10"} role="img" aria-label="Logo dmproxy">
+      <circle cx="50" cy="50" r="40" strokeWidth="7" />
+      <path d="M30 73 V29 L52 61 L74 29 V73" strokeWidth="10" strokeLinejoin="miter" strokeLinecap="butt" />
     </svg>
   );
 }
@@ -40,7 +39,7 @@ export function Crosses({ className }: { className?: string }) {
   );
 }
 
-/** Pill terbelah "PROVIDE EZ SERVICE | DM DIGITAL". */
+/** Pill terbelah "PROVIDE EZ SERVICE | DMPROXY". */
 export function ServicePill({ className }: { className?: string }) {
   return (
     <div
@@ -50,7 +49,7 @@ export function ServicePill({ className }: { className?: string }) {
       )}
     >
       <span className="bg-white px-4 py-2 text-ink">Provide EZ Service</span>
-      <span className="bg-ink px-6 py-2 text-white">DM Digital</span>
+      <span className="bg-ink px-6 py-2 text-white">dmproxy</span>
     </div>
   );
 }

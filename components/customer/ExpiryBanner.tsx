@@ -54,18 +54,26 @@ export function ExpiryBanner({
         </div>
       </div>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <a href={SHOPEE_STORE_URL} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "md")}>
-          <ShopIcon className="size-4" /> Perpanjang via Shopee
-        </a>
         <a
           href={waExtendLink(orderNo, expiresDateShort)}
           target="_blank"
           rel="noopener noreferrer"
+          className={buttonClass("primary", "md")}
+        >
+          <WhatsAppIcon className="size-4" /> Perpanjang langsung
+        </a>
+        <a
+          href={SHOPEE_STORE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
           className={buttonClass("secondary", "md")}
         >
-          <WhatsAppIcon className="size-4" /> Perpanjang via WhatsApp
+          <ShopIcon className="size-4" /> Perpanjang via Shopee
         </a>
       </div>
+      <p className="mt-2 text-xs font-semibold text-ink/70">
+        Perpanjang langsung ke admin: bebas biaya admin, harga sama.
+      </p>
     </div>
   );
 }

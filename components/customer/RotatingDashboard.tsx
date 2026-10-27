@@ -23,6 +23,7 @@ import { countryFlag, countryName, formatTime } from "@/lib/format";
 import { SHOPEE_STORE_URL, waExtendLink, waHelpLink } from "@/lib/links";
 import type { RotatingInfo } from "@/lib/public-types";
 import { ExpiryBanner } from "./ExpiryBanner";
+import { OtherPlansCard } from "./OtherPlansCard";
 
 export const WARNING_DAYS = 3;
 
@@ -150,19 +151,23 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
 
             <div className="mt-auto pt-5">
               <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">Perpanjang</p>
-              <div className="grid grid-cols-2 gap-2">
-                <a href={SHOPEE_STORE_URL} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "sm")}>
-                  <ShopIcon className="size-4" /> Shopee
-                </a>
-                <a
-                  href={waExtendLink(orderNo, expiresDateShort)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={buttonClass("secondary", "sm")}
-                >
-                  <WhatsAppIcon className="size-4" /> WhatsApp
-                </a>
-              </div>
+              <a
+                href={waExtendLink(orderNo, expiresDateShort)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClass("primary", "sm", "w-full")}
+              >
+                <WhatsAppIcon className="size-4" /> Perpanjang langsung
+              </a>
+              <p className="mt-1.5 text-center text-xs text-muted">Bebas biaya admin, harga sama.</p>
+              <a
+                href={SHOPEE_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 flex items-center justify-center gap-1.5 text-xs font-bold text-muted transition-colors hover:text-ink"
+              >
+                <ShopIcon className="size-3.5" /> atau lewat Shopee
+              </a>
             </div>
           </Card>
 
@@ -299,6 +304,8 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
             </p>
           </div>
         </Card>
+
+        <OtherPlansCard />
 
         <div className="flex flex-col items-center gap-3 pt-4">
           <a href={waHelpLink(orderNo)} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "sm")}>

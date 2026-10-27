@@ -23,7 +23,7 @@ export default async function AdminLoginPage() {
           <h1 className="font-display text-2xl leading-tight font-extrabold tracking-tight uppercase">
             Panel <span className="text-brand">Admin</span>
           </h1>
-          <p className="mt-1 mb-6 text-sm text-muted">Cek Proxy DM Digital</p>
+          <p className="mt-1 mb-6 text-sm text-muted">Panel admin dmproxy</p>
           {!getAdminPassword() && (
             <p className="mb-4 rounded-2xl border-2 border-ink bg-warn-soft p-3 text-sm font-semibold">
               ADMIN_PASSWORD belum di-set. Tambahkan di environment variables lalu jalankan ulang.

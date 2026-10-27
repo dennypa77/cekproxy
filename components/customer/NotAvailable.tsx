@@ -3,7 +3,7 @@ import { Crosses, LogoTab, ServicePill } from "@/components/Brand";
 import { Decor } from "@/components/Decor";
 import { SearchIcon, ShopIcon, StatusIcon, WhatsAppIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui";
-import { SHOPEE_STORE_URL, waHelpLink } from "@/lib/links";
+import { SHOPEE_STORE_URL, waHelpLink, waOrderGeneralLink } from "@/lib/links";
 import type { StatusIconName } from "@/lib/public-types";
 
 export function NotAvailable({
@@ -45,13 +45,28 @@ export function NotAvailable({
               <SearchIcon className="size-5" /> Cek nomor pesanan lain
             </Link>
             {showShopee && (
-              <a href={SHOPEE_STORE_URL} target="_blank" rel="noopener noreferrer" className={buttonClass("brand", "lg", "w-full")}>
-                <ShopIcon className="size-5" /> Order lagi via Shopee
+              <a
+                href={waOrderGeneralLink()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClass("brand", "lg", "w-full")}
+              >
+                <WhatsAppIcon className="size-5" /> Pesan lagi langsung
               </a>
             )}
             <a href={waHelpLink(orderNo)} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "lg", "w-full")}>
               <WhatsAppIcon className="size-5" /> Hubungi admin
             </a>
+            {showShopee && (
+              <a
+                href={SHOPEE_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted transition-colors hover:text-ink"
+              >
+                <ShopIcon className="size-3.5" /> atau lewat Shopee
+              </a>
+            )}
           </div>
         </div>
         <div className="mt-8 flex justify-center">

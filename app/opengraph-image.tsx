@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { siteHost } from "@/lib/site";
 
-export const alt = "Cek Proxy DM Digital";
+export const alt = "dmproxy — jual proxy datacenter & residential";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -34,13 +34,12 @@ export default function OpengraphImage() {
             }}
           >
             <svg width="76" height="76" viewBox="0 0 100 100" fill="none" stroke="#ffffff">
-              <circle cx="50" cy="50" r="41" strokeWidth="6" />
-              <path d="M28 32 L50 65 L72 32 V72" strokeWidth="10" strokeLinejoin="miter" />
-              <path d="M28 32 V60" strokeWidth="10" />
+              <circle cx="50" cy="50" r="40" strokeWidth="7" />
+              <path d="M30 73 V29 L52 61 L74 29 V73" strokeWidth="10" strokeLinejoin="miter" />
             </svg>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: 2, color: "#111111" }}>DM DIGITAL</div>
+            <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: 2, color: "#111111" }}>DMPROXY</div>
             <div style={{ fontSize: 26, color: "#5b6270" }}>{siteHost()}</div>
           </div>
         </div>

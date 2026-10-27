@@ -9,7 +9,7 @@ import { requireAdmin } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: { default: "Admin", template: "%s · Admin DM Digital" },
+  title: { default: "Admin", template: "%s · Admin dmproxy" },
   robots: { index: false, follow: false },
 };
 
@@ -25,7 +25,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
               <span className="flex size-10 items-center justify-center rounded-full bg-ink text-white">
                 <LogoMark className="size-7" />
               </span>
-              Admin <span className="text-brand">DM Digital</span>
+              Admin <span className="text-brand">dmproxy</span>
             </span>
             <form action={logoutAction} className="sm:hidden">
               <button type="submit" className={buttonClass("secondary", "xs")}>

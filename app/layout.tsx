@@ -8,23 +8,23 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "sw
 const poppins = Poppins({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--font-poppins", display: "swap" });
 
 const DESCRIPTION =
-  "Cek sisa bandwidth, daftar proxy, replace IP, dan IP whitelist untuk pesanan proxy DM Digital.";
+  "Jual proxy datacenter & residential. Pesan langsung ke admin, bebas biaya admin, lengkap dengan dashboard cek bandwidth, ganti IP, dan IP whitelist.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: { default: "Cek Proxy DM Digital", template: "%s · Cek Proxy DM Digital" },
+  title: { default: "dmproxy — Jual Proxy Datacenter & Residential", template: "%s · dmproxy" },
   description: DESCRIPTION,
-  applicationName: "Cek Proxy DM Digital",
+  applicationName: "dmproxy",
   // Kartu preview saat link dibagikan di WhatsApp / chat Shopee.
   openGraph: {
     type: "website",
     locale: "id_ID",
     url: "/",
-    siteName: "Cek Proxy DM Digital",
-    title: "Cek Proxy DM Digital",
+    siteName: "dmproxy",
+    title: "dmproxy — Jual Proxy Datacenter & Residential",
     description: DESCRIPTION,
   },
-  twitter: { card: "summary_large_image", title: "Cek Proxy DM Digital", description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: "dmproxy", description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {
