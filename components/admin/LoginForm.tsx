@@ -2,7 +2,7 @@
 
 import { loginAction } from "@/app/admin/actions";
 import { Button, inputClass, labelClass } from "@/components/ui";
-import { useServerForm } from "./useServerForm";
+import { useServerForm } from "@/components/useServerForm";
 
 export function LoginForm() {
   const { pending, onSubmit, state } = useServerForm(loginAction);

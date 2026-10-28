@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  detachOrderCustomerAction,
   extendOrderAction,
+  generateClaimCodeAction,
   linkOrderAccountAction,
   regenerateRotatingKeyAction,
   releaseOrderAccountAction,
+  revokeClaimCodeAction,
   resetReplaceUsedAction,
   toggleOrderActiveAction,
   updateOrderAction,
@@ -13,6 +16,7 @@ import {
 } from "@/app/admin/actions";
 import { AccountBandwidth } from "@/components/admin/AccountBandwidth";
 import { ActionButton } from "@/components/admin/ActionButton";
+import { ClaimCodeCard } from "@/components/admin/ClaimCodeCard";
 import { CredentialsForm, EditOrderForm, ExtendOrderForm, LinkAccountForm } from "@/components/admin/OrderForms";
 import { RotatingOrderCard } from "@/components/admin/RotatingOrderCard";
 import { ChevronLeftIcon } from "@/components/icons";
@@ -39,10 +43,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const order = await repo.getOrder(id);
   if (!order) notFound();
 
-  const [account, accounts, logs] = await Promise.all([
+  const [account, accounts, logs, pemilik] = await Promise.all([
     order.account_id ? repo.getAccount(order.account_id) : Promise.resolve(null),
     repo.listAccounts(),
     repo.listReplaceLogs(order.id, 100),
+    order.customer_id ? repo.getCustomer(order.customer_id) : Promise.resolve(null),
   ]);
   const available = accounts
     .filter((a) => a.status === "available")
@@ -110,6 +115,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               replace_quota: order.replace_quota,
               replace_used: order.replace_used,
               catatan: order.catatan,
+              wa_number: order.wa_number,
             }}
             hideReplace={rotating}
           />
@@ -128,6 +134,31 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </Card>
 
         <div className="space-y-4">
+          <Card>
+            <h2 className="mb-1 font-semibold text-ink">Akun customer &amp; kode klaim</h2>
+            <p className="mb-3 text-sm text-muted">
+              Customer memakai kode ini untuk menautkan pesanan ke akunnya.
+            </p>
+            <ClaimCodeCard
+              orderNo={order.shopee_order_no}
+              claimCode={order.claim_code}
+              claimExpiresLabel={order.claim_code_expires_at ? formatDateTime(order.claim_code_expires_at) : null}
+              customer={
+                pemilik
+                  ? {
+                      nama: pemilik.nama,
+                      waNumber: pemilik.wa_number,
+                      claimedLabel: order.claimed_at ? formatDateTime(order.claimed_at) : "-",
+                    }
+                  : null
+              }
+              orderWaNumber={order.wa_number}
+              generateAction={generateClaimCodeAction.bind(null, order.id)}
+              revokeAction={revokeClaimCodeAction.bind(null, order.id)}
+              detachAction={detachOrderCustomerAction.bind(null, order.id)}
+            />
+          </Card>
+
           <Card>
             <h2 className="mb-3 font-semibold text-ink">Perpanjang</h2>
             <ExtendOrderForm action={extendOrderAction.bind(null, order.id)} />

@@ -1,15 +1,20 @@
 import "server-only";
 import { createClient, type PostgrestError } from "@supabase/supabase-js";
 import {
+  type Customer,
   DbError,
   type Order,
   type ReplaceLog,
   type Repo,
+  type WaMessage,
   type WebshareAccount,
 } from "./types";
 
 function toDbError(error: PostgrestError): DbError {
   if (error.code === "23505") return new DbError("DUPLICATE", error.message);
+  if (error.message.includes("CLAIM_CODE_INVALID")) return new DbError("CLAIM_CODE_INVALID", error.message);
+  if (error.message.includes("CLAIM_CODE_EXPIRED")) return new DbError("CLAIM_CODE_EXPIRED", error.message);
+  if (error.message.includes("ALREADY_CLAIMED")) return new DbError("ALREADY_CLAIMED", error.message);
   if (error.message.includes("ACCOUNT_NOT_AVAILABLE")) {
     return new DbError("ACCOUNT_NOT_AVAILABLE", error.message);
   }
@@ -150,6 +155,58 @@ export function createSupabaseRepo(url: string, serviceRoleKey: string): Repo {
         .eq("status", "pending")
         .select("id");
       return (check(res) as { id: string }[]).length > 0;
+    },
+
+    async listCustomers() {
+      const res = await sb.from("customers").select("*").order("created_at", { ascending: false });
+      return check(res) as Customer[];
+    },
+    async getCustomer(id) {
+      return check(await sb.from("customers").select("*").eq("id", id).maybeSingle()) as Customer | null;
+    },
+    async getCustomerByWa(waNumber) {
+      const res = await sb.from("customers").select("*").eq("wa_number", waNumber).maybeSingle();
+      return check(res) as Customer | null;
+    },
+    async createCustomer(input) {
+      return check(await sb.from("customers").insert(input).select("*").single()) as Customer;
+    },
+    async updateCustomer(id, patch) {
+      check(await sb.from("customers").update(patch).eq("id", id));
+    },
+    async listOrdersByCustomer(customerId) {
+      const res = await sb
+        .from("orders")
+        .select("*")
+        .eq("customer_id", customerId)
+        .order("expires_at", { ascending: false });
+      return check(res) as Order[];
+    },
+    async claimOrder(code, customerId) {
+      const res = await sb.rpc("claim_order", { p_code: code, p_customer_id: customerId }).single();
+      return check(res) as Order;
+    },
+
+    async insertWaMessage(input) {
+      return check(await sb.from("wa_messages").insert(input).select("*").single()) as WaMessage;
+    },
+    async listWaMessages(limit) {
+      const res = await sb
+        .from("wa_messages")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      return check(res) as WaMessage[];
+    },
+    async waMessageSent(orderId, template) {
+      const res = await sb
+        .from("wa_messages")
+        .select("id")
+        .eq("order_id", orderId)
+        .eq("template", template)
+        .eq("status", "sent")
+        .limit(1);
+      return ((check(res) as { id: string }[]) ?? []).length > 0;
     },
 
     async rateLimitHit(key, windowSeconds) {

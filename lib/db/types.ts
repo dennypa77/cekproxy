@@ -41,6 +41,14 @@ export interface Order {
   is_active: boolean;
   catatan: string | null;
   created_at: string;
+  /** Akun customer yang mengklaim pesanan ini (null = belum diklaim). */
+  customer_id: string | null;
+  claimed_at: string | null;
+  /** Kode klaim sekali pakai; null begitu pesanan diklaim. */
+  claim_code: string | null;
+  claim_code_expires_at: string | null;
+  /** Nomor WhatsApp pembeli (format 62…), dipakai kirim kode klaim & pengingat. */
+  wa_number: string | null;
 }
 
 export interface ReplaceLog {
@@ -58,6 +66,9 @@ export type DbErrorCode =
   | "DUPLICATE"
   | "ACCOUNT_NOT_AVAILABLE"
   | "ORDER_NOT_FOUND"
+  | "CLAIM_CODE_INVALID"
+  | "CLAIM_CODE_EXPIRED"
+  | "ALREADY_CLAIMED"
   | "UNKNOWN";
 
 export class DbError extends Error {
@@ -107,6 +118,7 @@ export interface NewOrderInput {
   expires_at: string;
   replace_quota: number;
   catatan: string | null;
+  wa_number?: string | null;
 }
 
 export type OrderPatch = Partial<
@@ -121,6 +133,11 @@ export type OrderPatch = Partial<
     | "catatan"
     | "api_key"
     | "rate_per_minute"
+    | "customer_id"
+    | "claimed_at"
+    | "claim_code"
+    | "claim_code_expires_at"
+    | "wa_number"
   >
 >;
 
@@ -131,6 +148,7 @@ export interface NewRotatingOrderInput {
   api_key: string;
   rate_per_minute: number;
   catatan: string | null;
+  wa_number?: string | null;
 }
 
 export interface NewReplaceLogInput {
@@ -140,6 +158,53 @@ export interface NewReplaceLogInput {
   status: ReplaceLogStatus;
   error: string | null;
   replacement_id: number | null;
+}
+
+export interface Customer {
+  id: string;
+  /** Kanonik: digit saja, diawali 62. */
+  wa_number: string;
+  nama: string;
+  password_hash: string;
+  /** Dinaikkan saat password diganti / akun diblokir → sesi lama batal. */
+  session_version: number;
+  is_blocked: boolean;
+  created_at: string;
+  last_login_at: string | null;
+}
+
+export interface NewCustomerInput {
+  wa_number: string;
+  nama: string;
+  password_hash: string;
+}
+
+export type CustomerPatch = Partial<
+  Pick<Customer, "nama" | "password_hash" | "session_version" | "is_blocked" | "last_login_at">
+>;
+
+export type WaTemplate = "claim_code" | "expiry_h3" | "expiry_h1" | "expired" | "manual";
+
+export interface WaMessage {
+  id: string;
+  order_id: string | null;
+  customer_id: string | null;
+  to_number: string;
+  template: WaTemplate;
+  status: "sent" | "failed";
+  error: string | null;
+  provider_id: string | null;
+  created_at: string;
+}
+
+export interface NewWaMessageInput {
+  order_id: string | null;
+  customer_id: string | null;
+  to_number: string;
+  template: WaTemplate;
+  status: "sent" | "failed";
+  error: string | null;
+  provider_id: string | null;
 }
 
 /** Semua akses database lewat interface ini (Supabase atau memori untuk mode test). */
@@ -171,6 +236,20 @@ export interface Repo {
   listPendingReplaceLogs(orderId: string): Promise<ReplaceLog[]>;
   /** Ubah log pending menjadi final. true jika log masih pending (klaim berhasil). */
   resolvePendingLog(logId: string, status: "success" | "failed", error: string | null): Promise<boolean>;
+
+  listCustomers(): Promise<Customer[]>;
+  getCustomer(id: string): Promise<Customer | null>;
+  getCustomerByWa(waNumber: string): Promise<Customer | null>;
+  createCustomer(input: NewCustomerInput): Promise<Customer>;
+  updateCustomer(id: string, patch: CustomerPatch): Promise<void>;
+  listOrdersByCustomer(customerId: string): Promise<Order[]>;
+  /** Atomik: tautkan pesanan ke akun & matikan kodenya. Lempar DbError kalau kode tidak sah. */
+  claimOrder(code: string, customerId: string): Promise<Order>;
+
+  insertWaMessage(input: NewWaMessageInput): Promise<WaMessage>;
+  listWaMessages(limit: number): Promise<WaMessage[]>;
+  /** Sudah pernah terkirim sukses untuk pesanan + jenis pesan ini? */
+  waMessageSent(orderId: string, template: WaTemplate): Promise<boolean>;
 
   rateLimitHit(key: string, windowSeconds: number): Promise<number>;
   rateLimitPeek(key: string): Promise<number>;

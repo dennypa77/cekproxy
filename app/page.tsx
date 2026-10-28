@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Crosses, DotGrid, FeatureBadges, LogoMark, ServicePill } from "@/components/Brand";
 import { AnnouncementBar } from "@/components/customer/AnnouncementBar";
 import { SearchForm } from "@/components/customer/SearchForm";
@@ -53,7 +54,10 @@ const LANGKAH = [
     judul: "Terima nomor pesanan",
     isi: "Setelah pembayaran masuk, kami aktifkan proxy dan mengirim nomor pesanan Anda lewat chat.",
   },
-  { judul: "Buka dashboard", isi: "Masukkan nomor itu di Cek Pesanan untuk melihat daftar IP dan mengelolanya." },
+  {
+    judul: "Buka dashboard",
+    isi: "Buat akun dengan nomor WhatsApp Anda, klaim pesanan memakai kode dari admin, lalu kelola semua pesanan di satu halaman.",
+  },
 ];
 
 const LETAK_NOMOR = [
@@ -183,8 +187,8 @@ export default function HomePage() {
                 Cara <span className="text-brand">pesan</span>
               </h2>
               <p className="mt-3 text-sm text-muted sm:text-base">
-                Empat langkah, tanpa perlu membuat akun. Pesan lewat Shopee juga bisa — nomor pesanan Shopee dipakai
-                untuk membuka dashboard.
+                Empat langkah saja. Pesan lewat Shopee juga bisa — nomor pesanan Shopee dipakai untuk membuka
+                dashboard yang sama.
               </p>
             </div>
 
@@ -214,7 +218,7 @@ export default function HomePage() {
               </h2>
               <p className="mt-3 text-sm text-muted sm:text-base">
                 Sudah membeli? Masukkan nomor pesanan Anda untuk melihat daftar proxy, sisa bandwidth, dan masa
-                aktifnya. Tanpa login. Pesan langsung maupun lewat Shopee sama-sama dapat nomor pesanan.
+                aktifnya. Punya lebih dari satu pesanan? Buat akun supaya semuanya ada di satu halaman.
               </p>
             </div>
 
@@ -223,6 +227,22 @@ export default function HomePage() {
 
               <div className="rounded-3xl border-2 border-ink bg-paper p-5">
                 <h3 className="font-display text-base font-extrabold tracking-tight text-ink uppercase">
+                  Punya beberapa pesanan?
+                </h3>
+                <p className="mt-2 text-sm text-muted">
+                  Buat akun dengan nomor WhatsApp Anda, lalu klaim tiap pesanan memakai kode dari admin — semuanya
+                  tampil dalam satu halaman.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link href="/akun/daftar" className={buttonClass("primary", "sm")}>
+                    Buat akun
+                  </Link>
+                  <Link href="/akun/masuk" className={buttonClass("secondary", "sm")}>
+                    Masuk
+                  </Link>
+                </div>
+
+                <h3 className="mt-6 font-display text-base font-extrabold tracking-tight text-ink uppercase">
                   Di mana nomor pesanan?
                 </h3>
                 <ol className="mt-3 space-y-3">

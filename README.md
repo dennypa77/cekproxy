@@ -78,7 +78,7 @@ Di mode test, API key tidak dikirim ke Webshare. Beberapa pola API key memicu pe
 1. Daftar/login di https://supabase.com, lalu klik **New project**. Pilih region **Southeast Asia (Singapore)** agar dekat dengan Indonesia. Simpan password database-nya.
 2. Setelah project jadi, buka menu **SQL Editor**, lalu klik **New query**.
 3. Buka file [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), salin seluruh isinya, tempel ke SQL Editor, lalu klik **Run**. Pastikan hasilnya "Success".
-   Lakukan hal yang sama untuk [`supabase/migrations/0002_plan_info.sql`](supabase/migrations/0002_plan_info.sql) (kolom jenis proxy) dan [`supabase/migrations/0003_rotating.sql`](supabase/migrations/0003_rotating.sql) (produk rotating). Ketiga file aman dijalankan ulang dan tidak mengubah data lama.
+   Lakukan hal yang sama untuk [`0002_plan_info.sql`](supabase/migrations/0002_plan_info.sql) (kolom jenis proxy), [`0003_rotating.sql`](supabase/migrations/0003_rotating.sql) (produk rotating), dan [`0004_customer_accounts.sql`](supabase/migrations/0004_customer_accounts.sql) (akun customer, kode klaim, log WhatsApp). Semua file aman dijalankan ulang dan tidak mengubah data lama.
 4. *(Opsional, hanya untuk uji coba)* Jalankan juga [`supabase/seed.sql`](supabase/seed.sql) dengan cara yang sama. Data ini hanya bekerja jika `WEBSHARE_TEST_MODE=true`. **Jangan jalankan di database produksi.**
 5. Buka **Project Settings → API** (atau **API Keys**), lalu salin dua nilai berikut:
    - **Project URL** untuk `SUPABASE_URL`
@@ -202,6 +202,52 @@ Endpoint `GET /api/rotating/info?key=dmr_xxx` mengembalikan ukuran pool, daftar 
 
 ---
 
+## Akun customer
+
+Customer membuat akun sendiri dengan **nomor WhatsApp + password**, lalu mengklaim tiap pesanan memakai **kode klaim** yang Anda buat di panel admin. Setelah itu semua pesanannya tampil di satu halaman (`/akun`) — tidak perlu lagi menyimpan banyak link.
+
+**Alur Anda sebagai admin:**
+
+1. Buat pesanan seperti biasa, dan isi **Nomor WhatsApp pembeli** di formulirnya (kolom baru). Nomor ini dipakai untuk mengirim kode klaim dan pengingat expired.
+2. Buka **Kelola pesanan** → kartu **Akun customer & kode klaim** → **Buat kode klaim**.
+3. Klik **Kirim ke +62…** untuk membuka WhatsApp dengan pesan siap kirim (berisi kode dan link pendaftaran).
+4. Customer mendaftar di `/akun/daftar`, lalu memasukkan kode di `/akun/klaim`.
+
+Catatan penting:
+
+- Kode berlaku **7 hari**, **sekali pakai**, dan hangus begitu dipakai. Kode baru bisa dibuat kapan saja (kode lama langsung mati).
+- Kalau pesanan salah diklaim, pakai **Lepas dari akun** lalu buat kode baru.
+- Halaman **Customer** di panel admin memuat daftar akun, tombol **Reset password** (menghasilkan password sementara untuk dikirim lewat chat), **Blokir**, dan tombol **Buat kode klaim massal** untuk menyiapkan kode semua pesanan lama sekaligus.
+- Belum ada layanan email, jadi lupa password ditangani admin lewat tombol reset itu.
+
+### Mewajibkan login (masa transisi)
+
+Selama `CUSTOMER_LOGIN_REQUIRED_FROM` kosong, halaman pesanan tetap bisa dibuka hanya dengan nomor pesanan seperti dulu. Isi env itu dengan tanggal (mis. `2026-12-01`) untuk mulai mewajibkan akun:
+
+- **Sebelum** tanggal tersebut: halaman pesanan terbuka, tapi muncul pita peringatan berisi tanggal dan tombol daftar/masuk.
+- **Sesudahnya**: pengunjung tanpa akun dialihkan ke halaman masuk; yang sudah masuk tapi pesanannya belum diklaim diarahkan ke halaman klaim; pesanan milik akun lain ditolak dengan pesan jelas. Aturan yang sama berlaku untuk semua API `/api/pesanan/*`, jadi tidak ada pintu belakang.
+
+Beri jarak minimal 2–4 minggu dan kirimkan kode klaim lebih dulu, supaya customer lama tidak kaget kehilangan akses.
+
+---
+
+## Pengingat WhatsApp otomatis
+
+Sekali sehari aplikasi mengirim pengingat ke WhatsApp customer: **3 hari sebelum** expired, **1 hari sebelum**, dan **saat pesanan berakhir**. Nomor yang dipakai adalah nomor akun customer, atau nomor yang Anda catat di pesanan kalau belum diklaim.
+
+**Cara mengaktifkan:**
+
+1. Daftar di penyedia gateway WhatsApp (bawaan: [Fonnte](https://fonnte.com)), sambungkan nomor WhatsApp Anda, lalu salin tokennya.
+2. Di Vercel isi `FONNTE_TOKEN` dan `CRON_SECRET` (acak, minimal 16 karakter), lalu **Redeploy**.
+3. Jadwal hariannya sudah tertulis di [`vercel.json`](vercel.json) (pukul 09.00 WIB). Paket Vercel Hobby hanya mengizinkan sekitar satu eksekusi cron per hari.
+4. Cek hasilnya di panel admin → **Notifikasi**: ada riwayat pengiriman, tombol **Simulasi (tanpa kirim)**, dan tombol **Kirim sekarang**.
+
+Pengaman yang sudah terpasang: satu pesanan tidak pernah menerima pesan yang sama dua kali (dijaga indeks unik di tabel `wa_messages`), maksimal 40 pesan per putaran dengan jeda antar pesan, dan seluruh fitur mati total kalau `FONNTE_TOKEN` kosong.
+
+> ⚠️ Fonnte adalah gateway tidak resmi yang memakai nomor WhatsApp Anda sendiri. Kalau penerima menandai pesan sebagai spam, nomor Anda bisa diblokir WhatsApp. Karena itu pesan hanya dikirim ke customer yang nomornya mereka berikan sendiri, isinya transaksional, dan ada cara berhenti. Jalur resmi (Meta WhatsApp Cloud API) bisa dipasang menyusul lewat modul yang sama, [`lib/wa-sender.ts`](lib/wa-sender.ts).
+
+---
+
 ## 6. Environment variables
 
 | Nama | Wajib | Keterangan |
@@ -215,6 +261,10 @@ Endpoint `GET /api/rotating/info?key=dmr_xxx` mengembalikan ukuran pool, daftar 
 | `LEGACY_HOST` | Tidak | Alamat lama yang dialihkan ke `SITE_URL`, mis. `namaproject.vercel.app`. Kosong = tidak ada redirect. |
 | `PENGUMUMAN` | Tidak | Teks pita pengumuman di halaman customer. Kosong = pita tidak tampil. |
 | `PENGUMUMAN_SAMPAI` | Tidak | `YYYY-MM-DD`. Lewat 23:59 WIB tanggal itu, pita pengumuman hilang sendiri. |
+| `CUSTOMER_LOGIN_REQUIRED_FROM` | Tidak | `YYYY-MM-DD`. Mulai tanggal itu halaman pesanan hanya bisa dibuka lewat akun customer. Kosong = masa transisi (link lama tetap jalan). |
+| `FONNTE_TOKEN` | Tidak | Token gateway WhatsApp untuk pengingat otomatis. Kosong = fitur mati total. |
+| `FONNTE_ENDPOINT` | Tidak | Alamat API gateway, kalau bukan `https://api.fonnte.com/send`. |
+| `CRON_SECRET` | Tidak | Minimal 16 karakter. Melindungi `/api/cron/notify`; Vercel Cron otomatis mengirimnya. |
 
 `DATABASE_URL` tidak diperlukan karena aplikasi terhubung ke Supabase lewat `SUPABASE_URL` + service role key.
 
@@ -297,6 +347,8 @@ app/
   pesanan/[no]/page.tsx        detail pesanan customer
   api/pesanan/[no]/…           API customer (bandwidth, proxies, countries, replace, whitelist)
   api/rotating/                API rotating (ambil proxy acak) + /info
+  api/cron/notify/             pengingat WhatsApp harian (dipanggil Vercel Cron)
+  akun/                        daftar, masuk, klaim, dan dashboard akun customer
   api/my-ip/                   deteksi IP pengunjung dari header request
   admin/login/                 login admin
   admin/(panel)/…              dashboard, pool akun, pesanan
@@ -306,12 +358,16 @@ lib/
   webshare.ts                  klien API Webshare (+ webshare-mock.ts untuk mode test)
   db/                          repository Supabase & memori
   services/                    logika pesanan, cache data proxy, replace, pool rotating
-  api-key.ts                   pembuatan & pola kunci API rotating
+  api-key.ts                   pembuatan & pola kunci API rotating + kode klaim
+  customer-session.ts          sesi akun customer (cookie bertanda tangan)
+  password.ts                  hashing password (scrypt bawaan Node)
+  wa-number.ts, wa-sender.ts   normalisasi nomor & pengiriman WhatsApp
   rate-limit.ts, session.ts, cache.ts, …
 supabase/
   migrations/0001_init.sql     skema + fungsi atomik
   migrations/0002_plan_info.sql info plan (jenis proxy)
   migrations/0003_rotating.sql pool rotating + pesanan rotating
+  migrations/0004_customer_accounts.sql  akun customer, kode klaim, log WhatsApp
   seed.sql                     data contoh mode test
 ```
 

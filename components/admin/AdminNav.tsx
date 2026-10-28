@@ -9,6 +9,8 @@ const LINKS = [
   { href: "/admin/akun", label: "Pool Akun" },
   { href: "/admin/pesanan", label: "Pesanan" },
   { href: "/admin/proxy", label: "Semua Proxy" },
+  { href: "/admin/customer", label: "Customer" },
+  { href: "/admin/notifikasi", label: "Notifikasi" },
 ];
 
 export function AdminNav() {

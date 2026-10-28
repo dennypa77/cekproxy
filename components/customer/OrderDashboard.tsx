@@ -24,12 +24,17 @@ export interface OrderDashboardProps {
   jenisProxy: string | null;
   initialReplaceUsed: number;
   initialReplaceQuota: number;
+  /** Tujuan tombol kembali: "/akun" kalau pesanan ini ada di akun customer. */
+  backHref?: string;
+  backLabel?: string;
 }
 
 export const WARNING_DAYS = 3;
 
 export function OrderDashboard(props: OrderDashboardProps) {
   const { orderNo, namaCustomer, expiresAtLabel, expiresDateShort, graceEndsLabel, daysLeft, expired, jenisProxy } = props;
+  const backHref = props.backHref ?? "/";
+  const backLabel = props.backLabel ?? "Cek pesanan lain";
   const [quota, setQuota] = useState({ used: props.initialReplaceUsed, total: props.initialReplaceQuota });
   const onQuotaChange = useCallback((used: number, total: number) => setQuota({ used, total }), []);
   const expiringSoon = !expired && daysLeft <= WARNING_DAYS;
@@ -40,10 +45,10 @@ export function OrderDashboard(props: OrderDashboardProps) {
 
       <div className="flex items-start justify-between gap-3">
         <Link
-          href="/"
+          href={backHref}
           className="mt-5 inline-flex items-center gap-1 rounded-full border-2 border-ink bg-white px-3 py-1.5 text-sm font-semibold transition hover:bg-brand-softer"
         >
-          <ChevronLeftIcon className="size-4" /> Cek pesanan lain
+          <ChevronLeftIcon className="size-4" /> {backLabel}
         </Link>
         <LogoTab size="sm" />
       </div>

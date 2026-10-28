@@ -5,8 +5,8 @@ import { useState } from "react";
 import { createRotatingOrderAction } from "@/app/admin/actions";
 import { Button, inputClass, labelClass } from "@/components/ui";
 import { jakartaDateInput } from "@/lib/format";
-import { ResultDetails } from "./ResultDetails";
-import { useServerForm } from "./useServerForm";
+import { ResultDetails } from "@/components/ResultDetails";
+import { useServerForm } from "@/components/useServerForm";
 
 export function AddRotatingOrderForm({ defaultDate }: { defaultDate: string }) {
   const [date, setDate] = useState(defaultDate);
@@ -46,6 +46,14 @@ export function AddRotatingOrderForm({ defaultDate }: { defaultDate: string }) {
           <input id="rot_nama" name="nama_customer" maxLength={100} className={inputClass} />
         </div>
       </div>
+      <div>
+        <label className={labelClass} htmlFor="rot_wa">
+          Nomor WhatsApp pembeli (opsional)
+        </label>
+        <input id="rot_wa" name="wa_number" type="tel" inputMode="numeric" placeholder="0812-3456-7890" className={inputClass} />
+        <p className="mt-1 text-xs text-muted">Dipakai mengirim kode klaim dan pengingat sebelum pesanan expired.</p>
+      </div>
+
 
       <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
         <div>

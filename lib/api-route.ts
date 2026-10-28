@@ -4,6 +4,7 @@ import { getClientIp } from "./ip";
 import { safeDecode } from "./order-no";
 import { hitRateLimit, isRateLimited, RATE_LIMIT_MESSAGE, type RateLimitBucket } from "./rate-limit";
 import { ACCESS_MESSAGES, resolveCustomerOrder, type CustomerContext } from "./services/customer";
+import { resolveOrderAccess } from "./services/order-access";
 import type { WebshareAccount } from "./db";
 
 export function jsonOk<T>(data: T, status = 200): NextResponse {
@@ -51,6 +52,16 @@ export async function loadCustomerRoute(
     if (access.reason === "not_found") await hitRateLimit("search", ip);
     return { ok: false, response: jsonError(ACCESS_MESSAGES[access.reason].title, 404) };
   }
+  // Aturan akun customer sama dengan halaman pesanan, supaya API tidak jadi pintu belakang.
+  const akses = await resolveOrderAccess(access.ctx.order);
+  if (akses.gate !== "allow") {
+    const pesan =
+      akses.gate === "other"
+        ? "Pesanan ini terdaftar di akun customer lain."
+        : "Silakan masuk ke akun Anda untuk membuka pesanan ini.";
+    return { ok: false, response: jsonError(pesan, 403) };
+  }
+
   if (options.requireNotExpired && access.ctx.expired) {
     return { ok: false, response: jsonError(EXPIRED_MESSAGE, 403) };
   }

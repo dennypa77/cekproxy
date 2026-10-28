@@ -7,8 +7,8 @@ import { Button, inputClass, labelClass } from "@/components/ui";
 import { copyText } from "@/lib/client/clipboard";
 import type { AdminActionState } from "@/lib/public-types";
 import { ActionButton } from "./ActionButton";
-import { ResultDetails } from "./ResultDetails";
-import { useServerForm } from "./useServerForm";
+import { ResultDetails } from "@/components/ResultDetails";
+import { useServerForm } from "@/components/useServerForm";
 
 export function RotatingOrderCard({
   apiKey,

@@ -6,8 +6,8 @@ import { createOrderAction } from "@/app/admin/actions";
 import { Button, inputClass, labelClass } from "@/components/ui";
 import { jakartaDateInput } from "@/lib/format";
 import type { AdminActionState } from "@/lib/public-types";
-import { ResultDetails } from "./ResultDetails";
-import { useServerForm } from "./useServerForm";
+import { ResultDetails } from "@/components/ResultDetails";
+import { useServerForm } from "@/components/useServerForm";
 
 export interface AccountOption {
   id: string;
@@ -81,6 +81,14 @@ export function AddOrderForm({ accounts, defaultDate }: { accounts: AccountOptio
         </div>
       </div>
       <div>
+        <label className={labelClass} htmlFor="wa_number">
+          Nomor WhatsApp pembeli (opsional)
+        </label>
+        <input id="wa_number" name="wa_number" type="tel" inputMode="numeric" placeholder="0812-3456-7890" className={inputClass} />
+        <p className="mt-1 text-xs text-muted">Dipakai mengirim kode klaim dan pengingat sebelum pesanan expired.</p>
+      </div>
+
+      <div>
         <label className={labelClass} htmlFor="account_id">
           Akun ({accounts.length} available)
         </label>
@@ -142,6 +150,7 @@ export function EditOrderForm({
     replace_quota: number;
     replace_used: number;
     catatan: string | null;
+    wa_number: string | null;
   };
   /** Pesanan rotating tidak memakai kuota replace, jadi kolomnya disembunyikan. */
   hideReplace?: boolean;
@@ -171,6 +180,14 @@ export function EditOrderForm({
           <input id="edit_nama" name="nama_customer" defaultValue={order.nama_customer ?? ""} className={inputClass} />
         </div>
       </div>
+      <div>
+        <label className={labelClass} htmlFor="edit_wa">
+          Nomor WhatsApp pembeli (opsional)
+        </label>
+        <input id="edit_wa" name="wa_number" type="tel" inputMode="numeric" placeholder="0812-3456-7890" defaultValue={order.wa_number ?? ""} className={inputClass} />
+        <p className="mt-1 text-xs text-muted">Dipakai mengirim kode klaim dan pengingat sebelum pesanan expired.</p>
+      </div>
+
       <div>
         <label className={labelClass} htmlFor="expires_date">
           Tanggal expired

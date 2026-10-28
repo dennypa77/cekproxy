@@ -44,3 +44,33 @@ export function waHelpLink(orderNo?: string): string {
 export function customerPath(orderNo: string): string {
   return `/pesanan/${encodeURIComponent(orderNo)}`;
 }
+
+/** Chat ke nomor customer (nomor kanonik 62…, lihat lib/wa-number.ts). */
+export function waTo(number: string, text: string): string {
+  return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
+}
+
+export function waClaimCodeMessage(orderNo: string, code: string, dashboardUrl: string): string {
+  return [
+    "Halo! Pesanan proxy Anda sudah siap.",
+    "",
+    `Nomor pesanan: ${orderNo}`,
+    `Kode klaim: ${code}`,
+    "",
+    `Buka ${dashboardUrl}, daftar/masuk dengan nomor WhatsApp ini, lalu masukkan kode di atas untuk melihat pesanan Anda.`,
+    "",
+    "Terima kasih — dmproxy",
+  ].join("\n");
+}
+
+export function waExpiryMessage(orderNo: string, expiresLabel: string, daysLeft: number, dashboardUrl: string): string {
+  const kapan = daysLeft <= 0 ? "hari ini" : `${daysLeft} hari lagi`;
+  return [
+    `Halo! Proxy Anda (${orderNo}) akan berakhir ${kapan}, pada ${expiresLabel}.`,
+    "",
+    "Balas chat ini kalau mau perpanjang — harganya sama, bebas biaya admin.",
+    `Cek detailnya di ${dashboardUrl}`,
+    "",
+    "Balas BERHENTI kalau tidak ingin menerima pengingat lagi.",
+  ].join("\n");
+}

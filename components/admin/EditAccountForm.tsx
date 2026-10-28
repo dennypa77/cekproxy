@@ -2,8 +2,8 @@
 
 import { Button, inputClass, labelClass } from "@/components/ui";
 import type { AdminActionState } from "@/lib/public-types";
-import { ResultDetails } from "./ResultDetails";
-import { useServerForm } from "./useServerForm";
+import { ResultDetails } from "@/components/ResultDetails";
+import { useServerForm } from "@/components/useServerForm";
 
 export function EditAccountForm({
   action,

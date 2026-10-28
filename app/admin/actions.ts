@@ -4,17 +4,20 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "@/lib/zod";
-import { generateRotatingKey } from "@/lib/api-key";
+import { generateClaimCode, generateRotatingKey } from "@/lib/api-key";
 import { cacheKeys, invalidate } from "@/lib/cache";
 import { db, DbError } from "@/lib/db";
 import { getAdminPassword } from "@/lib/env";
 import { endOfJakartaDay, formatDateTime, maskSecret } from "@/lib/format";
 import { getClientIp } from "@/lib/ip";
 import { customerPath } from "@/lib/links";
+import { generateTempPassword, hashPassword } from "@/lib/password";
+import { normalizeWaNumber, WA_NUMBER_PATTERN } from "@/lib/wa-number";
 import { orderNoSchema } from "@/lib/order-no";
 import { planLabel } from "@/lib/plan-type";
 import type { AdminActionState } from "@/lib/public-types";
 import { hitRateLimit } from "@/lib/rate-limit";
+import { runExpiryNotifications } from "@/lib/services/notify";
 import { invalidateRotatingPool } from "@/lib/services/rotating";
 import { checkAdminPassword, createAdminSession, destroyAdminSession, isAdmin } from "@/lib/session";
 import {
@@ -34,6 +37,10 @@ const fail = (message: string, details?: string[]): AdminActionState => ({ ok: f
 
 async function guard(): Promise<AdminActionState | null> {
   return (await isAdmin()) ? null : fail("Sesi admin berakhir. Silakan login ulang.");
+}
+
+function jakartaToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
 }
 
 function refreshAdmin() {
@@ -99,6 +106,9 @@ function describeDb(error: unknown, duplicateMessage = "Data sudah ada."): strin
     if (error.code === "DUPLICATE") return duplicateMessage;
     if (error.code === "ACCOUNT_NOT_AVAILABLE") return "Akun tidak tersedia (mungkin sudah dipakai pesanan lain).";
     if (error.code === "ORDER_NOT_FOUND") return "Pesanan tidak ditemukan.";
+    if (error.code === "ALREADY_CLAIMED") return "Pesanan sudah diklaim akun customer lain.";
+    if (error.code === "CLAIM_CODE_INVALID") return "Kode klaim tidak dikenali.";
+    if (error.code === "CLAIM_CODE_EXPIRED") return "Kode klaim sudah kedaluwarsa.";
   }
   console.error("[admin]", error);
   return "Terjadi kesalahan database. Cek log server.";
@@ -442,9 +452,23 @@ export async function deleteAccountAction(accountId: string): Promise<AdminActio
 // Pesanan
 // ---------------------------------------------------------------------------
 
+/** Nomor WhatsApp pembeli — opsional, dipakai kirim kode klaim & pengingat. */
+const optionalWaSchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value ? normalizeWaNumber(value) : null))
+  .refine((value) => value === null || WA_NUMBER_PATTERN.test(value), {
+    error: "Nomor WhatsApp tidak valid. Contoh: 0812-3456-7890.",
+  });
+
+/** Kode klaim berlaku 7 hari. */
+const CLAIM_CODE_TTL_DAYS = 7;
+
 const createOrderSchema = z.object({
   shopee_order_no: orderNoSchema,
   nama_customer: optionalText(100),
+  wa_number: optionalWaSchema,
   account_id: z.string({ error: "Pilih akun." }).min(1, { error: "Pilih akun yang tersedia." }),
   expires_date: dateInputSchema,
   replace_quota: quotaSchema,
@@ -467,6 +491,7 @@ export async function createOrderAction(formData: FormData): Promise<AdminAction
       expires_at: endOfJakartaDay(input.expires_date),
       replace_quota: input.replace_quota,
       catatan: input.catatan,
+      wa_number: input.wa_number,
     });
     refreshAdmin();
     return ok(`Pesanan ${order.shopee_order_no} dibuat.`, [
@@ -487,6 +512,7 @@ const ratePerMinuteSchema = z.coerce
 const rotatingOrderSchema = z.object({
   shopee_order_no: orderNoSchema,
   nama_customer: optionalText(100),
+  wa_number: optionalWaSchema,
   expires_date: dateInputSchema,
   rate_per_minute: ratePerMinuteSchema,
   catatan: optionalText(2000),
@@ -509,6 +535,7 @@ export async function createRotatingOrderAction(formData: FormData): Promise<Adm
       api_key: generateRotatingKey(),
       rate_per_minute: input.rate_per_minute,
       catatan: input.catatan,
+      wa_number: input.wa_number,
     });
     refreshAdmin();
     return ok(`Pesanan rotating ${order.shopee_order_no} dibuat.`, [
@@ -559,9 +586,190 @@ export async function updateRotatingLimitAction(orderId: string, formData: FormD
   return ok(`Batas diubah menjadi ${parsed.data.rate_per_minute} permintaan/menit.`);
 }
 
+// ---------------------------------------------------------------------------
+// Kode klaim & akun customer
+// ---------------------------------------------------------------------------
+
+/** Buat kode klaim baru untuk satu pesanan (kode lama langsung mati). */
+export async function generateClaimCodeAction(orderId: string): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const repo = db();
+  const order = await repo.getOrder(orderId);
+  if (!order) return fail("Pesanan tidak ditemukan.");
+  if (order.customer_id) {
+    return fail("Pesanan ini sudah ada di akun customer. Lepas dulu kalau mau dipindah.");
+  }
+
+  const claim_code = generateClaimCode();
+  const claim_code_expires_at = new Date(Date.now() + CLAIM_CODE_TTL_DAYS * 86_400_000).toISOString();
+  try {
+    await repo.updateOrder(orderId, { claim_code, claim_code_expires_at });
+  } catch (error) {
+    return fail(describeDb(error, "Kode klaim bentrok, coba sekali lagi."));
+  }
+  refreshAdmin();
+  return ok("Kode klaim dibuat.", [
+    `Kode: ${claim_code}`,
+    `Berlaku sampai ${formatDateTime(claim_code_expires_at)}`,
+  ]);
+}
+
+/** Batalkan kode klaim yang belum dipakai. */
+export async function revokeClaimCodeAction(orderId: string): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  try {
+    await db().updateOrder(orderId, { claim_code: null, claim_code_expires_at: null });
+  } catch (error) {
+    return fail(describeDb(error));
+  }
+  refreshAdmin();
+  return ok("Kode klaim dibatalkan.");
+}
+
+/** Lepas pesanan dari akun customer (mis. salah klaim). */
+export async function detachOrderCustomerAction(orderId: string): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const repo = db();
+  const order = await repo.getOrder(orderId);
+  if (!order) return fail("Pesanan tidak ditemukan.");
+  if (!order.customer_id) return fail("Pesanan ini belum tertaut ke akun customer.");
+
+  const note = `[${jakartaToday()}] Dilepas dari akun customer oleh admin`;
+  try {
+    await repo.updateOrder(orderId, {
+      customer_id: null,
+      claimed_at: null,
+      catatan: order.catatan ? `${order.catatan}\n${note}` : note,
+    });
+  } catch (error) {
+    return fail(describeDb(error));
+  }
+  refreshAdmin();
+  return ok("Pesanan dilepas dari akun customer. Buat kode klaim baru kalau mau dipindah.");
+}
+
+/** Siapkan kode klaim untuk semua pesanan aktif yang belum diklaim (masa transisi). */
+export async function bulkGenerateClaimCodesAction(): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const repo = db();
+  const orders = await repo.listOrders();
+  const target = orders.filter((o) => o.is_active && !o.customer_id && !o.claim_code);
+  if (target.length === 0) return ok("Semua pesanan aktif sudah punya kode klaim atau sudah diklaim.");
+
+  const expires = new Date(Date.now() + CLAIM_CODE_TTL_DAYS * 86_400_000).toISOString();
+  let berhasil = 0;
+  for (const order of target) {
+    try {
+      await repo.updateOrder(order.id, { claim_code: generateClaimCode(), claim_code_expires_at: expires });
+      berhasil++;
+    } catch (error) {
+      console.error("[admin] gagal membuat kode klaim", order.shopee_order_no, error);
+    }
+  }
+  refreshAdmin();
+  return ok(`${berhasil} kode klaim dibuat.`, [
+    `Berlaku sampai ${formatDateTime(expires)}`,
+    "Kirim kodenya ke customer lewat halaman pesanan masing-masing.",
+  ]);
+}
+
+/** Blokir / buka blokir akun customer. Sesi aktifnya ikut dibatalkan. */
+export async function toggleCustomerBlockedAction(customerId: string): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const repo = db();
+  const customer = await repo.getCustomer(customerId);
+  if (!customer) return fail("Akun customer tidak ditemukan.");
+
+  const next = !customer.is_blocked;
+  try {
+    await repo.updateCustomer(customerId, {
+      is_blocked: next,
+      session_version: customer.session_version + 1,
+    });
+  } catch (error) {
+    return fail(describeDb(error));
+  }
+  refreshAdmin();
+  return ok(next ? `Akun ${customer.nama} diblokir.` : `Akun ${customer.nama} diaktifkan lagi.`);
+}
+
+/** Reset password customer; password sementara dikembalikan untuk dikirim lewat chat. */
+export async function resetCustomerPasswordAction(customerId: string): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const repo = db();
+  const customer = await repo.getCustomer(customerId);
+  if (!customer) return fail("Akun customer tidak ditemukan.");
+
+  const sementara = generateTempPassword();
+  try {
+    await repo.updateCustomer(customerId, {
+      password_hash: await hashPassword(sementara),
+      session_version: customer.session_version + 1,
+    });
+  } catch (error) {
+    return fail(describeDb(error));
+  }
+  refreshAdmin();
+  return ok(`Password ${customer.nama} direset.`, [
+    `Password sementara: ${sementara}`,
+    "Kirim ke customer lewat WhatsApp dan minta segera diganti.",
+  ]);
+}
+
+// ---------------------------------------------------------------------------
+// Notifikasi WhatsApp
+// ---------------------------------------------------------------------------
+
+async function jalankanNotifikasi(dryRun: boolean): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  try {
+    const hasil = await runExpiryNotifications({ dryRun });
+    const ringkas = [
+      `Kandidat: ${hasil.kandidat}`,
+      `Terkirim: ${hasil.terkirim}`,
+      `Gagal: ${hasil.gagal}`,
+      `Dilewati: ${hasil.dilewati}`,
+      ...hasil.detail.slice(0, 10),
+    ];
+    refreshAdmin();
+    if (!hasil.enabled) {
+      return fail("Pengiriman WhatsApp belum aktif (FONNTE_TOKEN kosong). Hasil di bawah hanya simulasi.", ringkas);
+    }
+    return ok(dryRun ? "Simulasi selesai, tidak ada pesan yang dikirim." : "Putaran notifikasi selesai.", ringkas);
+  } catch (error) {
+    console.error("[admin] notifikasi gagal", error);
+    return fail("Gagal menjalankan notifikasi. Cek log server.");
+  }
+}
+
+/** Lihat siapa saja yang akan dikirimi, tanpa benar-benar mengirim. */
+export async function previewNotificationsAction(): Promise<AdminActionState> {
+  return jalankanNotifikasi(true);
+}
+
+/** Jalankan putaran notifikasi sekarang (tidak menunggu cron harian). */
+export async function sendNotificationsAction(): Promise<AdminActionState> {
+  return jalankanNotifikasi(false);
+}
+
 const updateOrderSchema = z.object({
   shopee_order_no: orderNoSchema,
   nama_customer: optionalText(100),
+  wa_number: optionalWaSchema,
   expires_date: dateInputSchema,
   replace_quota: quotaSchema,
   replace_used: quotaSchema,
@@ -593,6 +801,7 @@ export async function updateOrderAction(orderId: string, formData: FormData): Pr
       replace_quota: input.replace_quota,
       replace_used: input.replace_used,
       catatan: input.catatan,
+      wa_number: input.wa_number,
     });
   } catch (error) {
     return fail(describeDb(error, "Nomor pesanan sudah dipakai pesanan lain."));

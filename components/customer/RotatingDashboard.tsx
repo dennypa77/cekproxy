@@ -40,6 +40,9 @@ export interface RotatingDashboardProps {
   ratePerMinute: number;
   poolSize: number;
   countries: { code: string; count: number }[];
+  /** Tujuan tombol kembali: "/akun" kalau pesanan ini ada di akun customer. */
+  backHref?: string;
+  backLabel?: string;
 }
 
 export function RotatingDashboard(props: RotatingDashboardProps) {
@@ -90,10 +93,10 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
 
       <div className="flex items-start justify-between gap-3">
         <Link
-          href="/"
+          href={props.backHref ?? "/"}
           className="mt-5 inline-flex items-center gap-1 rounded-full border-2 border-ink bg-white px-3 py-1.5 text-sm font-semibold transition hover:bg-brand-softer"
         >
-          <ChevronLeftIcon className="size-4" /> Cek pesanan lain
+          <ChevronLeftIcon className="size-4" /> {props.backLabel ?? "Cek pesanan lain"}
         </Link>
         <LogoTab size="sm" />
       </div>

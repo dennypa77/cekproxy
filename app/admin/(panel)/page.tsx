@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Badge, Card } from "@/components/ui";
 import { db } from "@/lib/db";
-import { daysLeft, formatDateTime } from "@/lib/format";
-import { customerPath } from "@/lib/links";
+import { daysLeft, formatDate, formatDateTime } from "@/lib/format";
+import { customerPath, waExpiryMessage, waTo } from "@/lib/links";
 import { orderState } from "@/lib/order-status";
 import { KIND_LABEL, KIND_TONE, proxyKind, type ProxyKind } from "@/lib/plan-type";
 import { requireAdmin } from "@/lib/session";
+import { siteUrl } from "@/lib/site";
 
 export const metadata = { title: "Dashboard" };
 
@@ -13,7 +14,8 @@ export default async function AdminDashboardPage() {
   // Layout & page dirender paralel — cek sesi wajib di setiap page, bukan hanya layout.
   await requireAdmin();
   const repo = db();
-  const [accounts, orders] = await Promise.all([repo.listAccounts(), repo.listOrders()]);
+  const [accounts, orders, customers] = await Promise.all([repo.listAccounts(), repo.listOrders(), repo.listCustomers()]);
+  const customerById = new Map(customers.map((c) => [c.id, c]));
   const now = Date.now();
 
   const availableAccounts = accounts.filter((a) => a.status === "available").length;
@@ -122,6 +124,31 @@ export default async function AdminDashboardPage() {
                       {formatDateTime(order.expires_at)} <Badge tone="yellow">{daysLeft(order.expires_at, now)} hari</Badge>
                     </td>
                     <td className="py-2 whitespace-nowrap">
+                      {(() => {
+                        const wa = order.customer_id ? customerById.get(order.customer_id)?.wa_number : order.wa_number;
+                        if (!wa) return null;
+                        return (
+                          <>
+                            <a
+                              href={waTo(
+                                wa,
+                                waExpiryMessage(
+                                  order.shopee_order_no,
+                                  formatDate(order.expires_at),
+                                  daysLeft(order.expires_at, now),
+                                  `${siteUrl()}/akun`,
+                                ),
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-semibold text-ok hover:underline"
+                            >
+                              Chat WA
+                            </a>
+                            <span className="text-line"> · </span>
+                          </>
+                        );
+                      })()}
                       <Link href={`/admin/pesanan/${order.id}`} className="text-brand-deep hover:underline">
                         Detail
                       </Link>

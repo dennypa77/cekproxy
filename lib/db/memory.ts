@@ -1,6 +1,15 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { DbError, type Order, type ReplaceLog, type Repo, type WebshareAccount } from "./types";
+import {
+  type Customer,
+  DbError,
+  type Order,
+  type ReplaceLog,
+  type Repo,
+  type WaMessage,
+  type WebshareAccount,
+} from "./types";
+import { hashPasswordSync } from "../password";
 
 /**
  * Database di memori — HANYA untuk mode test lokal tanpa Supabase.
@@ -9,6 +18,8 @@ import { DbError, type Order, type ReplaceLog, type Repo, type WebshareAccount }
 interface MemoryState {
   accounts: WebshareAccount[];
   orders: Order[];
+  customers: Customer[];
+  waMessages: WaMessage[];
   logs: ReplaceLog[];
   rate: Map<string, { count: number; expiresAt: number }>;
   cache: Map<string, { value: unknown; expiresAt: number }>;
@@ -86,6 +97,11 @@ function seed(): MemoryState {
         is_active: true,
         catatan: "Pesanan contoh: aktif 30 hari",
         created_at: created,
+        customer_id: "00000000-0000-4000-8000-000000000021",
+        claimed_at: created,
+        claim_code: null,
+        claim_code_expires_at: null,
+        wa_number: "628123456789",
       },
       {
         id: "00000000-0000-4000-8000-000000000012",
@@ -102,6 +118,11 @@ function seed(): MemoryState {
         is_active: true,
         catatan: "Pesanan contoh: expired 2 hari lagi, kuota replace habis",
         created_at: created,
+        customer_id: null,
+        claimed_at: null,
+        claim_code: "K7M2P-9XQ4T",
+        claim_code_expires_at: new Date(now + 7 * DAY).toISOString(),
+        wa_number: "628123456789",
       },
       {
         id: "00000000-0000-4000-8000-000000000013",
@@ -118,6 +139,11 @@ function seed(): MemoryState {
         is_active: true,
         catatan: "Pesanan contoh: produk rotating (API)",
         created_at: created,
+        customer_id: null,
+        claimed_at: null,
+        claim_code: null,
+        claim_code_expires_at: null,
+        wa_number: null,
       },
       {
         id: "00000000-0000-4000-8000-000000000014",
@@ -134,8 +160,26 @@ function seed(): MemoryState {
         is_active: true,
         catatan: "Pesanan contoh: rotating yang sudah expired",
         created_at: created,
+        customer_id: null,
+        claimed_at: null,
+        claim_code: null,
+        claim_code_expires_at: null,
+        wa_number: null,
       },
     ],
+    customers: [
+      {
+        id: "00000000-0000-4000-8000-000000000021",
+        wa_number: "628123456789",
+        nama: "Rudi (contoh)",
+        password_hash: hashPasswordSync("demo1234"),
+        session_version: 1,
+        is_blocked: false,
+        created_at: created,
+        last_login_at: null,
+      },
+    ],
+    waMessages: [],
     logs: [],
     rate: new Map(),
     cache: new Map(),
@@ -235,6 +279,11 @@ export function createMemoryRepo(): Repo {
         replace_lock_until: null,
         is_active: true,
         created_at: new Date().toISOString(),
+        customer_id: null,
+        claimed_at: null,
+        claim_code: null,
+        claim_code_expires_at: null,
+        wa_number: null,
         ...input,
       };
       s.orders.push(order);
@@ -258,6 +307,11 @@ export function createMemoryRepo(): Repo {
         replace_lock_until: null,
         is_active: true,
         created_at: new Date().toISOString(),
+        customer_id: null,
+        claimed_at: null,
+        claim_code: null,
+        claim_code_expires_at: null,
+        wa_number: null,
         ...input,
       };
       account.status = "assigned";
@@ -360,6 +414,79 @@ export function createMemoryRepo(): Repo {
       log.status = status;
       log.error = error;
       return true;
+    },
+
+    async listCustomers() {
+      return clone([...state().customers].sort(byCreatedDesc));
+    },
+    async getCustomer(id) {
+      return clone(state().customers.find((c) => c.id === id) ?? null);
+    },
+    async getCustomerByWa(waNumber) {
+      return clone(state().customers.find((c) => c.wa_number === waNumber) ?? null);
+    },
+    async createCustomer(input) {
+      const s = state();
+      if (s.customers.some((c) => c.wa_number === input.wa_number)) {
+        throw new DbError("DUPLICATE", "nomor WhatsApp sudah terdaftar");
+      }
+      const customer: Customer = {
+        id: randomUUID(),
+        session_version: 1,
+        is_blocked: false,
+        created_at: new Date().toISOString(),
+        last_login_at: null,
+        ...input,
+      };
+      s.customers.push(customer);
+      return clone(customer);
+    },
+    async updateCustomer(id, patch) {
+      const customer = state().customers.find((c) => c.id === id);
+      if (customer) Object.assign(customer, patch);
+    },
+    async listOrdersByCustomer(customerId) {
+      return clone(
+        state()
+          .orders.filter((o) => o.customer_id === customerId)
+          .sort((a, b) => b.expires_at.localeCompare(a.expires_at)),
+      );
+    },
+    async claimOrder(code, customerId) {
+      const order = state().orders.find((o) => o.claim_code === code);
+      if (!order) throw new DbError("CLAIM_CODE_INVALID", "CLAIM_CODE_INVALID");
+      if (order.customer_id) throw new DbError("ALREADY_CLAIMED", "ALREADY_CLAIMED");
+      if (order.claim_code_expires_at && new Date(order.claim_code_expires_at).getTime() < Date.now()) {
+        throw new DbError("CLAIM_CODE_EXPIRED", "CLAIM_CODE_EXPIRED");
+      }
+      order.customer_id = customerId;
+      order.claimed_at = new Date().toISOString();
+      order.claim_code = null;
+      order.claim_code_expires_at = null;
+      const note = `[${jakartaDate()}] Diklaim oleh akun customer`;
+      order.catatan = order.catatan ? `${order.catatan}\n${note}` : note;
+      return clone(order);
+    },
+
+    async insertWaMessage(input) {
+      const s = state();
+      if (input.status === "sent" && input.order_id && input.template !== "manual") {
+        const sudah = s.waMessages.some(
+          (m) => m.order_id === input.order_id && m.template === input.template && m.status === "sent",
+        );
+        if (sudah) throw new DbError("DUPLICATE", "pesan sudah pernah dikirim");
+      }
+      const message: WaMessage = { id: randomUUID(), created_at: new Date().toISOString(), ...input };
+      s.waMessages.push(message);
+      return clone(message);
+    },
+    async listWaMessages(limit) {
+      return clone([...state().waMessages].sort(byCreatedDesc).slice(0, limit));
+    },
+    async waMessageSent(orderId, template) {
+      return state().waMessages.some(
+        (m) => m.order_id === orderId && m.template === template && m.status === "sent",
+      );
     },
 
     async rateLimitHit(key, windowSeconds) {

@@ -26,8 +26,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const filter = (ORDER_FILTERS.some((f) => f.value === params.filter) ? params.filter : "semua") as OrderFilter;
 
   const repo = db();
-  const [orders, accounts] = await Promise.all([repo.listOrders(), repo.listAccounts()]);
+  const [orders, accounts, customers] = await Promise.all([repo.listOrders(), repo.listAccounts(), repo.listCustomers()]);
   const accountById = new Map(accounts.map((a) => [a.id, a]));
+  const customerById = new Map(customers.map((c) => [c.id, c]));
   const now = Date.now();
 
   const needle = q.toLowerCase();
@@ -36,12 +37,15 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     if (!matchesFilter(order, filter, now)) return false;
     if (!needle) return true;
     const account = order.account_id ? accountById.get(order.account_id) : undefined;
+    const pemilik = order.customer_id ? customerById.get(order.customer_id) : undefined;
     return (
       order.shopee_order_no.includes(normalizedNeedle) ||
       (order.nama_customer ?? "").toLowerCase().includes(needle) ||
       (order.catatan ?? "").toLowerCase().includes(needle) ||
       (account?.label ?? "").toLowerCase().includes(needle) ||
-      (account?.email ?? "").toLowerCase().includes(needle)
+      (account?.email ?? "").toLowerCase().includes(needle) ||
+      (pemilik?.nama ?? "").toLowerCase().includes(needle) ||
+      (pemilik?.wa_number ?? "").includes(needle.replace(/\D/g, ""))
     );
   });
 
@@ -99,12 +103,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <p className="rounded-lg bg-paper p-3 text-sm text-muted">Tidak ada pesanan yang cocok.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left text-sm">
+            <table className="w-full min-w-[980px] text-left text-sm">
               <thead className="border-b border-line text-xs text-muted uppercase">
                 <tr>
                   <th className="py-2 pr-3 font-medium">No. Pesanan</th>
                   <th className="py-2 pr-3 font-medium">Customer</th>
                   <th className="py-2 pr-3 font-medium">Akun</th>
+                  <th className="py-2 pr-3 font-medium">Akun customer</th>
                   <th className="py-2 pr-3 font-medium">Expired</th>
                   <th className="py-2 pr-3 font-medium">Replace / Batas</th>
                   <th className="py-2 pr-3 font-medium">Status</th>
@@ -117,6 +122,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                   const badge = STATE_BADGE[state];
                   const account = order.account_id ? accountById.get(order.account_id) : undefined;
                   const rotating = order.order_type === "rotating";
+                  const pemilik = order.customer_id ? customerById.get(order.customer_id) : undefined;
                   return (
                     <tr key={order.id}>
                       <td className="py-2.5 pr-3 font-mono">
@@ -137,6 +143,15 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                           account.label
                         ) : (
                           <span className="text-bad">Belum ditautkan</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 pr-3">
+                        {pemilik ? (
+                          <span className="text-ink">{pemilik.nama}</span>
+                        ) : order.claim_code ? (
+                          <Badge tone="yellow">kode siap</Badge>
+                        ) : (
+                          <Badge>belum diklaim</Badge>
                         )}
                       </td>
                       <td className="py-2.5 pr-3 whitespace-nowrap">

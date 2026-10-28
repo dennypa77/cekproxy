@@ -44,6 +44,11 @@ export function endOfJakartaDay(dateInput: string): string {
   return new Date(`${dateInput}T23:59:59+07:00`).toISOString();
 }
 
+/** "YYYY-MM-DD" → ISO pukul 00:00:00 WIB hari itu. */
+export function startOfJakartaDay(dateInput: string): string {
+  return new Date(`${dateInput}T00:00:00+07:00`).toISOString();
+}
+
 export function formatGb(value: number): string {
   const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
   return `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: digits }).format(value)} GB`;

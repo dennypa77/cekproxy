@@ -11,6 +11,10 @@ export const RATE_LIMITS = {
   /** semua request API customer (bandwidth, proxy, dll.) */
   api: { max: 90, windowSeconds: 60 },
   login: { max: 5, windowSeconds: 300 },
+  /** Akun customer: daftar, masuk, dan klaim pesanan. */
+  customerLogin: { max: 5, windowSeconds: 300 },
+  customerRegister: { max: 3, windowSeconds: 3600 },
+  claim: { max: 5, windowSeconds: 600 },
 } as const;
 
 export type RateLimitBucket = keyof typeof RATE_LIMITS;
