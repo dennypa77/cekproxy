@@ -9,7 +9,8 @@
 --   klaim berhasil) dan punya masa berlaku.
 -- - orders.wa_number menyimpan nomor pembeli walau belum punya akun,
 --   supaya kode klaim dan pengingat expired tetap bisa dikirim.
--- - wa_messages mencatat setiap pesan yang dikirim agar tidak dobel.
+-- - wa_messages mencatat follow-up WhatsApp yang sudah dikirim admin,
+--   supaya satu pesanan tidak dihubungi dua kali untuk alasan yang sama.
 --
 -- Aman dijalankan ulang.
 -- =====================================================================
@@ -79,7 +80,7 @@ create index if not exists orders_customer_idx
   on public.orders (customer_id) where customer_id is not null;
 
 -- ---------------------------------------------------------------------
--- Log pesan WhatsApp (anti kirim dobel)
+-- Catatan follow-up WhatsApp (anti hubungi dua kali)
 -- ---------------------------------------------------------------------
 create table if not exists public.wa_messages (
   id           uuid primary key default gen_random_uuid(),

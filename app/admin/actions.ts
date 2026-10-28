@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "@/lib/zod";
 import { generateClaimCode, generateRotatingKey } from "@/lib/api-key";
 import { cacheKeys, invalidate } from "@/lib/cache";
-import { db, DbError } from "@/lib/db";
+import { db, DbError, type WaTemplate } from "@/lib/db";
 import { getAdminPassword } from "@/lib/env";
 import { endOfJakartaDay, formatDateTime, maskSecret } from "@/lib/format";
 import { getClientIp } from "@/lib/ip";
@@ -17,7 +17,6 @@ import { orderNoSchema } from "@/lib/order-no";
 import { planLabel } from "@/lib/plan-type";
 import type { AdminActionState } from "@/lib/public-types";
 import { hitRateLimit } from "@/lib/rate-limit";
-import { runExpiryNotifications } from "@/lib/services/notify";
 import { invalidateRotatingPool } from "@/lib/services/rotating";
 import { checkAdminPassword, createAdminSession, destroyAdminSession, isAdmin } from "@/lib/session";
 import {
@@ -729,41 +728,48 @@ export async function resetCustomerPasswordAction(customerId: string): Promise<A
 }
 
 // ---------------------------------------------------------------------------
-// Notifikasi WhatsApp
+// Follow-up WhatsApp (manual, dari nomor admin sendiri)
 // ---------------------------------------------------------------------------
 
-async function jalankanNotifikasi(dryRun: boolean): Promise<AdminActionState> {
+const TEMPLATE_VALID: WaTemplate[] = ["claim_code", "expiry_h3", "expiry_h1", "expired", "manual"];
+
+/**
+ * Tandai satu follow-up sudah dikirim lewat WhatsApp. Tidak mengirim apa pun —
+ * hanya mencatat supaya tidak dihubungi dua kali untuk alasan yang sama.
+ */
+export async function markFollowUpSentAction(
+  orderId: string,
+  template: string,
+  waNumber: string,
+): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
 
+  if (!TEMPLATE_VALID.includes(template as WaTemplate)) return fail("Jenis pesan tidak dikenali.");
+
+  const repo = db();
+  const order = await repo.getOrder(orderId);
+  if (!order) return fail("Pesanan tidak ditemukan.");
+
   try {
-    const hasil = await runExpiryNotifications({ dryRun });
-    const ringkas = [
-      `Kandidat: ${hasil.kandidat}`,
-      `Terkirim: ${hasil.terkirim}`,
-      `Gagal: ${hasil.gagal}`,
-      `Dilewati: ${hasil.dilewati}`,
-      ...hasil.detail.slice(0, 10),
-    ];
-    refreshAdmin();
-    if (!hasil.enabled) {
-      return fail("Pengiriman WhatsApp belum aktif (FONNTE_TOKEN kosong). Hasil di bawah hanya simulasi.", ringkas);
-    }
-    return ok(dryRun ? "Simulasi selesai, tidak ada pesan yang dikirim." : "Putaran notifikasi selesai.", ringkas);
+    await repo.insertWaMessage({
+      order_id: orderId,
+      customer_id: order.customer_id,
+      to_number: waNumber,
+      template: template as WaTemplate,
+      status: "sent",
+      error: null,
+      provider_id: null,
+    });
   } catch (error) {
-    console.error("[admin] notifikasi gagal", error);
-    return fail("Gagal menjalankan notifikasi. Cek log server.");
+    if (error instanceof DbError && error.code === "DUPLICATE") {
+      return fail("Follow-up ini sudah pernah ditandai terkirim.");
+    }
+    return fail(describeDb(error));
   }
-}
 
-/** Lihat siapa saja yang akan dikirimi, tanpa benar-benar mengirim. */
-export async function previewNotificationsAction(): Promise<AdminActionState> {
-  return jalankanNotifikasi(true);
-}
-
-/** Jalankan putaran notifikasi sekarang (tidak menunggu cron harian). */
-export async function sendNotificationsAction(): Promise<AdminActionState> {
-  return jalankanNotifikasi(false);
+  refreshAdmin();
+  return ok(`Follow-up ${order.shopee_order_no} dicatat sebagai sudah dikirim.`);
 }
 
 const updateOrderSchema = z.object({

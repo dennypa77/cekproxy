@@ -231,20 +231,19 @@ Beri jarak minimal 2–4 minggu dan kirimkan kode klaim lebih dulu, supaya custo
 
 ---
 
-## Pengingat WhatsApp otomatis
+## Follow-up WhatsApp (manual)
 
-Sekali sehari aplikasi mengirim pengingat ke WhatsApp customer: **3 hari sebelum** expired, **1 hari sebelum**, dan **saat pesanan berakhir**. Nomor yang dipakai adalah nomor akun customer, atau nomor yang Anda catat di pesanan kalau belum diklaim.
+Panel admin punya halaman **Follow Up** yang mengumpulkan pesanan yang perlu dihubungi hari itu:
 
-**Cara mengaktifkan:**
+- pesanan yang **akan expired** dalam 3 hari,
+- pesanan yang **baru lewat** masa aktif (sampai 7 hari ke belakang),
+- pesanan yang **kode klaimnya belum dipakai**.
 
-1. Daftar di penyedia gateway WhatsApp (bawaan: [Fonnte](https://fonnte.com)), sambungkan nomor WhatsApp Anda, lalu salin tokennya.
-2. Di Vercel isi `FONNTE_TOKEN` dan `CRON_SECRET` (acak, minimal 16 karakter), lalu **Redeploy**.
-3. Jadwal hariannya sudah tertulis di [`vercel.json`](vercel.json) (pukul 09.00 WIB). Paket Vercel Hobby hanya mengizinkan sekitar satu eksekusi cron per hari.
-4. Cek hasilnya di panel admin → **Notifikasi**: ada riwayat pengiriman, tombol **Simulasi (tanpa kirim)**, dan tombol **Kirim sekarang**.
+Tiap baris punya tombol **Chat** yang membuka WhatsApp dengan pesan siap kirim (nomor pesanan, tanggal expired, link dashboard), tombol **Salin pesan**, dan tombol **Tandai sudah** supaya customer yang sama tidak dihubungi dua kali untuk alasan yang sama. Riwayatnya tercatat di halaman yang sama.
 
-Pengaman yang sudah terpasang: satu pesanan tidak pernah menerima pesan yang sama dua kali (dijaga indeks unik di tabel `wa_messages`), maksimal 40 pesan per putaran dengan jeda antar pesan, dan seluruh fitur mati total kalau `FONNTE_TOKEN` kosong.
+Pengiriman sengaja **tidak diotomatiskan**: gateway WhatsApp tidak resmi berisiko membuat nomor diblokir, sedangkan memakai nomor pengirim terpisah membuat balasan customer masuk ke nomor yang tidak dibaca. Dengan cara manual, pesan terkirim dari nomor CS yang sudah dikenal customer dan balasannya tetap di satu tempat.
 
-> ⚠️ Fonnte adalah gateway tidak resmi yang memakai nomor WhatsApp Anda sendiri. Kalau penerima menandai pesan sebagai spam, nomor Anda bisa diblokir WhatsApp. Karena itu pesan hanya dikirim ke customer yang nomornya mereka berikan sendiri, isinya transaksional, dan ada cara berhenti. Jalur resmi (Meta WhatsApp Cloud API) bisa dipasang menyusul lewat modul yang sama, [`lib/wa-sender.ts`](lib/wa-sender.ts).
+Nomor tujuan diambil dari akun customer (kalau pesanan sudah diklaim) atau dari kolom **Nomor WhatsApp pembeli** di form pesanan. Pesanan tanpa nomor ditandai jelas di daftar.
 
 ---
 
@@ -262,9 +261,6 @@ Pengaman yang sudah terpasang: satu pesanan tidak pernah menerima pesan yang sam
 | `PENGUMUMAN` | Tidak | Teks pita pengumuman di halaman customer. Kosong = pita tidak tampil. |
 | `PENGUMUMAN_SAMPAI` | Tidak | `YYYY-MM-DD`. Lewat 23:59 WIB tanggal itu, pita pengumuman hilang sendiri. |
 | `CUSTOMER_LOGIN_REQUIRED_FROM` | Tidak | `YYYY-MM-DD`. Mulai tanggal itu halaman pesanan hanya bisa dibuka lewat akun customer. Kosong = masa transisi (link lama tetap jalan). |
-| `FONNTE_TOKEN` | Tidak | Token gateway WhatsApp untuk pengingat otomatis. Kosong = fitur mati total. |
-| `FONNTE_ENDPOINT` | Tidak | Alamat API gateway, kalau bukan `https://api.fonnte.com/send`. |
-| `CRON_SECRET` | Tidak | Minimal 16 karakter. Melindungi `/api/cron/notify`; Vercel Cron otomatis mengirimnya. |
 
 `DATABASE_URL` tidak diperlukan karena aplikasi terhubung ke Supabase lewat `SUPABASE_URL` + service role key.
 
@@ -347,7 +343,6 @@ app/
   pesanan/[no]/page.tsx        detail pesanan customer
   api/pesanan/[no]/…           API customer (bandwidth, proxies, countries, replace, whitelist)
   api/rotating/                API rotating (ambil proxy acak) + /info
-  api/cron/notify/             pengingat WhatsApp harian (dipanggil Vercel Cron)
   akun/                        daftar, masuk, klaim, dan dashboard akun customer
   api/my-ip/                   deteksi IP pengunjung dari header request
   admin/login/                 login admin
@@ -361,7 +356,7 @@ lib/
   api-key.ts                   pembuatan & pola kunci API rotating + kode klaim
   customer-session.ts          sesi akun customer (cookie bertanda tangan)
   password.ts                  hashing password (scrypt bawaan Node)
-  wa-number.ts, wa-sender.ts   normalisasi nomor & pengiriman WhatsApp
+  wa-number.ts                 normalisasi nomor WhatsApp (08xx/+62 → 62…)
   rate-limit.ts, session.ts, cache.ts, …
 supabase/
   migrations/0001_init.sql     skema + fungsi atomik

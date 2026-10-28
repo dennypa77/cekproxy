@@ -10,7 +10,7 @@ const LINKS = [
   { href: "/admin/pesanan", label: "Pesanan" },
   { href: "/admin/proxy", label: "Semua Proxy" },
   { href: "/admin/customer", label: "Customer" },
-  { href: "/admin/notifikasi", label: "Notifikasi" },
+  { href: "/admin/followup", label: "Follow Up" },
 ];
 
 export function AdminNav() {
