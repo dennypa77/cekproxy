@@ -40,6 +40,8 @@ export const KATEGORI_HARGA: KategoriHarga[] = [
           { ip: 50, bandwidthGb: 250, hargaRp: 72_000 },
           { ip: 100, bandwidthGb: 250, hargaRp: 132_000, populer: true },
           { ip: 200, bandwidthGb: 250, hargaRp: 208_000 },
+          { ip: 500, bandwidthGb: 250, hargaRp: 523_000 },
+          { ip: 1000, bandwidthGb: 250, hargaRp: 781_000 },
         ],
       },
       {
@@ -48,6 +50,7 @@ export const KATEGORI_HARGA: KategoriHarga[] = [
           { ip: 50, bandwidthGb: 1000, hargaRp: 149_000 },
           { ip: 100, bandwidthGb: 1000, hargaRp: 182_000 },
           { ip: 200, bandwidthGb: 1000, hargaRp: 241_000 },
+          { ip: 500, bandwidthGb: 1000, hargaRp: 699_000 },
         ],
       },
     ],
@@ -56,7 +59,7 @@ export const KATEGORI_HARGA: KategoriHarga[] = [
     id: "residential",
     nama: "Residential",
     ringkasan: "IP dari jaringan rumahan, jadi terlihat seperti pengguna biasa. Cocok untuk situs yang ketat.",
-    cocokUntuk: ["Situs yang ketat", "Terlihat seperti pengguna rumahan", "Jumlah IP lebih sedikit"],
+    cocokUntuk: ["Situs yang ketat", "Terlihat seperti pengguna rumahan", "Sampai 100 IP"],
     grup: [
       {
         label: "Bandwidth 250 GB",
@@ -64,6 +67,9 @@ export const KATEGORI_HARGA: KategoriHarga[] = [
           { ip: 5, bandwidthGb: 250, hargaRp: 65_000 },
           { ip: 10, bandwidthGb: 250, hargaRp: 105_000, populer: true },
           { ip: 15, bandwidthGb: 250, hargaRp: 155_000 },
+          { ip: 25, bandwidthGb: 250, hargaRp: 255_000 },
+          { ip: 50, bandwidthGb: 250, hargaRp: 505_000 },
+          { ip: 100, bandwidthGb: 250, hargaRp: 1_005_000 },
         ],
       },
     ],
