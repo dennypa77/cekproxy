@@ -1,75 +1,65 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Crosses, DotGrid, FeatureBadges, LogoMark, ServicePill } from "@/components/Brand";
+import { Crosses, FeatureBadges, LogoMark, ServicePill } from "@/components/Brand";
 import { AnnouncementBar } from "@/components/customer/AnnouncementBar";
 import { SearchForm } from "@/components/customer/SearchForm";
-import { GaugeIcon, ServerIcon, ShieldCheckIcon, ShopIcon, SwapIcon, WhatsAppIcon } from "@/components/icons";
+import { GaugeIcon, ServerIcon, ShieldCheckIcon, SwapIcon, WhatsAppIcon } from "@/components/icons";
 import { FaqSection } from "@/components/landing/FaqSection";
+import { DatacenterBackdrop, TerminalHero } from "@/components/landing/TerminalHero";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { SiteHeader } from "@/components/landing/SiteHeader";
 import { buttonClass } from "@/components/ui";
-import { SHOPEE_STORE_URL, waHelpLink, waOrderGeneralLink } from "@/lib/links";
+import { waHelpLink, waOrderGeneralLink } from "@/lib/links";
 import { MASA_AKTIF_HARI } from "@/lib/pricing";
 
-// Dirender per permintaan supaya pita PENGUMUMAN (dan tanggal kedaluwarsanya)
+// Dirender per permintaan supaya pita pengumuman (dan tanggal kedaluwarsanya)
 // langsung berlaku tanpa perlu deploy ulang.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "dmproxy — Jual Proxy Datacenter & Residential",
+  title: "dmproxy — Datacenter & Residential Proxies",
   description:
-    "Jual proxy datacenter dan residential untuk kerja online. Mulai Rp65.000, pesan langsung ke admin tanpa biaya admin, lengkap dengan dashboard cek bandwidth, ganti IP, dan IP whitelist.",
+    "Buy fast datacenter and residential proxies. From $3, same-day activation, with a self-service dashboard to check bandwidth, replace IPs, and manage your IP whitelist. Rotating proxy API available.",
+  alternates: { canonical: "/" },
 };
 
 const KEUNGGULAN = [
   {
     icon: <GaugeIcon className="size-5" />,
-    judul: "Dashboard sendiri",
-    isi: "Cek sisa bandwidth, masa aktif, dan daftar IP kapan saja — cukup dengan nomor pesanan Shopee.",
+    judul: "Your own dashboard",
+    isi: "Check remaining bandwidth, validity, and your IP list anytime — all with your order number.",
   },
   {
     icon: <SwapIcon className="size-5" />,
-    judul: "Ganti IP mandiri",
-    isi: "IP mati atau terblokir bisa Anda ganti sendiri sesuai kuota, lengkap dengan pilihan negara.",
+    judul: "Self-service IP replace",
+    isi: "Swap dead or blocked IPs yourself within your quota, with country selection.",
   },
   {
     icon: <ShieldCheckIcon className="size-5" />,
     judul: "IP whitelist",
-    isi: "Atur sendiri IP mana yang boleh memakai proxy Anda, tanpa perlu menunggu admin.",
+    isi: "Decide which IPs may use your proxies yourself, no waiting on support.",
   },
   {
     icon: <ServerIcon className="size-5" />,
     judul: "Datacenter & residential",
-    isi: "Pilih yang cepat dan hemat, atau yang terlihat seperti pengguna rumahan untuk situs ketat.",
+    isi: "Pick fast and cheap, or home-user IPs that pass on strict sites.",
   },
 ];
 
 const LANGKAH = [
-  { judul: "Pilih paket", isi: "Tentukan jumlah IP dan bandwidth yang Anda butuhkan di daftar harga di atas." },
+  { judul: "Pick a plan", isi: "Choose the IP count and bandwidth you need from the pricing above." },
   {
-    judul: "Chat admin",
-    isi: "Klik Pesan langsung — paket yang Anda pilih sudah terisi otomatis di chat. Admin membalas dengan cara bayarnya.",
+    judul: "Message us",
+    isi: "Click Order — your chosen plan is pre-filled in the chat. We'll reply with how to pay.",
   },
   {
-    judul: "Terima nomor pesanan",
-    isi: "Setelah pembayaran masuk, kami aktifkan proxy dan mengirim nomor pesanan Anda lewat chat.",
+    judul: "Get your order number",
+    isi: "Once payment arrives, we activate your proxies and send your order number over chat.",
   },
   {
-    judul: "Buka dashboard",
-    isi: "Buat akun dengan nomor WhatsApp Anda, klaim pesanan memakai kode dari admin, lalu kelola semua pesanan di satu halaman.",
+    judul: "Open your dashboard",
+    isi: "Create an account with your WhatsApp number, claim your order with our code, then manage everything in one place.",
   },
-];
-
-const LETAK_NOMOR = [
-  <>
-    Buka aplikasi Shopee, pilih menu <b>Saya</b>.
-  </>,
-  <>
-    Masuk ke <b>Pesanan Saya</b>, pilih pesanan proxy dmproxy.
-  </>,
-  <>
-    Salin <b>No. Pesanan</b> di bagian bawah detail pesanan.
-  </>,
 ];
 
 export default function HomePage() {
@@ -80,54 +70,47 @@ export default function HomePage() {
 
       <main id="atas">
         {/* Hero */}
-        <section className="relative overflow-hidden border-b-2 border-ink bg-white">
-          <DotGrid className="pointer-events-none absolute -top-6 -right-10 size-48 opacity-50" />
-          <DotGrid className="pointer-events-none absolute -bottom-8 -left-10 size-40 opacity-40" />
+        <section className="relative overflow-hidden border-b-2 border-line bg-surface">
+          <DatacenterBackdrop />
 
-          <div className="relative mx-auto max-w-3xl px-4 py-14 text-center sm:py-20">
-            <ServicePill />
-            <h1 className="mt-6 font-display leading-[0.95] font-extrabold tracking-tight uppercase">
-              <span className="block text-3xl text-ink sm:text-5xl">Proxy cepat untuk</span>
-              <span className="block text-5xl text-brand sm:text-7xl">kerja online</span>
-            </h1>
-            <p className="mx-auto mt-5 max-w-xl text-sm text-muted sm:text-base">
-              Datacenter dan residential, siap pakai hari itu juga. Setiap pesanan dapat dashboard untuk mengecek
-              bandwidth, mengganti IP, dan mengatur whitelist sendiri.
-            </p>
+          <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:py-20 lg:grid-cols-[1fr_minmax(0,28rem)]">
+            <div className="text-center lg:text-left">
+              <ServicePill />
+              <h1 className="mt-6 font-display leading-[0.95] font-extrabold tracking-tight uppercase">
+                <span className="block text-3xl text-ink sm:text-5xl">Fast proxies for</span>
+                <span className="block text-5xl text-brand sm:text-7xl">any online job</span>
+              </h1>
+              <p className="mx-auto mt-5 max-w-xl text-sm text-muted sm:text-base lg:mx-0">
+                Datacenter and residential, ready the same day. Order online and manage all your orders from a single
+                dashboard.
+              </p>
 
-            <div className="mt-7 flex flex-wrap justify-center gap-3">
-              <a
-                href={waOrderGeneralLink()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonClass("primary", "lg")}
-              >
-                <WhatsAppIcon className="size-5" /> Pesan langsung
-              </a>
-              <a href="#harga" className={buttonClass("secondary", "lg")}>
-                Lihat harga
-              </a>
+              <div className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
+                <Link href="/account/buy" className={buttonClass("primary", "lg")}>
+                  Order now
+                </Link>
+                <a href="#pricing" className={buttonClass("secondary", "lg")}>
+                  See pricing
+                </a>
+              </div>
+              <p className="mt-3 text-sm font-bold text-ink">
+                Pay only for your plan — <span className="text-brand">no service fee</span>.
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                Already have an account?{" "}
+                <Link href="/account/login" className="font-semibold text-brand hover:underline">
+                  Log in here
+                </Link>{" "}
+                · new buyers get a claim code from us.
+              </p>
+
+              <FeatureBadges className="mt-8 lg:justify-start" />
+              <p className="mt-4 text-xs font-bold tracking-wide text-muted uppercase">
+                From $3 · {MASA_AKTIF_HARI}-day plans · same-day activation
+              </p>
             </div>
-            <p className="mt-3 text-sm font-bold text-ink">
-              Pesan langsung ke admin — <span className="text-brand-deep">bebas biaya admin</span>, harga sama.
-            </p>
-            <p className="mt-1 text-xs text-muted">
-              Masih bisa pesan lewat{" "}
-              <a
-                href={SHOPEE_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-brand-deep hover:underline"
-              >
-                Shopee
-              </a>{" "}
-              kalau lebih nyaman.
-            </p>
 
-            <FeatureBadges className="mt-8" />
-            <p className="mt-4 text-xs font-bold tracking-wide text-muted uppercase">
-              Mulai Rp65.000 · masa aktif {MASA_AKTIF_HARI} hari · aktif di hari yang sama
-            </p>
+            <TerminalHero />
           </div>
         </section>
 
@@ -136,8 +119,8 @@ export default function HomePage() {
           <div className="mx-auto max-w-6xl px-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {KEUNGGULAN.map((item) => (
-                <div key={item.judul} className="rounded-3xl border-2 border-ink bg-white p-5">
-                  <span className="flex size-11 items-center justify-center rounded-full bg-ink text-white">
+                <div key={item.judul} className="rounded-3xl border-2 border-ink bg-surface p-5">
+                  <span className="flex size-11 items-center justify-center rounded-full bg-ink text-paper">
                     {item.icon}
                   </span>
                   <h3 className="mt-3 font-display text-base font-extrabold tracking-tight text-ink uppercase">
@@ -155,16 +138,15 @@ export default function HomePage() {
         {/* Rotating */}
         <section className="py-4 sm:py-8">
           <div className="mx-auto max-w-6xl px-4">
-            <div className="flex flex-col gap-5 rounded-3xl border-2 border-ink bg-ink p-6 text-white sm:flex-row sm:items-center sm:p-8">
+            <div className="grid-lines relative flex flex-col gap-5 overflow-hidden rounded-3xl border-2 border-brand/50 bg-surface-2 p-6 text-ink sm:flex-row sm:items-center sm:p-8">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold tracking-wider text-brand uppercase">Untuk kebutuhan otomatis</p>
+                <p className="text-xs font-bold tracking-wider text-brand uppercase">For automation</p>
                 <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight uppercase sm:text-3xl">
-                  Paket rotating lewat API
+                  Rotating plans via API
                 </h2>
-                <p className="mt-2 max-w-xl text-sm text-white/80">
-                  Satu alamat API dan kunci rahasia untuk menarik proxy acak dari pool kami — bisa pilih jumlah dan
-                  negara, langsung dari script Anda. Batasnya masa aktif dan jumlah permintaan per menit, tanpa
-                  menghitung GB.
+                <p className="mt-2 max-w-xl text-sm text-muted">
+                  One API endpoint and a secret key to pull random proxies from our pool — choose the count and country
+                  straight from your script. Limited by validity and requests per minute, with no GB metering.
                 </p>
               </div>
               <a
@@ -173,28 +155,27 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 className={buttonClass("secondary", "md", "shrink-0")}
               >
-                <WhatsAppIcon className="size-4" /> Tanya harga
+                <WhatsAppIcon className="size-4" /> Ask for pricing
               </a>
             </div>
           </div>
         </section>
 
         {/* Cara pesan */}
-        <section id="cara-pesan" className="scroll-mt-20 py-14 sm:py-20">
+        <section id="how-to-order" className="scroll-mt-20 py-14 sm:py-20">
           <div className="mx-auto max-w-6xl px-4">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="font-display text-3xl leading-tight font-extrabold tracking-tight text-ink uppercase sm:text-4xl">
-                Cara <span className="text-brand">pesan</span>
+                How to <span className="text-brand">order</span>
               </h2>
               <p className="mt-3 text-sm text-muted sm:text-base">
-                Empat langkah saja. Pesan lewat Shopee juga bisa — nomor pesanan Shopee dipakai untuk membuka
-                dashboard yang sama.
+                Just four steps. Prices shown are final — no marketplace service fee.
               </p>
             </div>
 
             <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {LANGKAH.map((langkah, index) => (
-                <li key={langkah.judul} className="rounded-3xl border-2 border-ink bg-white p-5">
+                <li key={langkah.judul} className="rounded-3xl border-2 border-ink bg-surface p-5">
                   <span className="flex size-9 items-center justify-center rounded-full bg-brand-soft font-display text-base font-extrabold text-ink">
                     {index + 1}
                   </span>
@@ -209,16 +190,16 @@ export default function HomePage() {
         </section>
 
         {/* Cek pesanan */}
-        <section id="cek-pesanan" className="scroll-mt-20 border-y-2 border-ink bg-white py-14 sm:py-20">
+        <section id="check-order" className="scroll-mt-20 border-y-2 border-ink bg-surface py-14 sm:py-20">
           <div className="mx-auto max-w-5xl px-4">
             <div className="mx-auto max-w-2xl text-center">
               <Crosses className="justify-center" />
               <h2 className="mt-4 font-display text-3xl leading-tight font-extrabold tracking-tight text-ink uppercase sm:text-4xl">
-                Cek <span className="text-brand">pesanan</span>
+                Check your <span className="text-brand">order</span>
               </h2>
               <p className="mt-3 text-sm text-muted sm:text-base">
-                Sudah membeli? Masukkan nomor pesanan Anda untuk melihat daftar proxy, sisa bandwidth, dan masa
-                aktifnya. Punya lebih dari satu pesanan? Buat akun supaya semuanya ada di satu halaman.
+                Already bought? Enter your order number to see your proxy list, remaining bandwidth, and validity. Have
+                more than one order? Create an account to keep them all in one place.
               </p>
             </div>
 
@@ -227,36 +208,26 @@ export default function HomePage() {
 
               <div className="rounded-3xl border-2 border-ink bg-paper p-5">
                 <h3 className="font-display text-base font-extrabold tracking-tight text-ink uppercase">
-                  Punya beberapa pesanan?
+                  Have several orders?
                 </h3>
                 <p className="mt-2 text-sm text-muted">
-                  Buat akun dengan nomor WhatsApp Anda, lalu klaim tiap pesanan memakai kode dari admin — semuanya
-                  tampil dalam satu halaman.
+                  Create an account with your WhatsApp number, then claim each order with the code we send — all on one
+                  page.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Link href="/akun/daftar" className={buttonClass("primary", "sm")}>
-                    Buat akun
+                  <Link href="/account/register" className={buttonClass("primary", "sm")}>
+                    Create account
                   </Link>
-                  <Link href="/akun/masuk" className={buttonClass("secondary", "sm")}>
-                    Masuk
+                  <Link href="/account/login" className={buttonClass("secondary", "sm")}>
+                    Log in
                   </Link>
                 </div>
 
                 <h3 className="mt-6 font-display text-base font-extrabold tracking-tight text-ink uppercase">
-                  Di mana nomor pesanan?
+                  Where's my order number?
                 </h3>
-                <ol className="mt-3 space-y-3">
-                  {LETAK_NOMOR.map((langkah, index) => (
-                    <li key={index} className="flex items-start gap-3 text-sm text-ink">
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-ink text-xs font-extrabold text-white">
-                        {index + 1}
-                      </span>
-                      <p className="pt-0.5">{langkah}</p>
-                    </li>
-                  ))}
-                </ol>
-                <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
-                  Pesan langsung ke admin? Nomor pesanan Anda dikirim lewat chat WhatsApp setelah proxy diaktifkan.
+                <p className="mt-2 text-sm text-muted">
+                  We send your order number over WhatsApp right after your proxies are activated — keep that chat handy.
                 </p>
               </div>
             </div>
@@ -266,10 +237,10 @@ export default function HomePage() {
         <FaqSection />
       </main>
 
-      <footer className="border-t-2 border-ink bg-white">
+      <footer className="border-t-2 border-ink bg-surface">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-4 py-10 text-center sm:flex-row sm:justify-between sm:text-left">
           <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-ink text-white">
+            <span className="flex size-11 items-center justify-center rounded-2xl bg-ink text-paper">
               <LogoMark className="size-7" />
             </span>
             <div>
@@ -280,13 +251,10 @@ export default function HomePage() {
 
           <div className="flex flex-wrap justify-center gap-2">
             <a href={waOrderGeneralLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "sm")}>
-              <WhatsAppIcon className="size-4" /> Pesan langsung
+              <WhatsAppIcon className="size-4" /> Order on WhatsApp
             </a>
             <a href={waHelpLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "sm")}>
-              <WhatsAppIcon className="size-4" /> Bantuan
-            </a>
-            <a href={SHOPEE_STORE_URL} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "sm")}>
-              <ShopIcon className="size-4" /> Toko Shopee
+              <WhatsAppIcon className="size-4" /> Help
             </a>
           </div>
         </div>

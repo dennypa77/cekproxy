@@ -1,85 +1,80 @@
-import { CheckIcon, ShopIcon, WhatsAppIcon } from "@/components/icons";
+import Link from "next/link";
+import { CheckIcon, WhatsAppIcon } from "@/components/icons";
 import { Badge, buttonClass } from "@/components/ui";
-import { SHOPEE_STORE_URL, waOrderLink } from "@/lib/links";
-import { hargaPerIp, KATEGORI_HARGA, labelBandwidth, MASA_AKTIF_HARI, rupiah, type Paket } from "@/lib/pricing";
+import { waOrderGeneralLink } from "@/lib/links";
+import {
+  KATEGORI_HARGA,
+  labelBandwidth,
+  MASA_AKTIF_HARI,
+  rupiah,
+  usd,
+  usdPerIp,
+  type Paket,
+} from "@/lib/pricing";
 
-function KartuPaket({ paket, kategori }: { paket: Paket; kategori: string }) {
+const TERMASUK = [
+  "Dashboard to track bandwidth & IP list",
+  "Replace IPs within your quota",
+  "Manage your own IP whitelist",
+  "Pick a country when replacing IPs",
+];
+
+function BarisPaket({ paket, kategori }: { paket: Paket; kategori: string }) {
   return (
-    <div className="relative flex flex-col rounded-3xl border-2 border-ink bg-white p-5">
-      {paket.populer && (
-        <span className="absolute -top-3 left-5">
-          <Badge tone="blue">Paling laris</Badge>
+    <tr className="transition-colors hover:bg-brand-softer">
+      <td className="py-3 pr-3">
+        <span className="font-display text-lg font-extrabold text-ink">{paket.ip} IP</span>
+        {paket.populer && (
+          <span className="ml-2 align-middle">
+            <Badge tone="blue">Best seller</Badge>
+          </span>
+        )}
+      </td>
+      <td className="py-3 pr-3 whitespace-nowrap text-muted">{labelBandwidth(paket.bandwidthGb)}</td>
+      <td className="py-3 pr-3">
+        <span className="font-display text-lg font-extrabold text-ink">{usd(paket.hargaRp)}</span>
+        <span className="block text-xs text-muted">
+          {rupiah(paket.hargaRp)} · {MASA_AKTIF_HARI}-day plan
         </span>
-      )}
-
-      <p className="font-display text-4xl leading-none font-extrabold text-ink">
-        {paket.ip} <span className="text-2xl">IP</span>
-      </p>
-      <p className="mt-1 text-sm font-bold tracking-wide text-muted uppercase">
-        Bandwidth {labelBandwidth(paket.bandwidthGb)}
-      </p>
-
-      <div className="my-4 rounded-2xl bg-brand-softer p-4">
-        <p className="font-display text-3xl font-extrabold text-ink">{rupiah(paket.hargaRp)}</p>
-        <p className="text-xs font-semibold text-muted">
-          masa aktif {MASA_AKTIF_HARI} hari · ±{hargaPerIp(paket)} per IP
-        </p>
-      </div>
-
-      <div className="mt-auto space-y-2">
-        <a
-          href={waOrderLink({ kategori, ip: paket.ip, bandwidthGb: paket.bandwidthGb, harga: rupiah(paket.hargaRp) })}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonClass("primary", "md", "w-full")}
+      </td>
+      <td className="hidden py-3 pr-3 whitespace-nowrap text-muted sm:table-cell">≈{usdPerIp(paket)} / IP</td>
+      <td className="py-3 text-right">
+        <Link
+          href={`/account/buy?sku=${encodeURIComponent(paket.sku)}`}
+          className={buttonClass("primary", "sm")}
+          title={`Order ${kategori} ${paket.ip} IP`}
         >
-          <WhatsAppIcon className="size-4" /> Pesan langsung
-        </a>
-        <a
-          href={SHOPEE_STORE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted transition-colors hover:text-ink"
-        >
-          <ShopIcon className="size-3.5" /> atau pesan lewat Shopee
-        </a>
-      </div>
-    </div>
+          Order
+        </Link>
+      </td>
+    </tr>
   );
 }
 
-const TERMASUK = [
-  "Dashboard cek bandwidth & daftar IP",
-  "Ganti IP (replace) sesuai kuota",
-  "Atur IP whitelist sendiri",
-  "Pilih negara saat ganti IP",
-];
-
 export function PricingSection() {
   return (
-    <section id="harga" className="scroll-mt-20 py-14 sm:py-20">
+    <section id="pricing" className="scroll-mt-20 py-14 sm:py-20">
       <div className="mx-auto max-w-6xl px-4">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl leading-tight font-extrabold tracking-tight text-ink uppercase sm:text-4xl">
-            Pilih <span className="text-brand">paket</span> Anda
+            Choose your <span className="text-brand">plan</span>
           </h2>
           <p className="mt-3 text-sm text-muted sm:text-base">
-            Harga sudah termasuk dashboard pengelolaan. Pesan langsung ke admin lewat WhatsApp supaya tidak kena
-            biaya admin marketplace — harganya sama persis dengan di Shopee.
+            Order online: create an account, pick a plan, and check out. Every price already includes the management
+            dashboard. Prices shown in USD (IDR also listed).
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <Badge tone="green">Bebas biaya admin</Badge>
-            <Badge tone="blue">Harga sama dengan Shopee</Badge>
-            <Badge>Bisa tetap pesan lewat Shopee</Badge>
+            <Badge tone="green">No service fee</Badge>
+            <Badge tone="blue">Same-day activation</Badge>
           </div>
         </div>
 
         {KATEGORI_HARGA.map((kategori) => (
           <div key={kategori.id} id={kategori.id} className="mt-12 scroll-mt-20 first:mt-10">
-            <div className="flex flex-col gap-3 border-b-2 border-ink pb-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-3 border-b-2 border-line pb-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h3 className="font-display text-2xl font-extrabold tracking-tight text-ink uppercase">
-                  Proxy {kategori.nama}
+                  {kategori.nama} proxies
                 </h3>
                 <p className="mt-1 max-w-xl text-sm text-muted">{kategori.ringkasan}</p>
               </div>
@@ -94,29 +89,55 @@ export function PricingSection() {
 
             {kategori.grup.map((grup) => (
               <div key={grup.label} className="mt-6">
-                <p className="mb-3 text-xs font-bold tracking-wider text-muted uppercase">{grup.label}</p>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {grup.paket.map((paket) => (
-                    <KartuPaket key={`${paket.ip}-${paket.bandwidthGb}`} paket={paket} kategori={kategori.nama} />
-                  ))}
+                <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">{grup.label}</p>
+                <div className="overflow-x-auto rounded-3xl border-2 border-line bg-surface px-4 sm:px-5">
+                  <table className="w-full min-w-[460px] text-left text-sm">
+                    <thead className="border-b border-line text-xs tracking-wider text-muted uppercase">
+                      <tr>
+                        <th className="py-3 pr-3 font-medium">IP count</th>
+                        <th className="py-3 pr-3 font-medium">Bandwidth</th>
+                        <th className="py-3 pr-3 font-medium">Price</th>
+                        <th className="hidden py-3 pr-3 font-medium sm:table-cell">Per IP</th>
+                        <th className="py-3 text-right font-medium">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-line">
+                      {grup.paket.map((paket) => (
+                        <BarisPaket key={paket.sku} paket={paket} kategori={kategori.nama} />
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             ))}
           </div>
         ))}
 
-        <div className="mt-10 rounded-3xl border-2 border-ink bg-white p-5 sm:p-6">
-          <p className="mb-3 text-xs font-bold tracking-wider text-muted uppercase">Semua paket sudah termasuk</p>
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {TERMASUK.map((item) => (
-              <li key={item} className="flex items-start gap-2 text-sm text-ink">
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-ok-soft">
-                  <CheckIcon className="size-3.5" strokeWidth={3} />
-                </span>
-                {item}
-              </li>
-            ))}
-          </ul>
+        <div className="mt-10 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="rounded-3xl border-2 border-line bg-surface p-5 sm:p-6">
+            <p className="mb-3 text-xs font-bold tracking-wider text-muted uppercase">Every plan includes</p>
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {TERMASUK.map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-ink">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-ok-soft text-ok">
+                    <CheckIcon className="size-3.5" strokeWidth={3} />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex flex-wrap gap-2 lg:flex-col">
+            <a
+              href={waOrderGeneralLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClass("secondary", "sm")}
+            >
+              <WhatsAppIcon className="size-4" /> Ask us
+            </a>
+          </div>
         </div>
       </div>
     </section>
