@@ -19,7 +19,7 @@ export function LogoTab({ className, size = "md" }: { className?: string; size?:
   return (
     <div
       className={cn(
-        "flex items-end justify-center bg-ink text-white",
+        "flex items-end justify-center bg-ink text-paper",
         size === "md" ? "rounded-b-[1.9rem] px-3 pt-6 pb-3" : "rounded-b-[1.4rem] px-2 pt-4 pb-2",
         className,
       )}
@@ -48,14 +48,14 @@ export function ServicePill({ className }: { className?: string }) {
         className,
       )}
     >
-      <span className="bg-white px-4 py-2 text-ink">Provide EZ Service</span>
-      <span className="bg-ink px-6 py-2 text-white">dmproxy</span>
+      <span className="bg-surface px-4 py-2 text-ink">Provide EZ Service</span>
+      <span className="bg-ink px-6 py-2 text-paper">dmproxy</span>
     </div>
   );
 }
 
 const FEATURES = [
-  { label: "Aman", icon: <ShieldCheckIcon className="size-4" /> },
+  { label: "Secure", icon: <ShieldCheckIcon className="size-4" /> },
   { label: "Trusted", icon: <ThumbUpIcon className="size-4" /> },
   { label: "Fast", icon: <StopwatchIcon className="size-4" /> },
 ];
@@ -66,7 +66,7 @@ export function FeatureBadges({ className }: { className?: string }) {
       {FEATURES.map((feature) => (
         <li
           key={feature.label}
-          className="inline-flex items-center gap-2 rounded-full bg-ink py-1 pr-4 pl-1 text-xs font-extrabold tracking-wide text-white uppercase"
+          className="inline-flex items-center gap-2 rounded-full bg-ink py-1 pr-4 pl-1 text-xs font-extrabold tracking-wide text-paper uppercase"
         >
           <IconCircle>{feature.icon}</IconCircle>
           {feature.label}
@@ -80,7 +80,7 @@ export function FeatureBadges({ className }: { className?: string }) {
 export function DotGrid({ className }: { className?: string }) {
   return (
     <div
-      className={cn("bg-[radial-gradient(#11111140_1.6px,transparent_1.6px)] bg-[length:14px_14px]", className)}
+      className={cn("bg-[radial-gradient(rgb(232_238_246_/_0.18)_1.6px,transparent_1.6px)] bg-[length:14px_14px]", className)}
       aria-hidden="true"
     />
   );

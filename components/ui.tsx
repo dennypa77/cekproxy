@@ -5,18 +5,20 @@ export function cn(...classes: (string | false | null | undefined)[]): string {
 }
 
 const VARIANTS = {
-  /** Aksi utama: pill hitam */
-  primary: "border-2 border-ink bg-ink text-white hover:bg-[#2b2b2b] disabled:border-ink/30 disabled:bg-ink/30",
-  /** Aksen biru */
-  brand: "border-2 border-brand-deep bg-brand-deep text-white hover:border-[#075ec0] hover:bg-[#075ec0] disabled:opacity-50",
+  /** Aksi utama: pill biru menyala */
+  primary:
+    "border-2 border-brand bg-brand text-[#06101c] hover:border-brand-deep hover:bg-brand-deep hover:text-white disabled:border-brand/30 disabled:bg-brand/30 disabled:text-ink/40",
+  /** Aksen biru tua */
+  brand:
+    "border-2 border-brand-deep bg-brand-deep text-white hover:border-brand hover:bg-brand hover:text-[#06101c] disabled:opacity-50",
   secondary:
-    "border-2 border-ink bg-white text-ink hover:bg-brand-softer disabled:border-ink/25 disabled:text-ink/35 disabled:hover:bg-white",
-  danger: "border-2 border-bad bg-bad text-white hover:bg-[#b83232] disabled:opacity-50",
-  dangerSoft: "border-2 border-ink bg-white text-bad hover:bg-bad-soft disabled:border-ink/25 disabled:opacity-50",
-  ghost: "border-2 border-transparent text-ink hover:bg-ink/5 disabled:opacity-40 disabled:hover:bg-transparent",
+    "border-2 border-ink/45 bg-surface text-ink hover:border-brand hover:bg-brand-softer disabled:border-line disabled:text-ink/35 disabled:hover:bg-surface",
+  danger: "border-2 border-bad bg-bad text-[#1a0808] hover:bg-[#ff8585] disabled:opacity-50",
+  dangerSoft: "border-2 border-bad/50 bg-surface text-bad hover:bg-bad-soft disabled:border-line disabled:opacity-50",
+  ghost: "border-2 border-transparent text-ink hover:bg-ink/10 disabled:opacity-40 disabled:hover:bg-transparent",
   // alias agar pemanggil lama tetap konsisten dengan tema
-  shopee: "border-2 border-ink bg-ink text-white hover:bg-[#2b2b2b]",
-  whatsapp: "border-2 border-ink bg-white text-ink hover:bg-brand-softer",
+  shopee: "border-2 border-ink/45 bg-surface text-ink hover:border-brand hover:bg-brand-softer",
+  whatsapp: "border-2 border-ok/50 bg-surface text-ok hover:bg-ok-soft",
 } as const;
 
 const SIZES = {
@@ -69,7 +71,7 @@ export function Spinner({ className }: { className?: string }) {
 export function IconCircle({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <span
-      className={cn("flex size-7 shrink-0 items-center justify-center rounded-full bg-white text-ink", className)}
+      className={cn("flex size-7 shrink-0 items-center justify-center rounded-full bg-surface text-ink", className)}
       aria-hidden="true"
     >
       {children}
@@ -79,7 +81,7 @@ export function IconCircle({ children, className }: { children: ReactNode; class
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <section className={cn("rounded-3xl border-2 border-ink bg-white p-5 sm:p-6", className)}>{children}</section>
+    <section className={cn("rounded-3xl border-2 border-ink bg-surface p-5 sm:p-6", className)}>{children}</section>
   );
 }
 
@@ -102,7 +104,7 @@ export function CardHeader({
       <div className="flex min-w-0 items-center gap-3">
         {icon && (
           <span
-            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-ink text-white"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-ink text-paper"
             aria-hidden="true"
           >
             {icon}
@@ -125,7 +127,7 @@ const BADGE_TONES = {
   red: "bg-bad-soft",
   yellow: "bg-warn-soft",
   blue: "bg-brand-soft",
-  gray: "bg-white",
+  gray: "bg-surface-2",
 } as const;
 
 export function Badge({ tone = "gray", children }: { tone?: keyof typeof BADGE_TONES; children: ReactNode }) {
@@ -154,7 +156,7 @@ export function Pill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-full bg-ink py-1 text-xs font-extrabold tracking-wide text-white uppercase",
+        "inline-flex items-center gap-2 rounded-full bg-ink py-1 text-xs font-extrabold tracking-wide text-paper uppercase",
         icon ? "pr-4 pl-1" : "px-4 py-1.5",
         className,
       )}
@@ -166,6 +168,6 @@ export function Pill({
 }
 
 export const inputClass =
-  "block w-full rounded-2xl border-2 border-ink bg-white px-4 py-2.5 text-base font-medium text-ink outline-none transition placeholder:font-normal placeholder:text-ink/35 focus:border-brand-deep focus:ring-4 focus:ring-brand/20 disabled:bg-paper disabled:text-ink/40 sm:text-sm";
+  "block w-full rounded-2xl border-2 border-line bg-surface-2 px-4 py-2.5 text-base font-medium text-ink outline-none transition placeholder:font-normal placeholder:text-ink/30 focus:border-brand focus:ring-4 focus:ring-brand/25 disabled:bg-paper disabled:text-ink/35 sm:text-sm";
 
 export const labelClass = "mb-1.5 block text-xs font-bold tracking-wide text-ink uppercase";

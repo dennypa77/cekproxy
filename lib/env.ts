@@ -50,3 +50,14 @@ export function customerLoginRequiredFrom(): string | null {
   return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
 }
 
+/** Webhook Discord untuk notifikasi invoice. Null = notifikasi mati. */
+export function getDiscordWebhookUrl(): string | null {
+  const value = process.env.DISCORD_WEBHOOK_URL?.trim();
+  return value && /^https:\/\/discord(app)?\.com\/api\/webhooks\//.test(value) ? value : null;
+}
+
+/** ID Discord pemilik, untuk mention saat ada pembayaran masuk. */
+export function getDiscordMentionId(): string | null {
+  const value = process.env.DISCORD_MENTION_ID?.trim();
+  return value && /^\d{17,20}$/.test(value) ? value : null;
+}

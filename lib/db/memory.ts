@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import {
   type Customer,
   DbError,
+  type Invoice,
   type Order,
   type ReplaceLog,
   type Repo,
@@ -19,6 +20,7 @@ interface MemoryState {
   accounts: WebshareAccount[];
   orders: Order[];
   customers: Customer[];
+  invoices: Invoice[];
   waMessages: WaMessage[];
   logs: ReplaceLog[];
   rate: Map<string, { count: number; expiresAt: number }>;
@@ -179,6 +181,7 @@ function seed(): MemoryState {
         last_login_at: null,
       },
     ],
+    invoices: [],
     waMessages: [],
     logs: [],
     rate: new Map(),
@@ -194,6 +197,8 @@ function state(): MemoryState {
 }
 
 const clone = <T>(value: T): T => structuredClone(value);
+/** Status invoice yang masih "memegang" nominal unik & slot customer. */
+const AKTIF = ["menunggu_bayar", "menunggu_verifikasi"];
 const byCreatedDesc = (a: { created_at: string }, b: { created_at: string }) =>
   b.created_at.localeCompare(a.created_at);
 
@@ -201,6 +206,14 @@ function findOrder(id: string): Order {
   const order = state().orders.find((o) => o.id === id);
   if (!order) throw new DbError("ORDER_NOT_FOUND", "ORDER_NOT_FOUND");
   return order;
+}
+
+/** 4 karakter hex acak untuk nomor invoice/orders. */
+function kodeAcak(): string {
+  return Math.floor(Math.random() * 0xffff)
+    .toString(16)
+    .toUpperCase()
+    .padStart(4, "0");
 }
 
 function jakartaDate(): string {
@@ -466,6 +479,180 @@ export function createMemoryRepo(): Repo {
       const note = `[${jakartaDate()}] Diklaim oleh akun customer`;
       order.catatan = order.catatan ? `${order.catatan}\n${note}` : note;
       return clone(order);
+    },
+
+    async listInvoices() {
+      return clone([...state().invoices].sort(byCreatedDesc));
+    },
+    async getInvoice(id) {
+      return clone(state().invoices.find((i) => i.id === id) ?? null);
+    },
+    async getInvoiceByNoForCustomer(invoiceNo, customerId) {
+      const inv = state().invoices.find((i) => i.invoice_no === invoiceNo && i.customer_id === customerId);
+      return clone(inv ?? null);
+    },
+    async listInvoicesByCustomer(customerId) {
+      return clone(state().invoices.filter((i) => i.customer_id === customerId).sort(byCreatedDesc));
+    },
+    async createInvoice(input) {
+      const s = state();
+      const aktif = s.invoices.filter((i) => i.customer_id === input.customer_id && AKTIF.includes(i.status));
+      if (aktif.length >= input.maksAktif) throw new DbError("TOO_MANY_INVOICES", "TOO_MANY_INVOICES");
+
+      if (input.jenis === "perpanjangan") {
+        const order = s.orders.find((o) => o.id === input.extend_order_id);
+        if (!order || order.customer_id !== input.customer_id) {
+          throw new DbError("ORDER_NOT_FOUND", "ORDER_NOT_FOUND");
+        }
+        const sudahAda = s.invoices.some(
+          (i) => i.extend_order_id === input.extend_order_id && AKTIF.includes(i.status),
+        );
+        if (sudahAda) throw new DbError("DUPLICATE", "invoice perpanjangan sudah ada");
+      }
+
+      // Nominal unik di antara invoice yang masih menunggu (meniru index parsial di SQL).
+      const terpakai = new Set(s.invoices.filter((i) => AKTIF.includes(i.status)).map((i) => i.total_rp));
+      let kodeUnik = 0;
+      for (let coba = 0; coba < 50 && kodeUnik === 0; coba++) {
+        const kandidat = 1 + Math.floor(Math.random() * 999);
+        if (!terpakai.has(input.harga_rp + kandidat)) kodeUnik = kandidat;
+      }
+      if (kodeUnik === 0) throw new DbError("AMOUNT_COLLISION", "AMOUNT_COLLISION");
+
+      const invoice: Invoice = {
+        id: randomUUID(),
+        invoice_no: `INV-${jakartaDate().replace(/-/g, "")}-${kodeAcak()}`,
+        customer_id: input.customer_id,
+        jenis: input.jenis,
+        paket_sku: input.paket_sku,
+        paket_nama: input.paket_nama,
+        kategori: input.kategori,
+        ip: input.ip,
+        bandwidth_gb: input.bandwidth_gb,
+        masa_aktif_hari: input.masa_aktif_hari,
+        harga_rp: input.harga_rp,
+        kode_unik: kodeUnik,
+        total_rp: input.harga_rp + kodeUnik,
+        metode: input.metode,
+        status: "menunggu_bayar",
+        extend_order_id: input.extend_order_id,
+        order_id: null,
+        expires_at: new Date(Date.now() + input.ttlJam * 3_600_000).toISOString(),
+        created_at: new Date().toISOString(),
+        paid_claimed_at: null,
+        approved_at: null,
+        rejected_at: null,
+        expired_at: null,
+        canceled_at: null,
+        catatan_customer: input.catatan,
+        catatan_admin: null,
+        alasan_tolak: null,
+      };
+      s.invoices.push(invoice);
+      return clone(invoice);
+    },
+    async markInvoicePaid(invoiceId, customerId, catatan) {
+      const invoice = state().invoices.find((i) => i.id === invoiceId && i.customer_id === customerId);
+      if (!invoice) throw new DbError("INVOICE_NOT_FOUND", "INVOICE_NOT_FOUND");
+      if (invoice.status === "menunggu_verifikasi") return false;
+      if (invoice.status !== "menunggu_bayar") throw new DbError("INVOICE_STATUS_INVALID", "INVOICE_STATUS_INVALID");
+      invoice.status = "menunggu_verifikasi";
+      invoice.paid_claimed_at = new Date().toISOString();
+      if (catatan?.trim()) invoice.catatan_customer = catatan.trim();
+      return true;
+    },
+    async cancelInvoice(invoiceId, customerId) {
+      const invoice = state().invoices.find((i) => i.id === invoiceId && i.customer_id === customerId);
+      if (!invoice || invoice.status !== "menunggu_bayar") {
+        throw new DbError("INVOICE_STATUS_INVALID", "INVOICE_STATUS_INVALID");
+      }
+      invoice.status = "dibatalkan";
+      invoice.canceled_at = new Date().toISOString();
+    },
+    async approveInvoice(invoiceId, accountId, expiresAt, replaceQuota, catatan) {
+      const s = state();
+      const invoice = s.invoices.find((i) => i.id === invoiceId);
+      if (!invoice) throw new DbError("INVOICE_NOT_FOUND", "INVOICE_NOT_FOUND");
+      if (!["menunggu_bayar", "menunggu_verifikasi", "kedaluwarsa"].includes(invoice.status)) {
+        throw new DbError("INVOICE_STATUS_INVALID", "INVOICE_STATUS_INVALID");
+      }
+      const customer = s.customers.find((c) => c.id === invoice.customer_id);
+      const catatanBersih = catatan?.trim() ? catatan.trim() : null;
+
+      let order: Order;
+      if (invoice.jenis === "perpanjangan") {
+        const target = s.orders.find((o) => o.id === invoice.extend_order_id);
+        if (!target) throw new DbError("ORDER_NOT_FOUND", "ORDER_NOT_FOUND");
+        const dasar = Math.max(new Date(target.expires_at).getTime(), Date.now());
+        target.expires_at = new Date(dasar + invoice.masa_aktif_hari * DAY).toISOString();
+        const note = `[${jakartaDate()}] Diperpanjang ${invoice.masa_aktif_hari} hari dari invoice ${invoice.invoice_no}`;
+        target.catatan = target.catatan ? `${target.catatan}\n${note}` : note;
+        order = target;
+      } else {
+        const account = s.accounts.find((a) => a.id === accountId);
+        if (!account || account.status !== "available") {
+          throw new DbError("ACCOUNT_NOT_AVAILABLE", "ACCOUNT_NOT_AVAILABLE");
+        }
+        account.status = "assigned";
+        const note = `[${jakartaDate()}] Dari invoice ${invoice.invoice_no} (${invoice.paket_nama})`;
+        order = {
+          id: randomUUID(),
+          shopee_order_no: `DMP-${jakartaDate().replace(/-/g, "")}-${kodeAcak()}`,
+          order_type: "static",
+          api_key: null,
+          rate_per_minute: 60,
+          account_id: account.id,
+          nama_customer: customer?.nama ?? null,
+          expires_at: expiresAt,
+          replace_quota: replaceQuota,
+          replace_used: 0,
+          replace_lock_until: null,
+          is_active: true,
+          catatan: catatanBersih ? `${note}\n${catatanBersih}` : note,
+          created_at: new Date().toISOString(),
+          customer_id: invoice.customer_id,
+          claimed_at: new Date().toISOString(),
+          claim_code: null,
+          claim_code_expires_at: null,
+          wa_number: customer?.wa_number ?? null,
+        };
+        s.orders.push(order);
+      }
+
+      invoice.status = "disetujui";
+      invoice.approved_at = new Date().toISOString();
+      invoice.order_id = order.id;
+      invoice.catatan_admin = catatanBersih;
+      return clone(order);
+    },
+    async rejectInvoice(invoiceId, alasan) {
+      const invoice = state().invoices.find((i) => i.id === invoiceId);
+      if (!invoice || !["menunggu_bayar", "menunggu_verifikasi", "kedaluwarsa"].includes(invoice.status)) {
+        throw new DbError("INVOICE_STATUS_INVALID", "INVOICE_STATUS_INVALID");
+      }
+      invoice.status = "ditolak";
+      invoice.rejected_at = new Date().toISOString();
+      invoice.alasan_tolak = alasan;
+    },
+    async expireInvoice(invoiceId) {
+      const invoice = state().invoices.find((i) => i.id === invoiceId);
+      if (!invoice || !AKTIF.includes(invoice.status)) {
+        throw new DbError("INVOICE_STATUS_INVALID", "INVOICE_STATUS_INVALID");
+      }
+      invoice.status = "kedaluwarsa";
+      invoice.expired_at = new Date().toISOString();
+    },
+    async expireDueInvoices() {
+      const sekarang = Date.now();
+      const kena: string[] = [];
+      for (const invoice of state().invoices) {
+        if (invoice.status === "menunggu_bayar" && new Date(invoice.expires_at).getTime() < sekarang) {
+          invoice.status = "kedaluwarsa";
+          invoice.expired_at = new Date().toISOString();
+          kena.push(invoice.invoice_no);
+        }
+      }
+      return kena;
     },
 
     async insertWaMessage(input) {

@@ -9,26 +9,33 @@
 @theme {
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
-  /* Tema DM Digital: putih, hitam, biru muda */
-  --color-paper: #f4f5f7;
-  --color-ink: #111111;
-  --color-muted: #5b6270;
-  --color-line: #e3e6eb;
-  --color-brand: #1e8bff;
-  --color-brand-deep: #0a6fe0;
-  --color-brand-soft: #dcebff;
-  --color-brand-softer: #f1f7ff;
+  /* Tema dmproxy: ruang server gelap dengan aksen biru */
+  --color-paper: #0a0e14;
+  --color-surface: #121923;
+  --color-surface-2: #18202c;
+  --color-ink: #e8eef6;
+  --color-muted: #93a3b8;
+  --color-line: #263243;
+  --color-brand: #2e95ff;
+  --color-brand-deep: #1a7ae0;
+  --color-brand-soft: color-mix(in oklab, #2e95ff 22%, transparent);
+  --color-brand-softer: color-mix(in oklab, #2e95ff 10%, transparent);
 
   /* Status (selalu disertai ikon + label, tidak pernah warna saja) */
-  --color-ok: #16a34a;
-  --color-ok-soft: #e7f6ec;
-  --color-warn: #fab219;
-  --color-warn-soft: #fff4d6;
-  --color-bad: #d03b3b;
-  --color-bad-soft: #fdecec;
+  --color-ok: #35d07f;
+  --color-ok-soft: color-mix(in oklab, #35d07f 18%, transparent);
+  --color-warn: #ffc53d;
+  --color-warn-soft: color-mix(in oklab, #ffc53d 18%, transparent);
+  --color-bad: #ff6b6b;
+  --color-bad-soft: color-mix(in oklab, #ff6b6b 18%, transparent);
 
   --animate-pop-in: pop-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-indeterminate: progress-indeterminate 1.4s ease-in-out infinite;
+  /* Animasi bernuansa datacenter */
+  --animate-scan: scan 7s linear infinite;
+  --animate-grid-drift: grid-drift 24s linear infinite;
+  --animate-node: node-pulse 2.6s ease-in-out infinite;
+  --animate-caret: caret-blink 1.1s step-end infinite;
 
   @keyframes pop-in {
     from { opacity: 0; transform: translateY(8px) scale(0.98); }
@@ -38,19 +45,39 @@
     0% { transform: translateX(-100%); }
     100% { transform: translateX(250%); }
   }
+  /* Berkas cahaya yang menyapu, seperti indikator rak server */
+  @keyframes scan {
+    0% { transform: translateY(-120%); opacity: 0; }
+    12% { opacity: 0.9; }
+    88% { opacity: 0.9; }
+    100% { transform: translateY(520%); opacity: 0; }
+  }
+  @keyframes grid-drift {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 44px 44px, 44px 44px; }
+  }
+  @keyframes node-pulse {
+    0%, 100% { opacity: 0.25; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes caret-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
 }
 
 html {
   -webkit-tap-highlight-color: transparent;
+  color-scheme: dark;
 }
 
-/* Latar putih bernuansa marmer lembut, seperti foto produk */
+/* Latar gelap dengan cahaya biru redup, seperti ruang server */
 body {
   background-color: var(--color-paper);
   background-image:
-    radial-gradient(120% 60% at 8% 0%, rgb(255 255 255 / 0.95) 0%, rgb(255 255 255 / 0) 60%),
-    radial-gradient(80% 50% at 100% 35%, rgb(255 255 255 / 0.9) 0%, rgb(255 255 255 / 0) 60%),
-    radial-gradient(90% 60% at 0% 100%, rgb(255 255 255 / 0.85) 0%, rgb(255 255 255 / 0) 55%);
+    radial-gradient(90% 50% at 12% -5%, rgb(46 149 255 / 0.16) 0%, rgb(46 149 255 / 0) 60%),
+    radial-gradient(70% 45% at 100% 10%, rgb(46 149 255 / 0.1) 0%, rgb(46 149 255 / 0) 60%),
+    radial-gradient(80% 60% at 50% 110%, rgb(46 149 255 / 0.08) 0%, rgb(46 149 255 / 0) 55%);
   background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
@@ -58,8 +85,16 @@ body {
 }
 
 ::selection {
-  background: var(--color-brand-soft);
+  background: color-mix(in oklab, var(--color-brand) 45%, transparent);
   color: var(--color-ink);
+}
+
+/* Kisi tipis ala denah rak, dipakai di hero & panel gelap */
+.grid-lines {
+  background-image:
+    linear-gradient(to right, rgb(232 238 246 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(232 238 246 / 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
 }
 
 @media (prefers-reduced-motion: reduce) {

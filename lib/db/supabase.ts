@@ -3,6 +3,7 @@ import { createClient, type PostgrestError } from "@supabase/supabase-js";
 import {
   type Customer,
   DbError,
+  type Invoice,
   type Order,
   type ReplaceLog,
   type Repo,
@@ -15,6 +16,10 @@ function toDbError(error: PostgrestError): DbError {
   if (error.message.includes("CLAIM_CODE_INVALID")) return new DbError("CLAIM_CODE_INVALID", error.message);
   if (error.message.includes("CLAIM_CODE_EXPIRED")) return new DbError("CLAIM_CODE_EXPIRED", error.message);
   if (error.message.includes("ALREADY_CLAIMED")) return new DbError("ALREADY_CLAIMED", error.message);
+  if (error.message.includes("INVOICE_NOT_FOUND")) return new DbError("INVOICE_NOT_FOUND", error.message);
+  if (error.message.includes("INVOICE_STATUS_INVALID")) return new DbError("INVOICE_STATUS_INVALID", error.message);
+  if (error.message.includes("TOO_MANY_INVOICES")) return new DbError("TOO_MANY_INVOICES", error.message);
+  if (error.message.includes("AMOUNT_COLLISION")) return new DbError("AMOUNT_COLLISION", error.message);
   if (error.message.includes("ACCOUNT_NOT_AVAILABLE")) {
     return new DbError("ACCOUNT_NOT_AVAILABLE", error.message);
   }
@@ -98,6 +103,7 @@ export function createSupabaseRepo(url: string, serviceRoleKey: string): Repo {
           p_expires_at: input.expires_at,
           p_replace_quota: input.replace_quota,
           p_catatan: input.catatan,
+          p_wa_number: input.wa_number ?? null,
         })
         .single();
       return check(res) as Order;
@@ -185,6 +191,86 @@ export function createSupabaseRepo(url: string, serviceRoleKey: string): Repo {
     async claimOrder(code, customerId) {
       const res = await sb.rpc("claim_order", { p_code: code, p_customer_id: customerId }).single();
       return check(res) as Order;
+    },
+
+    async listInvoices() {
+      const res = await sb.from("invoices").select("*").order("created_at", { ascending: false });
+      return check(res) as Invoice[];
+    },
+    async getInvoice(id) {
+      return check(await sb.from("invoices").select("*").eq("id", id).maybeSingle()) as Invoice | null;
+    },
+    async getInvoiceByNoForCustomer(invoiceNo, customerId) {
+      const res = await sb
+        .from("invoices")
+        .select("*")
+        .eq("invoice_no", invoiceNo)
+        .eq("customer_id", customerId)
+        .maybeSingle();
+      return check(res) as Invoice | null;
+    },
+    async listInvoicesByCustomer(customerId) {
+      const res = await sb
+        .from("invoices")
+        .select("*")
+        .eq("customer_id", customerId)
+        .order("created_at", { ascending: false });
+      return check(res) as Invoice[];
+    },
+    async createInvoice(input) {
+      const res = await sb
+        .rpc("create_invoice", {
+          p_customer_id: input.customer_id,
+          p_jenis: input.jenis,
+          p_sku: input.paket_sku,
+          p_paket_nama: input.paket_nama,
+          p_kategori: input.kategori,
+          p_ip: input.ip,
+          p_bandwidth_gb: input.bandwidth_gb,
+          p_masa_aktif_hari: input.masa_aktif_hari,
+          p_harga_rp: input.harga_rp,
+          p_metode: input.metode,
+          p_extend_order_id: input.extend_order_id,
+          p_catatan: input.catatan,
+          p_ttl_jam: input.ttlJam,
+          p_maks_aktif: input.maksAktif,
+        })
+        .single();
+      return check(res) as Invoice;
+    },
+    async markInvoicePaid(invoiceId, customerId, catatan) {
+      const res = await sb.rpc("mark_invoice_paid", {
+        p_invoice_id: invoiceId,
+        p_customer_id: customerId,
+        p_catatan: catatan,
+      });
+      return check(res) === true;
+    },
+    async cancelInvoice(invoiceId, customerId) {
+      check(await sb.rpc("cancel_invoice", { p_invoice_id: invoiceId, p_customer_id: customerId }));
+    },
+    async approveInvoice(invoiceId, accountId, expiresAt, replaceQuota, catatan) {
+      const res = await sb
+        .rpc("approve_invoice", {
+          p_invoice_id: invoiceId,
+          p_account_id: accountId,
+          p_expires_at: expiresAt,
+          p_replace_quota: replaceQuota,
+          p_catatan: catatan,
+        })
+        .single();
+      return check(res) as Order;
+    },
+    async rejectInvoice(invoiceId, alasan) {
+      check(await sb.rpc("reject_invoice", { p_invoice_id: invoiceId, p_alasan: alasan }));
+    },
+    async expireInvoice(invoiceId) {
+      check(await sb.rpc("expire_invoice", { p_invoice_id: invoiceId }));
+    },
+    async expireDueInvoices() {
+      const res = await sb.rpc("expire_invoices");
+      const data = check(res) as string[] | null;
+      return data ?? [];
     },
 
     async insertWaMessage(input) {

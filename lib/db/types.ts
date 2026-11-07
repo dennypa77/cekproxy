@@ -69,6 +69,10 @@ export type DbErrorCode =
   | "CLAIM_CODE_INVALID"
   | "CLAIM_CODE_EXPIRED"
   | "ALREADY_CLAIMED"
+  | "INVOICE_NOT_FOUND"
+  | "INVOICE_STATUS_INVALID"
+  | "TOO_MANY_INVOICES"
+  | "AMOUNT_COLLISION"
   | "UNKNOWN";
 
 export class DbError extends Error {
@@ -207,6 +211,68 @@ export interface NewWaMessageInput {
   provider_id: string | null;
 }
 
+export type InvoiceStatus =
+  | "menunggu_bayar"
+  | "menunggu_verifikasi"
+  | "disetujui"
+  | "ditolak"
+  | "kedaluwarsa"
+  | "dibatalkan";
+
+export type InvoiceJenis = "baru" | "perpanjangan";
+
+export interface Invoice {
+  id: string;
+  invoice_no: string;
+  customer_id: string;
+  jenis: InvoiceJenis;
+  /** Snapshot katalog saat invoice dibuat (harga bisa berubah kemudian). */
+  paket_sku: string;
+  paket_nama: string;
+  kategori: string;
+  ip: number;
+  bandwidth_gb: number;
+  masa_aktif_hari: number;
+  harga_rp: number;
+  kode_unik: number;
+  /** harga_rp + kode_unik — nominal yang harus ditransfer. */
+  total_rp: number;
+  metode: string;
+  status: InvoiceStatus;
+  /** Pesanan yang diperpanjang (khusus jenis perpanjangan). */
+  extend_order_id: string | null;
+  /** Pesanan hasil persetujuan. */
+  order_id: string | null;
+  expires_at: string;
+  created_at: string;
+  paid_claimed_at: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
+  expired_at: string | null;
+  canceled_at: string | null;
+  catatan_customer: string | null;
+  /** Catatan internal admin; tidak pernah ditampilkan ke customer. */
+  catatan_admin: string | null;
+  alasan_tolak: string | null;
+}
+
+export interface NewInvoiceInput {
+  customer_id: string;
+  jenis: InvoiceJenis;
+  paket_sku: string;
+  paket_nama: string;
+  kategori: string;
+  ip: number;
+  bandwidth_gb: number;
+  masa_aktif_hari: number;
+  harga_rp: number;
+  metode: string;
+  extend_order_id: string | null;
+  catatan: string | null;
+  ttlJam: number;
+  maksAktif: number;
+}
+
 /** Semua akses database lewat interface ini (Supabase atau memori untuk mode test). */
 export interface Repo {
   listAccounts(): Promise<WebshareAccount[]>;
@@ -245,6 +311,31 @@ export interface Repo {
   listOrdersByCustomer(customerId: string): Promise<Order[]>;
   /** Atomik: tautkan pesanan ke akun & matikan kodenya. Lempar DbError kalau kode tidak sah. */
   claimOrder(code: string, customerId: string): Promise<Order>;
+
+  /**
+   * Invoice sengaja tidak punya updateInvoice/InvoicePatch: setiap perubahan
+   * status menyangkut uang, jadi harus lewat fungsi atomik di bawah ini.
+   */
+  listInvoices(): Promise<Invoice[]>;
+  getInvoice(id: string): Promise<Invoice | null>;
+  getInvoiceByNoForCustomer(invoiceNo: string, customerId: string): Promise<Invoice | null>;
+  listInvoicesByCustomer(customerId: string): Promise<Invoice[]>;
+  createInvoice(input: NewInvoiceInput): Promise<Invoice>;
+  /** true = baru berubah jadi menunggu verifikasi, false = sudah pernah ditandai. */
+  markInvoicePaid(invoiceId: string, customerId: string, catatan: string | null): Promise<boolean>;
+  cancelInvoice(invoiceId: string, customerId: string): Promise<void>;
+  /** Klaim akun + buat/perpanjang pesanan + tandai invoice lunas (satu transaksi). */
+  approveInvoice(
+    invoiceId: string,
+    accountId: string | null,
+    expiresAt: string,
+    replaceQuota: number,
+    catatan: string | null,
+  ): Promise<Order>;
+  rejectInvoice(invoiceId: string, alasan: string): Promise<void>;
+  expireInvoice(invoiceId: string): Promise<void>;
+  /** Sapu invoice yang lewat tempo; mengembalikan nomor invoice yang kena. */
+  expireDueInvoices(): Promise<string[]>;
 
   insertWaMessage(input: NewWaMessageInput): Promise<WaMessage>;
   listWaMessages(limit: number): Promise<WaMessage[]>;
