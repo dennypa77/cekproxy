@@ -5,7 +5,7 @@ import { apiFetch } from "@/lib/client/api";
 import { formatGb } from "@/lib/format";
 import type { BandwidthResponse } from "@/lib/public-types";
 
-// Batasi request paralel agar tabel besar tidak membanjiri API.
+// Limit parallel requests so a large table doesn't flood the API.
 const MAX_CONCURRENT = 3;
 let running = 0;
 const queue: (() => void)[] = [];
@@ -31,7 +31,7 @@ export function AccountBandwidth({ accountId }: { accountId: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    void schedule(() => apiFetch<BandwidthResponse>(`/api/admin/akun/${accountId}/bandwidth`)).then((result) => {
+    void schedule(() => apiFetch<BandwidthResponse>(`/api/admin/account/${accountId}/bandwidth`)).then((result) => {
       if (cancelled) return;
       setData(result.ok ? result.data : { available: false, message: result.error });
     });
@@ -44,7 +44,7 @@ export function AccountBandwidth({ accountId }: { accountId: string }) {
   if (!data.available) {
     return (
       <span className="text-xs text-bad" title={data.message}>
-        Tidak tersedia
+        Not available
       </span>
     );
   }

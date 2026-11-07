@@ -49,22 +49,22 @@ export async function resolveCustomerOrder(rawOrderNo: string): Promise<Customer
 export const ACCESS_MESSAGES: Record<AccessDeniedReason, { title: string; body: string; icon: StatusIconName }> = {
   not_found: {
     icon: "search",
-    title: "Nomor pesanan tidak ditemukan",
-    body: "Pastikan nomor pesanan sudah benar (lihat di aplikasi Shopee → Saya → Pesanan Saya). Jika Anda baru saja membeli, mohon tunggu admin memproses pesanan Anda.",
+    title: "Order number not found",
+    body: "Please make sure the order number is correct. If you just placed your order, please wait while we process it.",
   },
   inactive: {
     icon: "pause",
-    title: "Pesanan sedang tidak aktif",
-    body: "Pesanan ini sedang dinonaktifkan. Silakan hubungi admin via WhatsApp untuk informasi lebih lanjut.",
+    title: "Order is not active",
+    body: "This order is currently disabled. Please contact us on WhatsApp for more information.",
   },
   expired_long: {
     icon: "clock",
-    title: "Masa aktif sudah lama berakhir",
-    body: "Masa aktif proxy untuk pesanan ini sudah berakhir lebih dari 7 hari. Silakan order kembali melalui toko Shopee kami.",
+    title: "Validity ended a while ago",
+    body: "The proxy validity for this order ended more than 7 days ago. Contact us on WhatsApp to order again.",
   },
   no_account: {
     icon: "tool",
-    title: "Pesanan sedang disiapkan",
-    body: "Proxy untuk pesanan ini sedang disiapkan oleh admin. Silakan cek kembali beberapa saat lagi atau hubungi admin via WhatsApp.",
+    title: "Order is being set up",
+    body: "The proxies for this order are being set up. Please check back in a little while or contact us on WhatsApp.",
   },
 };

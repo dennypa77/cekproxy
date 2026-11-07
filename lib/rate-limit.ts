@@ -15,6 +15,9 @@ export const RATE_LIMITS = {
   customerLogin: { max: 5, windowSeconds: 300 },
   customerRegister: { max: 3, windowSeconds: 3600 },
   claim: { max: 5, windowSeconds: 600 },
+  /** Checkout: buat invoice & tandai sudah bayar. */
+  invoice: { max: 5, windowSeconds: 3600 },
+  invoicePaid: { max: 10, windowSeconds: 3600 },
 } as const;
 
 export type RateLimitBucket = keyof typeof RATE_LIMITS;
@@ -53,4 +56,4 @@ export async function isRateLimited(bucket: RateLimitBucket, ip: string): Promis
   }
 }
 
-export const RATE_LIMIT_MESSAGE = "Terlalu banyak percobaan. Silakan tunggu 1 menit lalu coba lagi.";
+export const RATE_LIMIT_MESSAGE = "Too many attempts. Please wait a minute and try again.";

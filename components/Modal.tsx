@@ -37,7 +37,7 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-ink/50 backdrop-blur-[2px]" onClick={() => dismissible && onClose()} />
-      <div className="animate-pop-in relative max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl border-2 border-b-0 border-ink bg-white p-5 sm:max-w-md sm:rounded-3xl sm:border-b-2 sm:p-6">
+      <div className="animate-pop-in relative max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl border-2 border-b-0 border-ink bg-surface p-5 sm:max-w-md sm:rounded-3xl sm:border-b-2 sm:p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="font-display text-xl font-extrabold tracking-tight uppercase">
             {title} {accent && <span className="text-brand">{accent}</span>}
@@ -46,8 +46,8 @@ export function Modal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border-2 border-ink bg-white p-1.5 transition hover:bg-brand-softer"
-              aria-label="Tutup"
+              className="rounded-full border-2 border-ink bg-surface p-1.5 transition hover:bg-brand-softer"
+              aria-label="Close"
             >
               <XIcon className="size-4" />
             </button>

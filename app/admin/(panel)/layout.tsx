@@ -18,18 +18,18 @@ export default async function AdminPanelLayout({ children }: { children: React.R
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-30 border-b-2 border-ink bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b-2 border-ink bg-paper/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center justify-between gap-3">
             <span className="flex items-center gap-2.5 font-display text-base font-extrabold tracking-tight uppercase">
-              <span className="flex size-10 items-center justify-center rounded-full bg-ink text-white">
+              <span className="flex size-10 items-center justify-center rounded-full bg-ink text-paper">
                 <LogoMark className="size-7" />
               </span>
               Admin <span className="text-brand">dmproxy</span>
             </span>
             <form action={logoutAction} className="sm:hidden">
               <button type="submit" className={buttonClass("secondary", "xs")}>
-                Keluar
+                Log out
               </button>
             </form>
           </div>
@@ -37,7 +37,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
             <AdminNav />
             <form action={logoutAction} className="hidden sm:block">
               <button type="submit" className={buttonClass("secondary", "sm")}>
-                Keluar
+                Log out
               </button>
             </form>
           </div>
@@ -46,8 +46,8 @@ export default async function AdminPanelLayout({ children }: { children: React.R
 
       {isTestMode() && (
         <div className="border-b-2 border-ink bg-brand-soft px-4 py-2 text-center text-xs font-bold tracking-wide uppercase">
-          Mode test aktif — data proxy adalah data palsu.
-          {isMemoryDb() && " Database memori dipakai (data hilang saat server restart)."}
+          Test mode active — proxy data is fake data.
+          {isMemoryDb() && " In-memory database in use (data is lost when the server restarts)."}
         </div>
       )}
 

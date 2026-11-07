@@ -28,12 +28,19 @@ import { orderState } from "@/lib/order-status";
 import { KIND_TONE, planLabel, proxyKind } from "@/lib/plan-type";
 import { requireAdmin } from "@/lib/session";
 
-export const metadata = { title: "Kelola Pesanan" };
+export const metadata = { title: "Manage Order" };
 
 const LOG_BADGE = {
   success: { tone: "green", label: "success" },
   failed: { tone: "red", label: "failed" },
   pending: { tone: "yellow", label: "pending" },
+} as const;
+
+const STATE_LABEL = {
+  aktif: "active",
+  akan_expired: "expiring soon",
+  expired: "expired",
+  nonaktif: "inactive",
 } as const;
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -59,45 +66,45 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/pesanan" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
-        <ChevronLeftIcon className="size-4" /> Kembali ke daftar pesanan
+      <Link href="/admin/orders" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
+        <ChevronLeftIcon className="size-4" /> Back to order list
       </Link>
 
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs text-muted uppercase">Nomor pesanan</p>
+            <p className="text-xs text-muted uppercase">Order number</p>
             <h1 className="font-mono text-xl font-bold break-all text-ink">{order.shopee_order_no}</h1>
-            <p className="text-sm text-muted">{order.nama_customer ?? "Tanpa nama"}</p>
+            <p className="text-sm text-muted">{order.nama_customer ?? "No name"}</p>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
               <Badge
                 tone={state === "aktif" ? "green" : state === "akan_expired" ? "yellow" : state === "expired" ? "red" : "gray"}
               >
-                {state.replace("_", " ")}
+                {STATE_LABEL[state]}
               </Badge>
-              <Badge tone={rotating ? "blue" : "gray"}>{rotating ? "Rotating" : "Statis"}</Badge>
+              <Badge tone={rotating ? "blue" : "gray"}>{rotating ? "Rotating" : "Static"}</Badge>
               <span>
-                Expired {formatDateTime(order.expires_at)}
-                {state === "aktif" || state === "akan_expired" ? ` (${daysLeft(order.expires_at, now)} hari lagi)` : ""}
+                Expires {formatDateTime(order.expires_at)}
+                {state === "aktif" || state === "akan_expired" ? ` (${daysLeft(order.expires_at, now)} days left)` : ""}
               </span>
             </div>
             <p className="mt-1 text-sm">
               {rotating
-                ? `Batas permintaan: ${order.rate_per_minute}/menit`
+                ? `Request limit: ${order.rate_per_minute}/min`
                 : `Replace: ${order.replace_used} / ${order.replace_quota}`}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <a href={customerPath(order.shopee_order_no)} target="_blank" className={buttonClass("primary", "sm")}>
-              Buka halaman customer ↗
+              Open customer page ↗
             </a>
             <ActionButton
               action={toggleOrderActiveAction.bind(null, order.id)}
               size="sm"
               variant={order.is_active ? "dangerSoft" : "secondary"}
-              confirm={order.is_active ? "Nonaktifkan pesanan ini? Customer tidak bisa membuka halaman pesanan." : undefined}
+              confirm={order.is_active ? "Deactivate this order? The customer won't be able to open the order page." : undefined}
             >
-              {order.is_active ? "Nonaktifkan" : "Aktifkan"}
+              {order.is_active ? "Deactivate" : "Activate"}
             </ActionButton>
           </div>
         </div>
@@ -105,7 +112,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-3 font-semibold text-ink">Edit pesanan</h2>
+          <h2 className="mb-3 font-semibold text-ink">Edit order</h2>
           <EditOrderForm
             action={updateOrderAction.bind(null, order.id)}
             order={{
@@ -124,10 +131,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <ActionButton
               action={resetReplaceUsedAction.bind(null, order.id)}
               size="sm"
-              confirm="Reset pemakaian replace menjadi 0?"
+              confirm="Reset replace usage to 0?"
               disabled={order.replace_used === 0}
             >
-              Reset replace terpakai ke 0
+              Reset replace used to 0
             </ActionButton>
           </div>
           )}
@@ -135,9 +142,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
         <div className="space-y-4">
           <Card>
-            <h2 className="mb-1 font-semibold text-ink">Akun customer &amp; kode klaim</h2>
+            <h2 className="mb-1 font-semibold text-ink">Customer account &amp; claim code</h2>
             <p className="mb-3 text-sm text-muted">
-              Customer memakai kode ini untuk menautkan pesanan ke akunnya.
+              The customer uses this code to link the order to their account.
             </p>
             <ClaimCodeCard
               orderNo={order.shopee_order_no}
@@ -160,15 +167,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </Card>
 
           <Card>
-            <h2 className="mb-3 font-semibold text-ink">Perpanjang</h2>
+            <h2 className="mb-3 font-semibold text-ink">Extend</h2>
             <ExtendOrderForm action={extendOrderAction.bind(null, order.id)} />
           </Card>
 
           {rotating ? (
             <Card>
-              <h2 className="mb-1 font-semibold text-ink">Akses rotating</h2>
+              <h2 className="mb-1 font-semibold text-ink">Rotating access</h2>
               <p className="mb-3 text-sm text-muted">
-                Proxy diambil acak dari semua akun yang ditandai ikut pool rotating di halaman Pool Akun.
+                Proxies are drawn at random from all accounts marked to join the rotating pool on the Account Pool page.
               </p>
               {order.api_key ? (
                 <RotatingOrderCard
@@ -178,16 +185,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   limitAction={updateRotatingLimitAction.bind(null, order.id)}
                 />
               ) : (
-                <p className="text-sm text-bad">Pesanan rotating ini belum punya kunci API.</p>
+                <p className="text-sm text-bad">This rotating order has no API key yet.</p>
               )}
             </Card>
           ) : (
           <Card>
-            <h2 className="mb-3 font-semibold text-ink">Akun tertaut</h2>
+            <h2 className="mb-3 font-semibold text-ink">Linked account</h2>
             {account ? (
               <div className="space-y-3">
                 <div className="text-sm">
-                  <Link href={`/admin/akun/${account.id}`} className="font-medium text-brand-deep hover:underline">
+                  <Link href={`/admin/account/${account.id}`} className="font-medium text-brand-deep hover:underline">
                     {account.label}
                   </Link>
                   <p className="text-muted">{account.email ?? "-"}</p>
@@ -203,15 +210,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   variant="dangerSoft"
                   size="sm"
                   confirm={
-                    "Lepas akun dari pesanan ini? Akun kembali berstatus available.\n\nSebelum dipakai customer lain, disarankan membersihkan IP whitelist dan mengganti password proxy di dashboard penyedia."
+                    "Release the account from this order? The account goes back to available.\n\nBefore it is used by another customer, we recommend clearing the IP whitelist and changing the proxy password in the provider dashboard."
                   }
                 >
-                  Lepas akun
+                  Release account
                 </ActionButton>
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm text-bad">Pesanan belum memiliki akun. Customer melihat pesan &quot;sedang disiapkan&quot;.</p>
+                <p className="text-sm text-bad">This order has no account yet. The customer sees a &quot;being prepared&quot; message.</p>
                 <LinkAccountForm action={linkOrderAccountAction.bind(null, order.id)} accounts={available} />
               </div>
             )}
@@ -222,7 +229,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       {account && (
         <Card>
-          <h2 className="mb-3 font-semibold text-ink">Username &amp; password proxy</h2>
+          <h2 className="mb-3 font-semibold text-ink">Proxy username &amp; password</h2>
           <CredentialsForm action={updateOrderCredentialsAction.bind(null, order.id)} />
         </Card>
       )}
@@ -230,18 +237,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {!rotating && (
       <Card>
         <h2 className="mb-3 font-semibold text-ink">
-          Log replace <span className="font-normal text-muted">({logs.length} terakhir)</span>
+          Replace log <span className="font-normal text-muted">(last {logs.length})</span>
         </h2>
         {logs.length === 0 ? (
-          <p className="rounded-lg bg-paper p-3 text-sm text-muted">Belum ada percobaan replace.</p>
+          <p className="rounded-lg bg-paper p-3 text-sm text-muted">No replace attempts yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="border-b border-line text-xs text-muted uppercase">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">Waktu</th>
-                  <th className="py-2 pr-3 font-medium">IP lama</th>
-                  <th className="py-2 pr-3 font-medium">Negara</th>
+                  <th className="py-2 pr-3 font-medium">Time</th>
+                  <th className="py-2 pr-3 font-medium">Old IP</th>
+                  <th className="py-2 pr-3 font-medium">Country</th>
                   <th className="py-2 pr-3 font-medium">Status</th>
                   <th className="py-2 font-medium">Error</th>
                 </tr>
@@ -252,7 +259,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     <td className="py-2 pr-3 whitespace-nowrap">{formatDateTime(log.created_at)}</td>
                     <td className="py-2 pr-3 font-mono">{log.old_ip}</td>
                     <td className="py-2 pr-3 whitespace-nowrap">
-                      {log.new_country === "ANY" ? "🎲 Acak" : `${countryFlag(log.new_country)} ${log.new_country}`}
+                      {log.new_country === "ANY" ? "🎲 Random" : `${countryFlag(log.new_country)} ${log.new_country}`}
                     </td>
                     <td className="py-2 pr-3">
                       <Badge tone={LOG_BADGE[log.status].tone}>{LOG_BADGE[log.status].label}</Badge>

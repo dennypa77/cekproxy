@@ -1,0 +1,79 @@
+If you've ever had a scraper work for ten minutes and then hit a wall of captchas and blocks, you've met the problem a rotating proxy solves. Instead of sending every request from the same IP address — which quickly looks suspicious — a rotating proxy spreads your requests across many IPs, so each one stays under the radar.
+
+A **rotating proxy API** is the cleanest way to do this from code. This guide explains what it is, how rotation works, and how you'd actually call one from a script.
+
+## What "rotating" means
+
+With a normal (static) proxy, you get one IP and keep it for the whole session. With rotation, the IP you use *changes* — either on a timer or on every request — drawing from a larger pool of addresses.
+
+There are two common rotation styles:
+
+- **Per-request rotation.** Every request goes out through a different IP. Ideal for scraping many pages fast, where you never need two requests to look like the same visitor.
+- **Sticky sessions.** You keep the same IP for a short window (say, a few minutes) so a multi-step flow — log in, add to cart, check out — completes on one address before rotating.
+
+## What a rotating proxy *API* adds
+
+The word "API" is the important part. Instead of hardcoding a list of proxies into your app and managing them by hand, you talk to a single endpoint and ask for what you need, right when you need it.
+
+A typical rotating proxy API lets you:
+
+- Hit **one endpoint** secured by a **secret key**.
+- Request **how many** proxies you want in a single call.
+- Choose the **country** the IPs should come from.
+- Pull fresh proxies again whenever your per-minute limit allows.
+
+That means your code stays simple: ask the API for IPs, use them, ask again. The pool, the rotation, and the health of the IPs are handled for you.
+
+Our own [rotating proxy API](/proxy-rotating-api) works exactly this way — billed by plan validity and requests per minute rather than per gigabyte, so heavy jobs stay predictable.
+
+## When you actually need rotation
+
+Rotation isn't always the right tool. Use it when:
+
+- You're making **lots of requests to the same target** and getting rate-limited or blocked.
+- You're **scraping at scale** and need each request to look independent.
+- You want to **spread load across countries** or many IPs automatically.
+
+You *don't* need rotation when you want a stable identity — for example, running one social account that should always appear to come from the same place. That's a job for a single residential IP (see [datacenter vs residential proxies](/blog/datacenter-vs-residential-proxies)).
+
+## How you'd call one from code
+
+The exact shape depends on the provider, but the pattern is almost always the same: a request to an endpoint with your key, which returns a list of ready-to-use proxies. Here's the idea in Python:
+
+```
+import requests
+
+# 1. Ask the API for a batch of proxies
+resp = requests.get(
+    "https://api.example.com/proxies",
+    params={"key": "YOUR_SECRET_KEY", "count": 5, "country": "us"},
+)
+proxies = resp.json()["proxies"]  # e.g. ["ip:port:user:pass", ...]
+
+# 2. Use one of them for your real request
+p = proxies[0]
+host, port, user, pw = p.split(":")
+proxy_url = f"http://{user}:{pw}@{host}:{port}"
+
+page = requests.get(
+    "https://target-site.example/products",
+    proxies={"http": proxy_url, "https": proxy_url},
+    timeout=20,
+)
+print(page.status_code)
+```
+
+The loop in a real scraper is: pull a batch, use each proxy for one or a few requests, and pull a new batch when you've worked through them. Because the pool rotates for you, you're never hammering a target from one address.
+
+## Tips for staying unblocked
+
+- **Respect the target's limits.** Rotation hides *who* you are, not *how aggressively* you request. Add small delays.
+- **Pick the right country.** Localized sites behave differently per region; request IPs where your target expects traffic.
+- **Handle failures.** Any single IP can be slow or blocked. Retry a failed request with the next proxy in your batch instead of giving up.
+- **Use sticky sessions for multi-step flows.** Don't rotate mid-checkout.
+
+## Recap
+
+A rotating proxy API gives your script fresh IPs on demand from one endpoint, so large jobs don't get blocked for looking repetitive. Reach for it when you're scraping at scale or hitting rate limits — and stick with a static IP when you need a consistent identity.
+
+Want rotation wired into your workflow? [Ask us about the rotating proxy API](/proxy-rotating-api) and we'll set up a pool sized to your needs. First, you can [check your current IP](/tools/what-is-my-ip) to confirm what your requests look like today.

@@ -2,15 +2,31 @@ import { cn, IconCircle } from "./ui";
 import { ShieldCheckIcon, StopwatchIcon, ThumbUpIcon, XIcon } from "./icons";
 
 /**
- * Logo dmproxy (digambar ulang sebagai SVG): cincin + monogram "DM".
- * Jika punya file logo asli, ganti isi komponen ini dengan <img src="/logo.svg" />.
+ * Logo dmproxy dari `public/logo.png` (putih, latar tembus pandang).
+ *
+ * File-nya dipasang sebagai *mask*, bukan <img>: bentuknya persis seperti file
+ * asli, tapi warnanya mengikuti `currentColor`. Itu yang membuat logo tetap
+ * terlihat di atas latar terang (mis. LogoTab) — gambar putih di sana akan hilang.
  */
+const MASK_LOGO = {
+  WebkitMaskImage: "url(/logo.png)",
+  maskImage: "url(/logo.png)",
+  WebkitMaskSize: "contain",
+  maskSize: "contain",
+  WebkitMaskRepeat: "no-repeat",
+  maskRepeat: "no-repeat",
+  WebkitMaskPosition: "center",
+  maskPosition: "center",
+} as const;
+
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" className={className ?? "size-10"} role="img" aria-label="Logo dmproxy">
-      <circle cx="50" cy="50" r="40" strokeWidth="7" />
-      <path d="M30 73 V29 L52 61 L74 29 V73" strokeWidth="10" strokeLinejoin="miter" strokeLinecap="butt" />
-    </svg>
+    <span
+      role="img"
+      aria-label="Logo dmproxy"
+      style={MASK_LOGO}
+      className={cn("inline-block shrink-0 bg-current", className ?? "size-10")}
+    />
   );
 }
 

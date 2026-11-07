@@ -23,13 +23,13 @@ export function AddRotatingOrderForm({ defaultDate }: { defaultDate: string }) {
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-3">
       <p className="text-sm text-muted">
-        Pesanan rotating tidak menempel ke satu akun. Customer mendapat kunci API untuk mengambil proxy acak dari pool.
+        A rotating order isn't tied to a single account. The customer gets an API key to pull random proxies from the pool.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className={labelClass} htmlFor="rot_order_no">
-            Nomor pesanan Shopee
+            Order number
           </label>
           <input
             id="rot_order_no"
@@ -41,24 +41,24 @@ export function AddRotatingOrderForm({ defaultDate }: { defaultDate: string }) {
         </div>
         <div>
           <label className={labelClass} htmlFor="rot_nama">
-            Nama customer (opsional)
+            Customer name (optional)
           </label>
           <input id="rot_nama" name="nama_customer" maxLength={100} className={inputClass} />
         </div>
       </div>
       <div>
         <label className={labelClass} htmlFor="rot_wa">
-          Nomor WhatsApp pembeli (opsional)
+          Buyer's WhatsApp number (optional)
         </label>
         <input id="rot_wa" name="wa_number" type="tel" inputMode="numeric" placeholder="0812-3456-7890" className={inputClass} />
-        <p className="mt-1 text-xs text-muted">Dipakai mengirim kode klaim dan pengingat sebelum pesanan expired.</p>
+        <p className="mt-1 text-xs text-muted">Used to send the claim code and reminders before the order expires.</p>
       </div>
 
 
       <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
         <div>
           <label className={labelClass} htmlFor="rot_expires_date">
-            Tanggal expired (23:59 WIB)
+            Expiry date (23:59 WIB)
           </label>
           <div className="flex flex-wrap gap-2">
             <input
@@ -72,14 +72,14 @@ export function AddRotatingOrderForm({ defaultDate }: { defaultDate: string }) {
             />
             {[7, 30].map((days) => (
               <Button key={days} variant="secondary" onClick={() => setDate(jakartaDateInput(days))}>
-                +{days} hari
+                +{days} days
               </Button>
             ))}
           </div>
         </div>
         <div>
           <label className={labelClass} htmlFor="rot_rate">
-            Batas / menit
+            Limit / min
           </label>
           <input
             id="rot_rate"
@@ -96,18 +96,18 @@ export function AddRotatingOrderForm({ defaultDate }: { defaultDate: string }) {
 
       <div>
         <label className={labelClass} htmlFor="rot_catatan">
-          Catatan (opsional)
+          Notes (optional)
         </label>
         <input id="rot_catatan" name="catatan" maxLength={2000} className={inputClass} />
       </div>
 
       <Button type="submit" loading={pending}>
-        Buat pesanan rotating
+        Create rotating order
       </Button>
       <ResultDetails state={state} />
       {state?.ok && createdPath && (
         <Link href={createdPath} target="_blank" className="inline-block text-sm text-brand-deep hover:underline">
-          Buka halaman customer →
+          Open customer page →
         </Link>
       )}
     </form>

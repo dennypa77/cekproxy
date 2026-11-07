@@ -89,7 +89,7 @@ export function TerminalHero() {
         <span className="size-2.5 rounded-full bg-bad/70" />
         <span className="size-2.5 rounded-full bg-warn/70" />
         <span className="size-2.5 rounded-full bg-ok/70" />
-        <span className="ml-2 text-xs tracking-wider text-muted">dmproxy — konsol</span>
+        <span className="ml-2 text-xs tracking-wider text-muted">dmproxy — console</span>
       </div>
 
       <div className="min-h-[13.5rem] space-y-1.5 p-4 sm:min-h-[15rem] sm:p-5">

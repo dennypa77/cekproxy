@@ -32,9 +32,9 @@ const WARNA: Record<PeristiwaDiscord, number> = {
 };
 
 const JUDUL: Record<PeristiwaDiscord, string> = {
-  invoice_baru: "Invoice baru dibuat",
-  invoice_dibayar: "Customer menyatakan SUDAH BAYAR",
-  invoice_kedaluwarsa: "Invoice kedaluwarsa",
+  invoice_baru: "New invoice created",
+  invoice_dibayar: "Customer marked as PAID",
+  invoice_kedaluwarsa: "Invoice expired",
 };
 
 function rupiah(nilai: number): string {
@@ -76,11 +76,11 @@ export async function notifyInvoice(peristiwa: PeristiwaDiscord, invoice: Invoic
         color: WARNA[peristiwa],
         fields: [
           { name: "Customer", value: `${invoice.customerNama}\n${invoice.customerWa}`, inline: true },
-          { name: "Paket", value: `${invoice.paket_nama}${invoice.jenis === "perpanjangan" ? " (perpanjangan)" : ""}`, inline: true },
-          { name: "Nominal", value: `\`${rupiah(invoice.total_rp)}\``, inline: true },
-          { name: "Metode", value: invoice.metode.toUpperCase(), inline: true },
+          { name: "Plan", value: `${invoice.paket_nama}${invoice.jenis === "perpanjangan" ? " (renewal)" : ""}`, inline: true },
+          { name: "Amount", value: `\`${rupiah(invoice.total_rp)}\``, inline: true },
+          { name: "Method", value: invoice.metode.toUpperCase(), inline: true },
           ...(invoice.catatan_customer
-            ? [{ name: "Catatan customer", value: invoice.catatan_customer.slice(0, 300), inline: false }]
+            ? [{ name: "Customer note", value: invoice.catatan_customer.slice(0, 300), inline: false }]
             : []),
         ],
         timestamp: new Date().toISOString(),
@@ -96,7 +96,7 @@ export async function notifyKedaluwarsa(nomor: string[]): Promise<void> {
     allowed_mentions: { parse: [] },
     embeds: [
       {
-        title: `${nomor.length} invoice kedaluwarsa`,
+        title: `${nomor.length} invoices expired`,
         description: nomor.slice(0, 20).join(", "),
         color: WARNA.invoice_kedaluwarsa,
         timestamp: new Date().toISOString(),

@@ -25,49 +25,49 @@ export default async function CustomerPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold text-ink">Customer</h1>
+      <h1 className="text-xl font-bold text-ink">Customers</h1>
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-semibold text-ink">Siapkan kode klaim massal</h2>
+            <h2 className="font-semibold text-ink">Prepare claim codes in bulk</h2>
             <p className="mt-1 max-w-xl text-sm text-muted">
-              Membuat kode klaim untuk semua pesanan aktif yang belum diklaim ({belumPunyaKode.length} pesanan belum
-              punya kode). Kodenya dikirim per pesanan lewat halaman Kelola pesanan.
+              Creates claim codes for all active orders not yet claimed ({belumPunyaKode.length} orders have no
+              code yet). Each code is sent per order from the Manage order page.
             </p>
           </div>
           <ActionButton
             action={bulkGenerateClaimCodesAction}
             size="sm"
             disabled={belumPunyaKode.length === 0}
-            confirm={`Buat kode klaim untuk ${belumPunyaKode.length} pesanan?`}
+            confirm={`Create claim codes for ${belumPunyaKode.length} orders?`}
           >
-            Buat kode klaim massal
+            Create claim codes in bulk
           </ActionButton>
         </div>
       </Card>
 
       <Card>
         <h2 className="mb-3 font-semibold text-ink">
-          Akun terdaftar <span className="font-normal text-muted">({customers.length})</span>
+          Registered accounts <span className="font-normal text-muted">({customers.length})</span>
         </h2>
 
         {customers.length === 0 ? (
           <p className="rounded-lg bg-paper p-3 text-sm text-muted">
-            Belum ada customer yang mendaftar. Kirimkan link halaman utama dan kode klaim lewat WhatsApp.
+            No customers have registered yet. Send the homepage link and a claim code via WhatsApp.
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] text-left text-sm">
               <thead className="border-b border-line text-xs text-muted uppercase">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">Nama</th>
+                  <th className="py-2 pr-3 font-medium">Name</th>
                   <th className="py-2 pr-3 font-medium">WhatsApp</th>
-                  <th className="py-2 pr-3 font-medium">Pesanan</th>
-                  <th className="py-2 pr-3 font-medium">Terdaftar</th>
-                  <th className="py-2 pr-3 font-medium">Terakhir masuk</th>
+                  <th className="py-2 pr-3 font-medium">Orders</th>
+                  <th className="py-2 pr-3 font-medium">Registered</th>
+                  <th className="py-2 pr-3 font-medium">Last login</th>
                   <th className="py-2 pr-3 font-medium">Status</th>
-                  <th className="py-2 text-right font-medium">Aksi</th>
+                  <th className="py-2 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -91,14 +91,14 @@ export default async function CustomerPage() {
                     </td>
                     <td className="py-2.5 pr-3">
                       <Badge tone={customer.is_blocked ? "red" : "green"}>
-                        {customer.is_blocked ? "diblokir" : "aktif"}
+                        {customer.is_blocked ? "blocked" : "active"}
                       </Badge>
                     </td>
                     <td className="py-2.5">
                       <div className="flex justify-end gap-1.5">
                         <ActionButton
                           action={resetCustomerPasswordAction.bind(null, customer.id)}
-                          confirm={`Reset password ${customer.nama}? Password lama langsung tidak berlaku dan semua perangkatnya keluar.`}
+                          confirm={`Reset ${customer.nama}'s password? The old password stops working immediately and all their devices are logged out.`}
                         >
                           Reset password
                         </ActionButton>
@@ -108,10 +108,10 @@ export default async function CustomerPage() {
                           confirm={
                             customer.is_blocked
                               ? undefined
-                              : `Blokir ${customer.nama}? Akunnya langsung keluar dan tidak bisa masuk lagi.`
+                              : `Block ${customer.nama}? They are logged out immediately and cannot log back in.`
                           }
                         >
-                          {customer.is_blocked ? "Buka blokir" : "Blokir"}
+                          {customer.is_blocked ? "Unblock" : "Block"}
                         </ActionButton>
                       </div>
                     </td>
@@ -125,20 +125,20 @@ export default async function CustomerPage() {
 
       <Card>
         <h2 className="mb-1 font-semibold text-ink">
-          Pesanan aktif yang belum diklaim <span className="font-normal text-muted">({belumDiklaim.length})</span>
+          Active orders not yet claimed <span className="font-normal text-muted">({belumDiklaim.length})</span>
         </h2>
         <p className="mb-3 text-sm text-muted">
-          Pesanan ini belum masuk ke akun customer mana pun. Buka halaman kelolanya untuk mengirim kode klaim.
+          These orders are not in any customer account yet. Open their manage page to send a claim code.
         </p>
         {belumDiklaim.length === 0 ? (
-          <p className="rounded-lg bg-paper p-3 text-sm text-muted">Semua pesanan aktif sudah diklaim.</p>
+          <p className="rounded-lg bg-paper p-3 text-sm text-muted">All active orders have been claimed.</p>
         ) : (
           <ul className="flex flex-wrap gap-2">
             {belumDiklaim.map((order) => (
               <li key={order.id}>
-                <Link href={`/admin/pesanan/${order.id}`} className={buttonClass("secondary", "xs")}>
+                <Link href={`/admin/orders/${order.id}`} className={buttonClass("secondary", "xs")}>
                   <span className="font-mono">{order.shopee_order_no}</span>
-                  {order.claim_code ? " · ada kode" : " · belum ada kode"}
+                  {order.claim_code ? " · has code" : " · no code yet"}
                 </Link>
               </li>
             ))}

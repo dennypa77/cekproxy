@@ -57,4 +57,4 @@ export function toBandwidthResponse(usage: BandwidthUsage, cachedAt: number): Ba
   };
 }
 
-export const BANDWIDTH_UNAVAILABLE = "Data bandwidth sedang tidak tersedia";
+export const BANDWIDTH_UNAVAILABLE = "Bandwidth data is currently unavailable";

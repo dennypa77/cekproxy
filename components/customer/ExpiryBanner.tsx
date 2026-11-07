@@ -1,6 +1,6 @@
-import { AlertIcon, ShopIcon, WhatsAppIcon } from "@/components/icons";
+import { AlertIcon, WhatsAppIcon } from "@/components/icons";
 import { buttonClass, cn } from "@/components/ui";
-import { SHOPEE_STORE_URL, waExtendLink } from "@/lib/links";
+import { waExtendLink } from "@/lib/links";
 
 export function ExpiryBanner({
   orderNo,
@@ -38,18 +38,18 @@ export function ExpiryBanner({
           <p className="font-display text-lg leading-tight font-extrabold tracking-tight uppercase sm:text-xl">
             {expired ? (
               <>
-                Masa aktif <span className="text-bad">sudah berakhir</span>
+                Your plan <span className="text-bad">has expired</span>
               </>
             ) : (
               <>
-                Proxy Anda akan expired <span className="text-brand-deep">dalam {daysLeft} hari</span>
+                Your proxy expires <span className="text-brand-deep">in {daysLeft} days</span>
               </>
             )}
           </p>
           <p className="mt-1 text-sm text-ink/80">
             {expired
-              ? `Proxy expired sejak ${expiresDateShort}. Perpanjang sekarang agar proxy bisa digunakan kembali. Halaman ini tersedia hingga ${graceEndsLabel}.`
-              : `Masa aktif berakhir pada ${expiresDateShort}. Perpanjang sebelum expired agar proxy tidak terputus.`}
+              ? `Your proxy has been expired since ${expiresDateShort}. Renew now to use it again. This page stays available until ${graceEndsLabel}.`
+              : `Your plan ends on ${expiresDateShort}. Renew before it expires so your proxy stays connected.`}
           </p>
         </div>
       </div>
@@ -60,19 +60,11 @@ export function ExpiryBanner({
           rel="noopener noreferrer"
           className={buttonClass("primary", "md")}
         >
-          <WhatsAppIcon className="size-4" /> Perpanjang langsung
-        </a>
-        <a
-          href={SHOPEE_STORE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonClass("secondary", "md")}
-        >
-          <ShopIcon className="size-4" /> Perpanjang via Shopee
+          <WhatsAppIcon className="size-4" /> Renew now
         </a>
       </div>
       <p className="mt-2 text-xs font-semibold text-ink/70">
-        Perpanjang langsung ke admin: bebas biaya admin, harga sama.
+        Renew directly with the admin: no service fee, same price.
       </p>
     </div>
   );

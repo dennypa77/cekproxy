@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { claimOrderAction, loginCustomerAction, registerCustomerAction } from "@/app/akun/actions";
+import { claimOrderAction, loginCustomerAction, registerCustomerAction } from "@/app/account/actions";
 import { ResultDetails } from "@/components/ResultDetails";
 import { Button, inputClass, labelClass } from "@/components/ui";
 import { useServerForm } from "@/components/useServerForm";
@@ -12,7 +12,7 @@ function WaField({ id = "wa_number" }: { id?: string }) {
   return (
     <div>
       <label className={labelClass} htmlFor={id}>
-        Nomor WhatsApp
+        WhatsApp number
       </label>
       <input
         id={id}
@@ -24,7 +24,7 @@ function WaField({ id = "wa_number" }: { id?: string }) {
         placeholder="0812-3456-7890"
         className={inputClass}
       />
-      <p className="mt-1 text-xs text-muted">Boleh ditulis 0812…, +62812…, atau 62812… — sama saja.</p>
+      <p className="mt-1 text-xs text-muted">You can write it as 0812…, +62812…, or 62812… — it's all the same.</p>
     </div>
   );
 }
@@ -38,7 +38,7 @@ export function RegisterForm({ next }: { next?: string }) {
 
       <div>
         <label className={labelClass} htmlFor="nama">
-          Nama
+          Name
         </label>
         <input id="nama" name="nama" required autoComplete="name" maxLength={100} className={inputClass} />
       </div>
@@ -59,11 +59,11 @@ export function RegisterForm({ next }: { next?: string }) {
             autoComplete="new-password"
             className={inputClass}
           />
-          <p className="mt-1 text-xs text-muted">Minimal 8 karakter.</p>
+          <p className="mt-1 text-xs text-muted">At least 8 characters.</p>
         </div>
         <div>
           <label className={labelClass} htmlFor="password_konfirmasi">
-            Ulangi password
+            Repeat password
           </label>
           <input
             id="password_konfirmasi"
@@ -77,14 +77,14 @@ export function RegisterForm({ next }: { next?: string }) {
       </div>
 
       <Button type="submit" loading={pending} className="w-full">
-        Buat akun
+        Create account
       </Button>
       <ResultDetails state={state} />
 
       <p className="text-center text-sm text-muted">
-        Sudah punya akun?{" "}
-        <Link href="/akun/masuk" className="font-semibold text-brand-deep hover:underline">
-          Masuk di sini
+        Already have an account?{" "}
+        <Link href="/account/login" className="font-semibold text-brand-deep hover:underline">
+          Log in here
         </Link>
       </p>
     </form>
@@ -115,17 +115,17 @@ export function LoginForm({ next }: { next?: string }) {
       </div>
 
       <Button type="submit" loading={pending} className="w-full">
-        Masuk
+        Log in
       </Button>
       <ResultDetails state={state} />
 
       <p className="text-center text-sm text-muted">
-        Belum punya akun?{" "}
-        <Link href="/akun/daftar" className="font-semibold text-brand-deep hover:underline">
-          Daftar dulu
+        Don't have an account yet?{" "}
+        <Link href="/account/register" className="font-semibold text-brand-deep hover:underline">
+          Sign up first
         </Link>
       </p>
-      <p className="text-center text-xs text-muted">Lupa password? Hubungi admin lewat WhatsApp.</p>
+      <p className="text-center text-xs text-muted">Forgot your password? Contact the admin on WhatsApp.</p>
     </form>
   );
 }
@@ -140,7 +140,7 @@ export function ClaimForm() {
     <form ref={formRef} onSubmit={onSubmit} className="space-y-4">
       <div>
         <label className={labelClass} htmlFor="kode">
-          Kode klaim dari admin
+          Claim code from the admin
         </label>
         <input
           id="kode"
@@ -154,12 +154,12 @@ export function ClaimForm() {
           className={`${inputClass} text-center font-mono text-lg tracking-widest uppercase`}
         />
         <p className="mt-1 text-xs text-muted">
-          Huruf besar/kecil dan tanda hubung tidak masalah — otomatis dirapikan.
+          Uppercase/lowercase and dashes don't matter — they're tidied up automatically.
         </p>
       </div>
 
       <Button type="submit" loading={pending} className="w-full">
-        Tambahkan pesanan
+        Add order
       </Button>
       <ResultDetails state={state} />
     </form>

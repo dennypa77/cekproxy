@@ -11,7 +11,7 @@ import { formatDateTime, maskSecret } from "@/lib/format";
 import { planDetail, planLabel } from "@/lib/plan-type";
 import { requireAdmin } from "@/lib/session";
 
-export const metadata = { title: "Edit Akun" };
+export const metadata = { title: "Edit Account" };
 export const maxDuration = 60;
 
 export default async function EditAccountPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,8 +24,8 @@ export default async function EditAccountPage({ params }: { params: Promise<{ id
 
   return (
     <div className="max-w-2xl space-y-4">
-      <Link href="/admin/akun" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
-        <ChevronLeftIcon className="size-4" /> Kembali ke pool akun
+      <Link href="/admin/account" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
+        <ChevronLeftIcon className="size-4" /> Back to account pool
       </Link>
 
       <Card>
@@ -33,12 +33,12 @@ export default async function EditAccountPage({ params }: { params: Promise<{ id
           <div>
             <h1 className="text-lg font-bold text-ink">{account.label}</h1>
             <p className="text-sm text-muted">
-              Dibuat {formatDateTime(account.created_at)} · <Badge>{account.status}</Badge>
+              Created {formatDateTime(account.created_at)} · <Badge>{account.status}</Badge>
             </p>
             <p className="mt-1 text-sm">
-              Pesanan:{" "}
+              Order:{" "}
               {order ? (
-                <Link href={`/admin/pesanan/${order.id}`} className="font-mono text-brand-deep hover:underline">
+                <Link href={`/admin/orders/${order.id}`} className="font-mono text-brand-deep hover:underline">
                   {order.shopee_order_no}
                 </Link>
               ) : (
@@ -46,7 +46,7 @@ export default async function EditAccountPage({ params }: { params: Promise<{ id
               )}
             </p>
             <p className="mt-1 text-sm">
-              Jenis: <b>{planLabel(account)}</b>
+              Type: <b>{planLabel(account)}</b>
               {planDetail(account) ? ` · ${planDetail(account)}` : ""}
             </p>
             <p className="mt-1 text-sm">
@@ -54,7 +54,7 @@ export default async function EditAccountPage({ params }: { params: Promise<{ id
             </p>
           </div>
           <ActionButton action={checkAccountAction.bind(null, account.id)} size="sm">
-            Cek ulang API key
+            Recheck API key
           </ActionButton>
         </div>
 

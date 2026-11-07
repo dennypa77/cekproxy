@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { logoutCustomerAction } from "@/app/akun/actions";
+import { logoutCustomerAction } from "@/app/account/actions";
 import { LogoTab } from "@/components/Brand";
 import { Decor } from "@/components/Decor";
 import { UserIcon } from "@/components/icons";
@@ -11,10 +11,17 @@ export function AccountShell({
   nama,
   children,
   action,
+  judul = "Your",
+  aksen = "orders",
+  eyebrow = "My account",
 }: {
   nama?: string;
   children: ReactNode;
   action?: ReactNode;
+  /** Judul halaman; kata kedua diberi warna aksen. */
+  judul?: string;
+  aksen?: string;
+  eyebrow?: string;
 }) {
   return (
     <main className="relative mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 pb-10">
@@ -22,7 +29,7 @@ export function AccountShell({
 
       <div className="flex items-start justify-between">
         <Link href="/" className="mt-6 inline-flex items-center gap-1 text-sm font-bold text-muted hover:text-ink">
-          ← Halaman utama
+          ← Home
         </Link>
         <LogoTab size="sm" />
       </div>
@@ -30,9 +37,9 @@ export function AccountShell({
       {nama && (
         <header className="mt-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold tracking-wider text-muted uppercase">Akun saya</p>
+            <p className="text-xs font-bold tracking-wider text-muted uppercase">{eyebrow}</p>
             <h1 className="font-display text-2xl leading-tight font-extrabold tracking-tight text-ink uppercase sm:text-3xl">
-              Pesanan <span className="text-brand">Anda</span>
+              {judul} <span className="text-brand">{aksen}</span>
             </h1>
             <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted">
               <UserIcon className="size-4" /> {nama}
@@ -42,7 +49,7 @@ export function AccountShell({
             {action}
             <form action={logoutCustomerAction}>
               <button type="submit" className={buttonClass("secondary", "sm")}>
-                Keluar
+                Log out
               </button>
             </form>
           </div>

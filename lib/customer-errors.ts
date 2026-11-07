@@ -12,14 +12,14 @@ export type CustomerOperation =
   | "credentials";
 
 const DEFAULTS: Record<CustomerOperation, string> = {
-  bandwidth: "Data bandwidth sedang tidak tersedia.",
-  proxies: "Daftar proxy belum bisa dimuat. Silakan coba lagi beberapa saat lagi.",
-  countries: "Daftar negara belum bisa dimuat. Anda tetap bisa memilih negara Acak.",
-  replace: "Replace IP gagal diproses. Kuota Anda tidak berkurang. Silakan coba lagi.",
-  whitelist_list: "Daftar IP whitelist belum bisa dimuat. Silakan coba lagi.",
-  whitelist_add: "IP belum bisa ditambahkan. Silakan coba lagi.",
-  whitelist_delete: "IP belum bisa dihapus. Silakan coba lagi.",
-  credentials: "Username & password belum bisa diubah. Silakan coba lagi.",
+  bandwidth: "Bandwidth data is currently unavailable.",
+  proxies: "Could not load the proxy list. Please try again in a moment.",
+  countries: "Could not load the country list. You can still choose Random.",
+  replace: "Could not replace the IP. Your quota was not used. Please try again.",
+  whitelist_list: "Could not load the whitelist. Please try again.",
+  whitelist_add: "Could not add the IP. Please try again.",
+  whitelist_delete: "Could not remove the IP. Please try again.",
+  credentials: "Could not change your username & password. Please try again.",
 };
 
 /**
@@ -34,30 +34,30 @@ export function customerErrorMessage(error: unknown, operation: CustomerOperatio
 
   switch (error.kind) {
     case "auth":
-      return "Layanan proxy untuk pesanan ini sedang bermasalah. Silakan hubungi admin via WhatsApp.";
+      return "The proxy service for this order is having issues. Please contact us on WhatsApp.";
     case "rate_limited":
-      return "Server sedang sibuk. Silakan coba lagi dalam 1 menit.";
+      return "The server is busy. Please try again in 1 minute.";
     case "network":
     case "timeout":
     case "upstream":
-      return "Server proxy sedang lambat atau tidak dapat dihubungi. Silakan coba lagi beberapa saat lagi.";
+      return "The proxy server is slow or unreachable. Please try again in a moment.";
     case "bad_request": {
       if (operation === "credentials") {
         const raw = `${error.message} ${JSON.stringify(error.detail ?? "")}`.toLowerCase();
         if (raw.includes("already") || raw.includes("taken") || raw.includes("unique")) {
-          return "Username tersebut sudah dipakai. Coba username lain.";
+          return "That username is already taken. Try another one.";
         }
-        return "Username/password ditolak. Gunakan 8–32 karakter huruf dan angka saja.";
+        return "Username/password rejected. Use 8-32 letters and numbers only.";
       }
       if (operation === "whitelist_add") {
         const raw = `${error.message} ${JSON.stringify(error.detail ?? "")}`.toLowerCase();
         if (raw.includes("already") || raw.includes("exist") || raw.includes("unique")) {
-          return "IP ini sudah ada di daftar whitelist.";
+          return "This IP is already in the whitelist.";
         }
         if (raw.includes("max") || raw.includes("limit")) {
-          return "Batas jumlah IP whitelist sudah tercapai. Hapus salah satu IP terlebih dahulu.";
+          return "The whitelist is full. Remove an IP first.";
         }
-        return "IP tidak dapat ditambahkan. Pastikan IP yang dimasukkan benar.";
+        return "Could not add the IP. Make sure the IP you entered is correct.";
       }
       return DEFAULTS[operation];
     }

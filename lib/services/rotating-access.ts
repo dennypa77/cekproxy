@@ -22,7 +22,7 @@ export async function authorizeRotating(request: Request): Promise<{ ok: true; o
     if (!(await hitRateLimit("api", ip))) {
       return { ok: false, denied: { status: 429, error: RATE_LIMIT_MESSAGE, retryAfter: 60 } };
     }
-    return { ok: false, denied: { status: 401, error: "Kunci API tidak valid." } };
+    return { ok: false, denied: { status: 401, error: "Invalid API key." } };
   };
 
   if (!key || !ROTATING_KEY_PATTERN.test(key)) return rejectKey();
@@ -30,10 +30,10 @@ export async function authorizeRotating(request: Request): Promise<{ ok: true; o
   const order = await db().getOrderByApiKey(key);
   if (!order || order.order_type !== "rotating") return rejectKey();
   if (!order.is_active) {
-    return { ok: false, denied: { status: 403, error: "Pesanan sedang tidak aktif. Hubungi admin." } };
+    return { ok: false, denied: { status: 403, error: "Order is not active. Contact us on WhatsApp." } };
   }
   if (new Date(order.expires_at).getTime() <= Date.now()) {
-    return { ok: false, denied: { status: 403, error: "Masa aktif sudah berakhir. Silakan perpanjang." } };
+    return { ok: false, denied: { status: 403, error: "Validity has ended. Please renew." } };
   }
 
   const allowed = await hitCustomRateLimit(`rotating:${order.id}`, order.rate_per_minute, 60);
@@ -42,7 +42,7 @@ export async function authorizeRotating(request: Request): Promise<{ ok: true; o
       ok: false,
       denied: {
         status: 429,
-        error: `Batas ${order.rate_per_minute} permintaan per menit terlampaui. Coba lagi sebentar lagi.`,
+        error: `Rate limit of ${order.rate_per_minute} requests per minute exceeded. Try again shortly.`,
         retryAfter: 60,
       },
     };

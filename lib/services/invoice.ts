@@ -1,8 +1,10 @@
 import "server-only";
-import { db, type Customer, type Invoice } from "../db";
+import { db, type Customer, type Invoice, type WebshareAccount } from "../db";
 import { notifyInvoice, notifyKedaluwarsa, type InvoiceRingkas, type PeristiwaDiscord } from "../discord";
 import { METODE_LABEL, type MetodeBayar } from "../payment";
-import { findPaket, MASA_AKTIF_HARI } from "../pricing";
+import { INVOICE_AKTIF } from "../invoice-status";
+import { proxyKind } from "../plan-type";
+import { findPaket, MASA_AKTIF_HARI, SEMUA_PAKET } from "../pricing";
 
 /** Invoice yang belum dibayar hangus setelah ini. */
 export const INVOICE_TTL_JAM = 24;
@@ -99,4 +101,73 @@ export function paketUntukInvoice(sku: string): PaketUntukInvoice | null {
 export function sisaWaktuBayar(invoice: Invoice, sekarang = Date.now()): number {
   const sisa = new Date(invoice.expires_at).getTime() - sekarang;
   return sisa > 0 ? Math.floor(sisa / 1000) : 0;
+}
+
+// ---------------------------------------------------------------------------
+// Data siap render untuk halaman customer
+// ---------------------------------------------------------------------------
+
+/**
+ * Tebak paket mana yang paling mirip dengan pesanan yang sedang berjalan,
+ * supaya tombol perpanjang sudah terisi pilihan yang masuk akal.
+ *
+ * Hanya tebakan untuk nilai awal dropdown — harga tetap dibaca ulang dari
+ * katalog di server saat invoice dibuat.
+ */
+export function tebakSku(account: WebshareAccount | null | undefined): string | null {
+  if (!account) return null;
+  const kind = proxyKind(account.proxy_subtype);
+  const kategori = kind === "residential" ? "residential" : kind === "unknown" ? null : "datacenter";
+  const ip = account.proxy_count;
+  const gb = account.bandwidth_limit_gb;
+  if (!kategori || !ip) return null;
+
+  const kandidat = SEMUA_PAKET.filter((paket) => paket.kategoriId === kategori);
+  if (kandidat.length === 0) return null;
+
+  // Jarak relatif, supaya selisih IP dan bandwidth sama-sama dihitung adil.
+  const skor = (paket: (typeof kandidat)[number]) =>
+    Math.abs(paket.ip - ip) / ip + (gb ? Math.abs(paket.bandwidthGb - gb) / gb : 0);
+  return kandidat.reduce((best, paket) => (skor(paket) < skor(best) ? paket : best)).sku;
+}
+
+export interface PerpanjangRow {
+  orderId: string;
+  orderNo: string;
+  expiresAt: string;
+  /** Pesanan rotating tidak dijual lewat checkout mandiri. */
+  rotating: boolean;
+  skuTebakan: string | null;
+  /** Invoice perpanjangan yang masih berjalan untuk pesanan ini. */
+  invoiceBerjalan: string | null;
+}
+
+/** Pesanan milik customer yang bisa diperpanjang lewat checkout. */
+export async function listPerpanjang(customerId: string): Promise<PerpanjangRow[]> {
+  const repo = db();
+  const [orders, invoices] = await Promise.all([
+    repo.listOrdersByCustomer(customerId),
+    repo.listInvoicesByCustomer(customerId),
+  ]);
+  if (orders.length === 0) return [];
+
+  const accounts = await repo.listAccounts();
+  const accountById = new Map(accounts.map((a) => [a.id, a]));
+  const berjalan = new Map(
+    invoices
+      .filter((inv) => inv.extend_order_id && INVOICE_AKTIF.includes(inv.status))
+      .map((inv) => [inv.extend_order_id as string, inv.invoice_no]),
+  );
+
+  return orders
+    .filter((order) => order.is_active)
+    .sort((a, b) => a.expires_at.localeCompare(b.expires_at))
+    .map((order) => ({
+      orderId: order.id,
+      orderNo: order.shopee_order_no,
+      expiresAt: order.expires_at,
+      rotating: order.order_type === "rotating",
+      skuTebakan: tebakSku(order.account_id ? accountById.get(order.account_id) : null),
+      invoiceBerjalan: berjalan.get(order.id) ?? null,
+    }));
 }

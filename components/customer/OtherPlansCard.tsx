@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ServerIcon, WhatsAppIcon } from "@/components/icons";
 import { buttonClass, Card } from "@/components/ui";
 import { waOrderGeneralLink } from "@/lib/links";
-import { KATEGORI_HARGA, rupiah } from "@/lib/pricing";
+import { KATEGORI_HARGA, usd } from "@/lib/pricing";
 
 /** Harga termurah per kategori, supaya angkanya ikut kalau daftar harga diubah. */
 const RINGKASAN = KATEGORI_HARGA.map((kategori) => ({
@@ -15,20 +15,20 @@ export function OtherPlansCard() {
   return (
     <Card>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-ink text-paper">
           <ServerIcon className="size-5" />
         </span>
 
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-            Butuh <span className="text-brand">paket lain?</span>
+            Need <span className="text-brand">another plan?</span>
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Tambah IP, naikkan bandwidth, atau coba jenis proxy lain.{" "}
+            Add IPs, increase bandwidth, or try a different proxy type.{" "}
             {RINGKASAN.map((item, index) => (
               <span key={item.nama}>
                 {index > 0 && " · "}
-                {item.nama} mulai <b className="text-ink">{rupiah(item.mulai)}</b>
+                {item.nama} from <b className="text-ink">{usd(item.mulai)}</b>
               </span>
             ))}
             .
@@ -36,8 +36,8 @@ export function OtherPlansCard() {
         </div>
 
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-          <Link href="/#harga" className={buttonClass("primary", "sm")}>
-            Lihat semua paket
+          <Link href="/account/buy" className={buttonClass("primary", "sm")}>
+            See all plans
           </Link>
           <a
             href={waOrderGeneralLink()}
@@ -45,7 +45,7 @@ export function OtherPlansCard() {
             rel="noopener noreferrer"
             className={buttonClass("secondary", "sm")}
           >
-            <WhatsAppIcon className="size-4" /> Tanya admin
+            <WhatsAppIcon className="size-4" /> Ask the admin
           </a>
         </div>
       </div>

@@ -15,13 +15,13 @@ export function AddAccountForm() {
           <label className={labelClass} htmlFor="acc-label">
             Label
           </label>
-          <input id="acc-label" name="label" required maxLength={100} placeholder="mis. Akun 01" className={inputClass} />
+          <input id="acc-label" name="label" required maxLength={100} placeholder="e.g. Account 01" className={inputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="acc-email">
-            Email (opsional)
+            Email (optional)
           </label>
-          <input id="acc-email" name="email" type="email" placeholder="otomatis dari API jika kosong" className={inputClass} />
+          <input id="acc-email" name="email" type="email" placeholder="auto-filled from API if empty" className={inputClass} />
         </div>
       </div>
       <div>
@@ -32,12 +32,12 @@ export function AddAccountForm() {
       </div>
       <div>
         <label className={labelClass} htmlFor="acc-note">
-          Catatan (opsional)
+          Notes (optional)
         </label>
         <input id="acc-note" name="catatan" maxLength={1000} className={inputClass} />
       </div>
       <Button type="submit" loading={pending}>
-        {pending ? "Memvalidasi…" : "Validasi & simpan"}
+        {pending ? "Validating…" : "Validate & save"}
       </Button>
       <ResultDetails state={state} />
     </form>
@@ -54,7 +54,7 @@ export function BulkImportForm() {
     <form ref={formRef} onSubmit={onSubmit} className="space-y-3">
       <div>
         <label className={labelClass} htmlFor="bulk-keys">
-          API key (satu per baris, maks. 30)
+          API keys (one per line, max 30)
         </label>
         <textarea
           id="bulk-keys"
@@ -67,7 +67,7 @@ export function BulkImportForm() {
         />
       </div>
       <Button type="submit" loading={pending}>
-        {pending ? "Mengimport…" : "Import"}
+        {pending ? "Importing…" : "Import"}
       </Button>
       <ResultDetails state={state} />
     </form>

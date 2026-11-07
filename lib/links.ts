@@ -1,6 +1,5 @@
-export const SHOPEE_STORE_URL = "https://shopee.co.id/dmdigital2";
-/** Pesan langsung ke admin: harga sama, tanpa biaya admin marketplace. */
-export const BEBAS_BIAYA_ADMIN = "Bebas biaya admin";
+/** No marketplace service fee when you order directly. */
+export const BEBAS_BIAYA_ADMIN = "No service fee";
 export const WHATSAPP_NUMBER = "62895325425299";
 
 export function whatsappLink(text: string): string {
@@ -9,40 +8,40 @@ export function whatsappLink(text: string): string {
 
 export function waExtendLink(orderNo: string, expiresLabel: string): string {
   return whatsappLink(
-    `Halo dmproxy, saya ingin perpanjang proxy (pesan langsung).\n\nNomor pesanan: ${orderNo}\nExpired: ${expiresLabel}\n\nMohon info cara bayarnya. Terima kasih.`,
+    `Hi dmproxy, I'd like to renew my proxy.\n\nOrder number: ${orderNo}\nExpires: ${expiresLabel}\n\nPlease let me know how to pay. Thank you.`,
   );
 }
 
-/** Pesan paket baru langsung ke admin lewat WhatsApp. */
+/** Order a new package directly via WhatsApp. */
 export function waOrderLink(paket: { kategori: string; ip: number; bandwidthGb: number; harga: string }): string {
   return whatsappLink(
-    `Halo dmproxy, saya mau pesan langsung.\n\nPaket: ${paket.kategori} ${paket.ip} IP / ${paket.bandwidthGb} GB\nHarga: ${paket.harga}\n\nMohon info cara bayarnya. Terima kasih.`,
+    `Hi dmproxy, I'd like to place an order.\n\nPackage: ${paket.kategori} ${paket.ip} IP / ${paket.bandwidthGb} GB\nPrice: ${paket.harga}\n\nPlease let me know how to pay. Thank you.`,
   );
 }
 
-/** Tanya paket tanpa menyebut paket tertentu. */
+/** Ask about packages without naming a specific one. */
 export function waOrderGeneralLink(): string {
   return whatsappLink(
-    "Halo dmproxy, saya mau pesan proxy langsung. Mohon dibantu pilihan paketnya. Terima kasih.",
+    "Hi dmproxy, I'd like to order a proxy. Could you help me pick a package? Thank you.",
   );
 }
 
 export function waQuotaLink(orderNo: string): string {
   return whatsappLink(
-    `Halo dmproxy, kuota replace IP untuk pesanan ${orderNo} sudah habis. Mohon bantuannya.`,
+    `Hi dmproxy, the IP replace quota for order ${orderNo} has run out. Could you help?`,
   );
 }
 
 export function waHelpLink(orderNo?: string): string {
   return whatsappLink(
     orderNo
-      ? `Halo dmproxy, saya butuh bantuan untuk pesanan proxy ${orderNo}.`
-      : "Halo dmproxy, saya butuh bantuan terkait pesanan proxy saya.",
+      ? `Hi dmproxy, I need help with proxy order ${orderNo}.`
+      : "Hi dmproxy, I need help with my proxy order.",
   );
 }
 
 export function customerPath(orderNo: string): string {
-  return `/pesanan/${encodeURIComponent(orderNo)}`;
+  return `/orders/${encodeURIComponent(orderNo)}`;
 }
 
 /** Chat ke nomor customer (nomor kanonik 62…, lihat lib/wa-number.ts). */
@@ -52,25 +51,25 @@ export function waTo(number: string, text: string): string {
 
 export function waClaimCodeMessage(orderNo: string, code: string, dashboardUrl: string): string {
   return [
-    "Halo! Pesanan proxy Anda sudah siap.",
+    "Hi! Your proxy order is ready.",
     "",
-    `Nomor pesanan: ${orderNo}`,
-    `Kode klaim: ${code}`,
+    `Order number: ${orderNo}`,
+    `Claim code: ${code}`,
     "",
-    `Buka ${dashboardUrl}, daftar/masuk dengan nomor WhatsApp ini, lalu masukkan kode di atas untuk melihat pesanan Anda.`,
+    `Open ${dashboardUrl}, sign up / log in with this WhatsApp number, then enter the code above to see your order.`,
     "",
-    "Terima kasih — dmproxy",
+    "Thank you — dmproxy",
   ].join("\n");
 }
 
 export function waExpiryMessage(orderNo: string, expiresLabel: string, daysLeft: number, dashboardUrl: string): string {
-  const kapan = daysLeft <= 0 ? "hari ini" : `${daysLeft} hari lagi`;
+  const kapan = daysLeft <= 0 ? "today" : `in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`;
   return [
-    `Halo! Proxy Anda (${orderNo}) akan berakhir ${kapan}, pada ${expiresLabel}.`,
+    `Hi! Your proxy (${orderNo}) will expire ${kapan}, on ${expiresLabel}.`,
     "",
-    "Balas chat ini kalau mau perpanjang — harganya sama, bebas biaya admin.",
-    `Cek detailnya di ${dashboardUrl}`,
+    "Reply to this chat if you'd like to renew — same price, no service fee.",
+    `See the details at ${dashboardUrl}`,
     "",
-    "Balas BERHENTI kalau tidak ingin menerima pengingat lagi.",
+    "Reply STOP if you no longer want these reminders.",
   ].join("\n");
 }

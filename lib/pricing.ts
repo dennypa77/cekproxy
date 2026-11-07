@@ -94,9 +94,15 @@ export function usd(hargaRp: number): string {
   return `$${Math.max(1, Math.round(hargaRp / IDR_PER_USD))}`;
 }
 
-/** Harga per IP dalam USD, untuk menunjukkan paket mana yang paling hemat. */
+/**
+ * Harga per IP dalam USD, untuk menunjukkan paket mana yang paling hemat.
+ *
+ * Dibulatkan ke sen, bukan ke dolar penuh: hampir semua paket ada di bawah
+ * $1 per IP, jadi pembulatan ke dolar membuat semua baris terlihat sama.
+ */
 export function usdPerIp(paket: Paket): string {
-  return usd(paket.hargaRp / paket.ip);
+  const nilai = paket.hargaRp / paket.ip / IDR_PER_USD;
+  return nilai >= 10 ? `$${Math.round(nilai)}` : `$${nilai.toFixed(2)}`;
 }
 
 /** Harga per IP (Rupiah), untuk menunjukkan paket mana yang paling hemat. */

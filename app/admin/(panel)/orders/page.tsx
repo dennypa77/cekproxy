@@ -10,13 +10,13 @@ import { normalizeOrderNo } from "@/lib/order-no";
 import { matchesFilter, ORDER_FILTERS, orderState, type OrderFilter } from "@/lib/order-status";
 import { requireAdmin } from "@/lib/session";
 
-export const metadata = { title: "Pesanan" };
+export const metadata = { title: "Orders" };
 
 const STATE_BADGE = {
-  aktif: { tone: "green", label: "Aktif" },
-  akan_expired: { tone: "yellow", label: "Akan expired" },
+  aktif: { tone: "green", label: "Active" },
+  akan_expired: { tone: "yellow", label: "Expiring soon" },
   expired: { tone: "red", label: "Expired" },
-  nonaktif: { tone: "gray", label: "Nonaktif" },
+  nonaktif: { tone: "gray", label: "Inactive" },
 } as const;
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ q?: string; filter?: string }> }) {
@@ -55,15 +55,15 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold text-ink">Pesanan</h1>
+      <h1 className="text-xl font-bold text-ink">Orders</h1>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
-          <h2 className="mb-3 font-semibold text-ink">Tambah pesanan statis (1 akun)</h2>
+          <h2 className="mb-3 font-semibold text-ink">Add static order (1 account)</h2>
           <AddOrderForm accounts={availableAccounts} defaultDate={jakartaDateInput(30)} />
         </Card>
         <Card>
-          <h2 className="mb-3 font-semibold text-ink">Tambah pesanan rotating (pool)</h2>
+          <h2 className="mb-3 font-semibold text-ink">Add rotating order (pool)</h2>
           <AddRotatingOrderForm defaultDate={jakartaDateInput(30)} />
         </Card>
       </div>
@@ -73,12 +73,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <input
             name="q"
             defaultValue={q}
-            placeholder="Cari nomor pesanan, nama, akun, catatan…"
+            placeholder="Search order number, name, account, notes…"
             className={inputClass}
           />
           <input type="hidden" name="filter" value={filter} />
           <Button type="submit" variant="secondary">
-            <SearchIcon className="size-4" /> Cari
+            <SearchIcon className="size-4" /> Search
           </Button>
         </form>
 
@@ -86,12 +86,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           {ORDER_FILTERS.map((option) => (
             <Link
               key={option.value}
-              href={`/admin/pesanan?filter=${option.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+              href={`/admin/orders?filter=${option.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
               className={cn(
                 "rounded-full border-2 px-3 py-1 text-sm font-bold whitespace-nowrap transition",
                 filter === option.value
-                  ? "border-ink bg-ink text-white"
-                  : "border-ink/20 bg-white hover:border-ink",
+                  ? "border-ink bg-ink text-paper"
+                  : "border-ink/20 bg-surface hover:border-ink",
               )}
             >
               {option.label}
@@ -100,20 +100,20 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         </div>
 
         {filtered.length === 0 ? (
-          <p className="rounded-lg bg-paper p-3 text-sm text-muted">Tidak ada pesanan yang cocok.</p>
+          <p className="rounded-lg bg-paper p-3 text-sm text-muted">No matching orders.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[980px] text-left text-sm">
               <thead className="border-b border-line text-xs text-muted uppercase">
                 <tr>
-                  <th className="py-2 pr-3 font-medium">No. Pesanan</th>
+                  <th className="py-2 pr-3 font-medium">Order No.</th>
                   <th className="py-2 pr-3 font-medium">Customer</th>
-                  <th className="py-2 pr-3 font-medium">Akun</th>
-                  <th className="py-2 pr-3 font-medium">Akun customer</th>
-                  <th className="py-2 pr-3 font-medium">Expired</th>
-                  <th className="py-2 pr-3 font-medium">Replace / Batas</th>
+                  <th className="py-2 pr-3 font-medium">Account</th>
+                  <th className="py-2 pr-3 font-medium">Customer account</th>
+                  <th className="py-2 pr-3 font-medium">Expires</th>
+                  <th className="py-2 pr-3 font-medium">Replace / Limit</th>
                   <th className="py-2 pr-3 font-medium">Status</th>
-                  <th className="py-2 text-right font-medium">Aksi</th>
+                  <th className="py-2 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -126,7 +126,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                   return (
                     <tr key={order.id}>
                       <td className="py-2.5 pr-3 font-mono">
-                        <Link href={`/admin/pesanan/${order.id}`} className="text-brand-deep hover:underline">
+                        <Link href={`/admin/orders/${order.id}`} className="text-brand-deep hover:underline">
                           {order.shopee_order_no}
                         </Link>
                         {rotating && (
@@ -138,31 +138,31 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                       <td className="py-2.5 pr-3">{order.nama_customer ?? "-"}</td>
                       <td className="py-2.5 pr-3">
                         {rotating ? (
-                          <span className="text-muted">Pool rotating</span>
+                          <span className="text-muted">Rotating pool</span>
                         ) : account ? (
                           account.label
                         ) : (
-                          <span className="text-bad">Belum ditautkan</span>
+                          <span className="text-bad">Not linked</span>
                         )}
                       </td>
                       <td className="py-2.5 pr-3">
                         {pemilik ? (
                           <span className="text-ink">{pemilik.nama}</span>
                         ) : order.claim_code ? (
-                          <Badge tone="yellow">kode siap</Badge>
+                          <Badge tone="yellow">code ready</Badge>
                         ) : (
-                          <Badge>belum diklaim</Badge>
+                          <Badge>not claimed</Badge>
                         )}
                       </td>
                       <td className="py-2.5 pr-3 whitespace-nowrap">
                         {formatDateTime(order.expires_at)}
                         {state !== "expired" && state !== "nonaktif" && (
-                          <span className="block text-xs text-muted">{daysLeft(order.expires_at, now)} hari lagi</span>
+                          <span className="block text-xs text-muted">{daysLeft(order.expires_at, now)} days left</span>
                         )}
                       </td>
                       <td className="py-2.5 pr-3">
                         {rotating ? (
-                          <span className="text-muted">{order.rate_per_minute}/menit</span>
+                          <span className="text-muted">{order.rate_per_minute}/min</span>
                         ) : (
                           `${order.replace_used} / ${order.replace_quota}`
                         )}
@@ -172,11 +172,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                       </td>
                       <td className="py-2.5">
                         <div className="flex justify-end gap-1.5">
-                          <Link href={`/admin/pesanan/${order.id}`} className={buttonClass("secondary", "xs")}>
-                            Kelola
+                          <Link href={`/admin/orders/${order.id}`} className={buttonClass("secondary", "xs")}>
+                            Manage
                           </Link>
                           <a href={customerPath(order.shopee_order_no)} target="_blank" className={buttonClass("ghost", "xs")}>
-                            Halaman customer ↗
+                            Customer page ↗
                           </a>
                         </div>
                       </td>

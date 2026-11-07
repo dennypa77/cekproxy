@@ -1,0 +1,69 @@
+An antidetect browser lets you run many separate browser profiles, each with its own fingerprint, cookies, and — crucially — its own proxy. It's the standard setup for anyone managing multiple accounts, because it keeps each identity isolated so one ban doesn't take down the rest.
+
+But the whole thing only works if the proxy is configured correctly. This guide walks through adding a proxy to the three most popular antidetect browsers — **AdsPower**, **GoLogin**, and **Dolphin Anty** — plus how to test it and the mistakes that get profiles flagged.
+
+## Before you start: what you need from your proxy
+
+Whichever tool you use, you'll enter the same handful of details, so have them ready:
+
+- **Protocol** — usually `HTTP(S)` or `SOCKS5`. Most antidetect browsers support both; HTTP is the common default.
+- **Host / IP** — the proxy server address.
+- **Port** — the number after the host.
+- **Username and password** — for authenticated proxies (most are).
+
+A proxy is usually handed to you as `host:port:username:password`. Keep that line handy.
+
+> For multi-accounting, use one proxy per profile. Residential IPs are the safer choice on strict platforms — see [datacenter vs residential proxies](/blog/datacenter-vs-residential-proxies) if you're unsure which to buy.
+
+## AdsPower
+
+1. Open AdsPower and click **New Profile**.
+2. In the profile setup, find the **Proxy** section and set **Proxy Type** to `HTTP` or `SOCKS5` to match your proxy.
+3. Paste the **host**, **port**, **username**, and **password** into their fields. If you have the single-line format, AdsPower also accepts pasting `host:port:user:pass` into the proxy box in some versions.
+4. Click **Check Proxy / Test**. AdsPower will show the detected IP and country.
+5. Save the profile and launch it.
+
+## GoLogin
+
+1. Create a new profile (**Add profile**).
+2. Open the **Proxy** tab for that profile.
+3. Choose **Your own proxy** (rather than the built-in pool), then select the protocol: `HTTP`, `SOCKS4`, or `SOCKS5`.
+4. Enter **host**, **port**, **username**, and **password**.
+5. Click **Check proxy** — GoLogin reports the IP, country, and connection status.
+6. Save and run the profile.
+
+## Dolphin Anty
+
+1. Go to **Proxies** in the sidebar and click **Create** (or add the proxy directly while creating a profile).
+2. Pick the type: `HTTP`, `SOCKS5`, etc.
+3. Fill in **host**, **port**, **login**, and **password**. Dolphin Anty also supports pasting the full `host:port:user:pass` string, which auto-fills the fields.
+4. Use **Check** to confirm the proxy is live and see its IP.
+5. Attach the proxy to a profile and launch.
+
+## Always verify the proxy is actually working
+
+A green "connected" status isn't proof. After launching the profile, open a what-is-my-ip page *inside that browser profile* and confirm the IP matches the proxy's — not your real one.
+
+You can use our [free IP checker](/tools/what-is-my-ip) for this: load it in the profile and check that the address and country are what you expect. If it shows your home IP, the proxy isn't being applied and you should stop before logging into anything.
+
+Two extra checks worth doing:
+
+- **DNS / WebRTC leaks.** A misconfigured profile can leak your real IP through WebRTC even when the proxy is set. Most antidetect browsers have a WebRTC setting — set it to match the proxy (often "Altered" or "Proxy") rather than "Real."
+- **Timezone and locale.** Make the profile's timezone and language line up with the proxy's country. A US IP with a Jakarta timezone is an obvious mismatch.
+
+## Common mistakes that get profiles flagged
+
+- **Reusing one proxy for many profiles.** This links the accounts together. One proxy per identity.
+- **Mixing proxy types with the account's history.** Switching an account from a residential IP to a datacenter IP (or jumping countries) looks suspicious. Keep it consistent.
+- **Ignoring leaks.** If WebRTC or DNS exposes your real IP, the fingerprint work is wasted.
+- **Rotating a logged-in session.** For a stable account, use one sticky IP. Rotation is for scraping, not for a social login — see [what a rotating proxy API is](/blog/what-is-a-rotating-proxy-api) for when rotation actually helps.
+- **Cheaping out on strict platforms.** If the target blocks datacenter ranges, no browser setting will save a datacenter IP. Use residential.
+
+## Recap
+
+1. Get your proxy details in `host:port:user:pass` form.
+2. Add them to the profile's proxy section in AdsPower, GoLogin, or Dolphin Anty, matching the protocol.
+3. Launch the profile and **verify the IP from inside it** — don't trust the status light alone.
+4. Fix leaks, match timezone/locale, and keep one proxy per identity.
+
+Need proxies built for antidetect profiles? [Browse residential plans](/proxy-residential) for strict platforms or [datacenter plans](/proxy-datacenter) for tolerant ones, and [check your IP](/tools/what-is-my-ip) once you're set up.

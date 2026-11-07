@@ -1,122 +1,81 @@
-import type { ReactNode } from "react";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { WhatsAppIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui";
 import { waHelpLink } from "@/lib/links";
 import { MASA_AKTIF_HARI } from "@/lib/pricing";
 
-const FAQ: { tanya: string; jawab: ReactNode }[] = [
+/** Plain-text FAQ so the same content powers both the UI and FAQPage JSON-LD. */
+export const FAQ_ITEMS: { q: string; a: string }[] = [
   {
-    tanya: "Apa bedanya proxy datacenter dan residential?",
-    jawab: (
-      <>
-        Datacenter memakai IP milik pusat data: lebih cepat dan lebih murah per IP, cocok kalau Anda butuh banyak IP
-        sekaligus. Residential memakai IP dari jaringan rumahan sehingga terlihat seperti pengguna biasa, lebih cocok
-        untuk situs yang ketat. Jumlah IP-nya lebih sedikit dan harganya lebih tinggi per IP.
-      </>
-    ),
+    q: "What's the difference between datacenter and residential proxies?",
+    a: "Datacenter proxies use IPs from data centers: faster and cheaper per IP, ideal when you need many IPs at once. Residential proxies use IPs from real home networks, so you look like an ordinary user — a better fit for strict sites. They come in smaller counts and cost more per IP.",
   },
   {
-    tanya: "Berapa lama masa aktifnya?",
-    jawab: (
-      <>
-        {MASA_AKTIF_HARI} hari sejak proxy diaktifkan. Sisa harinya bisa Anda lihat kapan saja di halaman{" "}
-        <a href="#cek-pesanan" className="font-semibold text-brand-deep hover:underline">
-          Cek Pesanan
-        </a>
-        . Mendekati habis, kami ingatkan lewat chat Shopee dan Anda bisa langsung perpanjang.
-      </>
-    ),
+    q: "How long is each plan active?",
+    a: `${MASA_AKTIF_HARI} days from the moment your proxies are activated. You can check the remaining days anytime from your dashboard, and we'll remind you over WhatsApp as it nears expiry so you can renew in one tap.`,
   },
   {
-    tanya: "Bagaimana cara memakai proxinya?",
-    jawab: (
-      <>
-        Setelah pesanan aktif, buka halaman Cek Pesanan dengan nomor pesanan Shopee Anda. Di sana ada daftar IP lengkap
-        dengan port, username, dan password, bisa disalin satu per satu atau diunduh sebagai file .txt dalam tiga
-        format. Tinggal dimasukkan ke browser antideteksi, aplikasi, atau tools yang Anda pakai.
-      </>
-    ),
+    q: "How do I use the proxies?",
+    a: "Once your order is active, open it with your order number. You'll get the full IP list with host, port, username and password — copy them one by one or download a .txt file in three formats. Just drop them into your antidetect browser, app, or any tool you use.",
   },
   {
-    tanya: "Kalau ada IP yang mati atau terblokir, bisa diganti?",
-    jawab: (
-      <>
-        Bisa. Setiap pesanan punya kuota ganti IP (replace) yang bisa dipakai sendiri lewat dashboard, tanpa menunggu
-        admin. Saat mengganti, Anda juga boleh memilih negara tujuan selama stoknya tersedia. Kalau kuotanya habis,
-        hubungi kami lewat WhatsApp.
-      </>
-    ),
+    q: "Can I replace an IP that dies or gets blocked?",
+    a: "Yes. Every order comes with a replace quota you can use yourself from the dashboard, no waiting on support. When replacing, you can also choose the destination country while stock lasts. If your quota runs out, message us on WhatsApp.",
   },
   {
-    tanya: "Bisa pilih negara tertentu?",
-    jawab: (
-      <>
-        Bisa, lewat menu ganti IP di dashboard. Pilihan negara mengikuti stok yang sedang tersedia, jadi daftarnya bisa
-        berubah sewaktu-waktu. Kalau negara yang Anda butuhkan sedang kosong, kabari kami.
-      </>
-    ),
+    q: "Can I choose a specific country?",
+    a: "Yes, from the replace menu in your dashboard. Available countries follow current stock, so the list can change. If the country you need is out of stock, let us know.",
   },
   {
-    tanya: "Bagaimana kalau bandwidth saya habis sebelum masa aktif berakhir?",
-    jawab: (
-      <>
-        Pemakaian bandwidth terlihat di dashboard lengkap dengan sisa kuotanya. Kalau habis sebelum waktunya, Anda bisa
-        membeli paket baru di Shopee atau menghubungi kami untuk menambah kuota.
-      </>
-    ),
+    q: "What if my bandwidth runs out before the plan expires?",
+    a: "Your bandwidth usage and remaining quota are shown in the dashboard. If it runs out early, you can order a new plan or message us to top up.",
   },
   {
-    tanya: "Apakah ada paket rotating lewat API?",
-    jawab: (
-      <>
-        Ada. Anda mendapat satu alamat API dan kunci rahasia untuk mengambil proxy acak dari pool kami, lengkap dengan
-        pilihan jumlah dan negara. Harganya menyesuaikan kebutuhan, jadi silakan hubungi kami lewat WhatsApp.
-      </>
-    ),
+    q: "Is there a rotating plan via API?",
+    a: "Yes. You get a single API endpoint and a secret key to pull random proxies from our pool, with your choice of count and country. Pricing depends on your needs, so please reach out on WhatsApp.",
   },
   {
-    tanya: "Bagaimana cara pesan dan bayarnya?",
-    jawab: (
-      <>
-        Paling cepat: klik <b>Pesan langsung</b> pada paket yang Anda mau, lalu admin membalas di WhatsApp dengan cara
-        pembayarannya. Cara ini bebas biaya admin marketplace dan harganya sama persis dengan yang tertera di sini.
-        Kalau lebih nyaman memakai perlindungan pembeli Shopee, pesanan lewat Shopee tetap kami layani dengan harga
-        yang sama.
-      </>
-    ),
+    q: "How do I order and pay?",
+    a: "Create an account, press Order on the plan you want, and you'll get an invoice with an exact amount to transfer by QRIS, BCA or BRI. There's no payment gateway, so we check each transfer by hand — proxies are usually live within 2 hours. Prices shown are final, with no marketplace service fee added.",
   },
   {
-    tanya: "Kenapa pesan langsung lebih murah?",
-    jawab: (
-      <>
-        Harga paketnya sama. Bedanya, pembelian lewat marketplace biasanya menambahkan biaya admin dan biaya layanan di
-        sisi pembeli — itu yang hilang kalau Anda pesan langsung ke kami.
-      </>
-    ),
+    q: "Why is ordering directly cheaper?",
+    a: "The package price is the same. The difference is that marketplaces usually add admin and service fees on the buyer's side — those disappear when you order directly from us.",
   },
 ];
+
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_ITEMS.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
 
 export function FaqSection() {
   return (
     <section id="faq" className="scroll-mt-20 py-14 sm:py-20">
+      <JsonLd data={FAQ_JSON_LD} />
       <div className="mx-auto max-w-3xl px-4">
         <div className="text-center">
           <h2 className="font-display text-3xl leading-tight font-extrabold tracking-tight text-ink uppercase sm:text-4xl">
-            Pertanyaan <span className="text-brand">umum</span>
+            Frequently asked <span className="text-brand">questions</span>
           </h2>
           <p className="mt-3 text-sm text-muted sm:text-base">
-            Belum terjawab? Chat kami, biasanya dibalas pada jam kerja.
+            Still unsure? Message us — we usually reply during working hours.
           </p>
         </div>
 
         <div className="mt-8 space-y-3">
-          {FAQ.map((item) => (
+          {FAQ_ITEMS.map((item) => (
             <details
-              key={item.tanya}
-              className="group rounded-3xl border-2 border-ink bg-white p-4 open:bg-brand-softer sm:p-5"
+              key={item.q}
+              className="group rounded-3xl border-2 border-ink bg-surface p-4 open:bg-brand-softer sm:p-5"
             >
               <summary className="flex cursor-pointer list-none items-start justify-between gap-3 font-display text-base font-extrabold text-ink marker:hidden sm:text-lg">
-                {item.tanya}
+                {item.q}
                 <span
                   aria-hidden="true"
                   className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-ink text-sm leading-none font-extrabold transition-transform group-open:rotate-45"
@@ -124,14 +83,14 @@ export function FaqSection() {
                   +
                 </span>
               </summary>
-              <p className="mt-3 text-sm leading-relaxed text-muted">{item.jawab}</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted">{item.a}</p>
             </details>
           ))}
         </div>
 
         <div className="mt-8 text-center">
           <a href={waHelpLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "md")}>
-            <WhatsAppIcon className="size-4" /> Tanya lewat WhatsApp
+            <WhatsAppIcon className="size-4" /> Ask on WhatsApp
           </a>
         </div>
       </div>

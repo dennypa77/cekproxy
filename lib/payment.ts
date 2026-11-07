@@ -41,21 +41,21 @@ export function metodeBayar(): InfoMetode[] {
       nomor: null,
       atasNama: process.env.QRIS_NAMA?.trim() || ATAS_NAMA_DEFAULT,
       gambar: process.env.QRIS_IMAGE?.trim() || "/qris.png",
-      petunjuk: "Scan kode QR dengan aplikasi bank atau e-wallet apa pun, lalu masukkan nominal persis seperti di bawah.",
+      petunjuk: "Scan the QR code with any bank or e-wallet app, then enter the exact amount shown below.",
     },
     {
       kode: "bca",
-      nama: "Transfer BCA",
+      nama: "BCA Transfer",
       nomor: bca.nomor,
       atasNama: bca.atasNama,
-      petunjuk: "Transfer ke rekening BCA di bawah dengan nominal persis, termasuk 3 digit terakhirnya.",
+      petunjuk: "Transfer to the BCA account below using the exact amount, including the last 3 digits.",
     },
     {
       kode: "bri",
-      nama: "Transfer BRI",
+      nama: "BRI Transfer",
       nomor: bri.nomor,
       atasNama: bri.atasNama,
-      petunjuk: "Transfer ke rekening BRI di bawah dengan nominal persis, termasuk 3 digit terakhirnya.",
+      petunjuk: "Transfer to the BRI account below using the exact amount, including the last 3 digits.",
     },
   ];
 }
@@ -66,6 +66,6 @@ export function findMetode(kode: string): InfoMetode | null {
 
 export const METODE_LABEL: Record<MetodeBayar, string> = {
   qris: "QRIS",
-  bca: "Transfer BCA",
-  bri: "Transfer BRI",
+  bca: "BCA Transfer",
+  bri: "BRI Transfer",
 };

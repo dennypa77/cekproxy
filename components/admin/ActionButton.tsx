@@ -39,7 +39,7 @@ export function ActionButton({
             if (result.ok) toast.success(result.message, { description: result.details?.join("\n") });
             else toast.error(result.message, { description: result.details?.join("\n") });
           } catch {
-            toast.error("Terjadi kesalahan. Silakan coba lagi.");
+            toast.error("Something went wrong. Please try again.");
           }
         });
       }}

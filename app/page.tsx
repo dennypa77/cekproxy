@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Crosses, FeatureBadges, LogoMark, ServicePill } from "@/components/Brand";
+import { Crosses, FeatureBadges, ServicePill } from "@/components/Brand";
 import { AnnouncementBar } from "@/components/customer/AnnouncementBar";
 import { SearchForm } from "@/components/customer/SearchForm";
 import { GaugeIcon, ServerIcon, ShieldCheckIcon, SwapIcon, WhatsAppIcon } from "@/components/icons";
 import { FaqSection } from "@/components/landing/FaqSection";
 import { DatacenterBackdrop, TerminalHero } from "@/components/landing/TerminalHero";
 import { PricingSection } from "@/components/landing/PricingSection";
+import { SiteFooter } from "@/components/landing/SiteFooter";
 import { SiteHeader } from "@/components/landing/SiteHeader";
 import { buttonClass } from "@/components/ui";
-import { waHelpLink, waOrderGeneralLink } from "@/lib/links";
+import { waHelpLink } from "@/lib/links";
 import { MASA_AKTIF_HARI } from "@/lib/pricing";
 
 // Dirender per permintaan supaya pita pengumuman (dan tanggal kedaluwarsanya)
@@ -47,18 +48,18 @@ const KEUNGGULAN = [
 ];
 
 const LANGKAH = [
-  { judul: "Pick a plan", isi: "Choose the IP count and bandwidth you need from the pricing above." },
   {
-    judul: "Message us",
-    isi: "Click Order — your chosen plan is pre-filled in the chat. We'll reply with how to pay.",
+    judul: "Create an account",
+    isi: "Sign up with your WhatsApp number and a password. That account is where every order of yours lives.",
+  },
+  { judul: "Pick a plan", isi: "Choose the IP count and bandwidth you need, then press Buy to get an invoice." },
+  {
+    judul: "Pay the exact amount",
+    isi: "QRIS, BCA or BRI. The last 3 digits are unique to your invoice — that is how we recognise your transfer.",
   },
   {
-    judul: "Get your order number",
-    isi: "Once payment arrives, we activate your proxies and send your order number over chat.",
-  },
-  {
-    judul: "Open your dashboard",
-    isi: "Create an account with your WhatsApp number, claim your order with our code, then manage everything in one place.",
+    judul: "We activate it",
+    isi: "We check every payment by hand, usually within 2 hours. Your proxies then appear in your dashboard.",
   },
 ];
 
@@ -237,28 +238,7 @@ export default function HomePage() {
         <FaqSection />
       </main>
 
-      <footer className="border-t-2 border-ink bg-surface">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-4 py-10 text-center sm:flex-row sm:justify-between sm:text-left">
-          <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-ink text-paper">
-              <LogoMark className="size-7" />
-            </span>
-            <div>
-              <p className="font-display text-sm font-extrabold tracking-tight text-ink lowercase">dmproxy</p>
-              <p className="text-xs text-muted">Provide EZ Service</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-2">
-            <a href={waOrderGeneralLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "sm")}>
-              <WhatsAppIcon className="size-4" /> Order on WhatsApp
-            </a>
-            <a href={waHelpLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "sm")}>
-              <WhatsAppIcon className="size-4" /> Help
-            </a>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

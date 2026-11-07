@@ -22,7 +22,7 @@ const POLL_INTERVAL_MS = 2_000;
 /** Replace 'pending' yang tidak kunjung selesai dianggap gagal setelah ini. */
 const PENDING_GIVE_UP_MS = 2 * 60 * 60 * 1000;
 const REPLACE_FAILED_MESSAGE =
-  "Replace IP gagal diproses. Kuota Anda tidak berkurang. Silakan coba lagi atau pilih negara lain.";
+  "Could not replace the IP. Your quota was not used. Please try again or choose another country.";
 
 export type ReplaceResult =
   | { status: "success" | "pending"; message: string; order: Order }
@@ -66,7 +66,7 @@ export async function performReplace(
       return {
         status: "failed",
         httpStatus: 400,
-        message: "IP tersebut tidak ada di daftar proxy Anda. Muat ulang daftar proxy lalu coba lagi.",
+        message: "That IP is not in your proxy list. Reload the proxy list and try again.",
       };
     }
   } catch (error) {
@@ -83,7 +83,7 @@ export async function performReplace(
         return {
           status: "failed",
           httpStatus: 400,
-          message: `Stok IP untuk ${countryName(country)} sedang kosong. Pilih negara lain atau Acak.`,
+          message: `No IPs available for ${countryName(country)} right now. Choose another country or Random.`,
         };
       }
     } catch (error) {
@@ -97,16 +97,16 @@ export async function performReplace(
   if (!started) {
     const fresh = await repo.getOrder(order.id);
     if (fresh && fresh.replace_used >= fresh.replace_quota) {
-      return { status: "failed", httpStatus: 409, message: "Kuota replace habis, hubungi admin." };
+      return { status: "failed", httpStatus: 409, message: "Your replace quota is used up. Contact us on WhatsApp." };
     }
     if (fresh?.replace_lock_until && new Date(fresh.replace_lock_until).getTime() > Date.now()) {
       return {
         status: "failed",
         httpStatus: 409,
-        message: "Masih ada proses replace yang berjalan. Tunggu sebentar lalu coba lagi.",
+        message: "A replace is still in progress. Please wait a moment and try again.",
       };
     }
-    return { status: "failed", httpStatus: 403, message: "Replace tidak dapat dilakukan untuk pesanan ini." };
+    return { status: "failed", httpStatus: 403, message: "Replace is not available for this order." };
   }
 
   // 4) Buat permintaan replace (async v3).
@@ -135,7 +135,7 @@ export async function performReplace(
   if (outcome === "success") {
     await repo.resolvePendingLog(pendingLog.id, "success", null);
     await repo.releaseReplaceLock(order.id, false);
-    return { status: "success", message: "IP berhasil diganti.", order: (await repo.getOrder(order.id)) ?? order };
+    return { status: "success", message: "IP replaced successfully.", order: (await repo.getOrder(order.id)) ?? order };
   }
 
   if (outcome === "failed") {
@@ -148,7 +148,7 @@ export async function performReplace(
   await repo.releaseReplaceLock(order.id, false);
   return {
     status: "pending",
-    message: "Replace masih diproses. Daftar proxy akan diperbarui dalam 1–2 menit.",
+    message: "Replace is still processing. Your proxy list will update in 1-2 minutes.",
     order: (await repo.getOrder(order.id)) ?? order,
   };
 }

@@ -6,11 +6,11 @@ export type OrderState = "aktif" | "akan_expired" | "expired" | "nonaktif";
 export type OrderFilter = "semua" | OrderState;
 
 export const ORDER_FILTERS: { value: OrderFilter; label: string }[] = [
-  { value: "semua", label: "Semua" },
-  { value: "aktif", label: "Aktif" },
-  { value: "akan_expired", label: "Akan expired (≤3 hari)" },
+  { value: "semua", label: "All" },
+  { value: "aktif", label: "Active" },
+  { value: "akan_expired", label: "Expiring soon (≤3 days)" },
   { value: "expired", label: "Expired" },
-  { value: "nonaktif", label: "Nonaktif" },
+  { value: "nonaktif", label: "Inactive" },
 ];
 
 export function orderState(order: { is_active: boolean; expires_at: string }, now = Date.now()): OrderState {

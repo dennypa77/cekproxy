@@ -1,0 +1,77 @@
+Choosing between datacenter and residential proxies is the first decision most people face when they start buying proxies — and picking the wrong type is the most common reason a proxy "doesn't work." Both hide your real IP address, but they come from completely different places, and that difference decides whether a target website trusts them.
+
+This guide explains how the two types differ, what each one is good at, and a simple way to decide which you actually need.
+
+## The one-sentence difference
+
+A **datacenter proxy** is an IP address that belongs to a server hosting company. It lives in a data center, it's fast, and it's cheap — but websites can often tell it's not a regular person.
+
+A **residential proxy** is an IP address assigned by a home internet provider (ISP) to a real household. To a website, traffic through it looks like an ordinary person browsing from home, which makes it much harder to flag.
+
+Everything else — price, speed, and where you should use each — follows from that single distinction.
+
+## Datacenter proxies
+
+Datacenter proxies are generated in bulk on servers, so they're abundant and inexpensive. That's their superpower: you get a lot of bandwidth and very low latency for very little money.
+
+**Strengths**
+
+- **Speed.** Server-grade connections mean fast page loads and high throughput, which matters for scraping or anything bandwidth-heavy.
+- **Price.** The cost per IP is far lower than residential, so they scale cheaply.
+- **Stability.** The IP doesn't change under you unless you want it to.
+
+**Weaknesses**
+
+- **Easier to detect.** Their IP ranges are publicly known to belong to hosting providers, so strict sites can block them on sight.
+- **Shared reputation.** If someone abused the same subnet before you, you can inherit the bad reputation.
+
+**Best for:** sites that don't aggressively fingerprint visitors — SEO rank checking, price monitoring, accessing general public data, testing from different locations, and high-volume scraping of tolerant targets. If a site lets datacenter IPs through, there's no reason to pay more.
+
+See [datacenter proxy plans and pricing](/proxy-datacenter) if that's your use case.
+
+## Residential proxies
+
+Residential proxies route your traffic through real home connections, so the destination site sees an ordinary ISP customer. That trust is exactly what you're paying extra for.
+
+**Strengths**
+
+- **Hard to detect.** The IP belongs to a real ISP subscriber, so it blends in with normal traffic.
+- **Passes strict sites.** Platforms that block datacenter ranges — social networks, marketplaces, sneaker and ticketing sites, sensitive dashboards — are far more forgiving of residential IPs.
+- **Location targeting.** You can appear to browse from a specific country.
+
+**Weaknesses**
+
+- **More expensive.** You're paying for scarcity and trust.
+- **Sometimes slower.** Home connections vary, so latency is less predictable than a data center's.
+
+**Best for:** managing multiple accounts, social media automation, ad verification, market research on strict platforms, and anything where getting flagged as a "bot" is the main risk.
+
+See [residential proxy plans](/proxy-residential) if your targets are strict.
+
+## How to decide in 30 seconds
+
+Ask yourself one question: **does my target website block or challenge datacenter IPs?**
+
+- **If no** (or you're not sure and the target is tolerant): start with datacenter proxies. They're cheaper and faster, and you can always upgrade.
+- **If yes** (strict social platform, marketplace, or anything tied to a real identity): go residential. Datacenter IPs will just burn through bans.
+
+A practical approach: test with a small datacenter plan first. If you see captchas, soft blocks, or instant bans, switch that workload to residential. Many people run a mix — datacenter for bulk, tolerant work and residential for the few targets that demand it.
+
+## A note on account safety
+
+Whichever type you choose, two habits reduce bans more than the proxy type itself:
+
+- **One identity per IP.** Don't rotate ten accounts through a single IP. If you run many profiles, pair each with its own proxy — this is where an [antidetect browser setup](/blog/how-to-set-up-proxies-in-antidetect-browser) comes in.
+- **Match the location.** Keep the proxy's country consistent with the account's history and language settings.
+
+## Where rotating fits in
+
+Some jobs don't need one fixed IP — they need a *fresh* IP on almost every request, such as large-scale scraping. That's a third pattern called rotation, which you can get on top of either type. If that sounds like your workload, read [what a rotating proxy API is and how to use one](/blog/what-is-a-rotating-proxy-api).
+
+## Quick recap
+
+- **Datacenter** = fast and cheap, but easier to detect. Great default for tolerant targets.
+- **Residential** = looks like a real person, harder to block. Worth the premium on strict sites.
+- Test cheap first, upgrade only the workloads that get flagged.
+
+Not sure which fits your project? [Tell us what you're working on](/proxy-datacenter) and we'll point you to the right plan. You can also [check your current IP address](/tools/what-is-my-ip) to confirm a proxy is actually in place before you start.

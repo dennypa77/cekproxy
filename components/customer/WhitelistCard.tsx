@@ -42,26 +42,26 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
     const result = await apiFetch<MyIpResponse>("/api/my-ip");
     setDetecting(false);
     if (!result.ok || !result.data.ip) {
-      toast.error("IP Anda tidak dapat dideteksi. Silakan isi manual.");
+      toast.error("Your IP could not be detected. Please enter it manually.");
       return;
     }
     if (!result.data.isIPv4) {
       toast.warning(
-        `IP Anda saat ini IPv6 (${result.data.ip}). Whitelist hanya mendukung IPv4 — cek IPv4 Anda di situs seperti ipv4.icanhazip.com.`,
+        `Your current IP is IPv6 (${result.data.ip}). Whitelist only supports IPv4 — check your IPv4 on a site like ipv4.icanhazip.com.`,
         { duration: 8000 },
       );
       return;
     }
     setIp(result.data.ip);
     setInputError(null);
-    toast.success("IP Anda saat ini sudah diisi");
+    toast.success("Your current IP has been filled in");
   }
 
   async function add(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const value = ip.trim();
     if (!IPV4.test(value)) {
-      setInputError("Format IP tidak valid. Contoh yang benar: 103.10.20.30");
+      setInputError("Invalid IP format. A correct example: 103.10.20.30");
       return;
     }
     setInputError(null);
@@ -76,7 +76,7 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
       toast.error(result.error);
       return;
     }
-    toast.success(`IP ${result.data.ip} ditambahkan ke whitelist`);
+    toast.success(`IP ${result.data.ip} added to the whitelist`);
     setIp("");
     void load();
   }
@@ -90,7 +90,7 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
       toast.error(result.error);
       return;
     }
-    toast.success(`IP ${entry.ip} dihapus dari whitelist`);
+    toast.success(`IP ${entry.ip} removed from the whitelist`);
     setEntries((current) => current?.filter((e) => e.id !== entry.id) ?? null);
   }
 
@@ -99,10 +99,10 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
       <CardHeader
         title="IP"
         accent="Whitelist"
-        description="Pakai proxy tanpa username & password dari jaringan dengan IP ini."
+        description="Use the proxy without a username & password from networks with these IPs."
         icon={<ShieldIcon className="size-5" />}
         action={
-          <Button variant="secondary" size="sm" onClick={load} disabled={loading} aria-label="Muat ulang whitelist">
+          <Button variant="secondary" size="sm" onClick={load} disabled={loading} aria-label="Reload whitelist">
             <RefreshIcon className={cn("size-4", loading && "animate-spin")} />
           </Button>
         }
@@ -110,14 +110,14 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
 
       {expired && (
         <p className="mb-4 flex items-center gap-2 rounded-2xl border-2 border-ink bg-bad-soft px-4 py-3 text-sm font-semibold">
-          <LockIcon className="size-4 shrink-0" /> Pengelolaan IP whitelist dinonaktifkan karena masa aktif sudah berakhir.
+          <LockIcon className="size-4 shrink-0" /> Whitelist IP management is disabled because the plan has expired.
         </p>
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <form onSubmit={add} className="space-y-3" noValidate>
           <label htmlFor="whitelist-ip" className={labelClass}>
-            Tambah IPv4
+            Add IPv4
           </label>
           <div className="flex flex-col gap-3 sm:flex-row">
             <input
@@ -127,7 +127,7 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
                 setIp(event.target.value);
                 setInputError(null);
               }}
-              placeholder="Contoh: 103.10.20.30"
+              placeholder="Example: 103.10.20.30"
               inputMode="decimal"
               autoComplete="off"
               disabled={expired || adding}
@@ -135,11 +135,11 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
               aria-invalid={Boolean(inputError)}
             />
             <Button type="submit" loading={adding} disabled={expired} className="sm:w-28">
-              Tambah
+              Add
             </Button>
           </div>
           <Button variant="secondary" size="sm" onClick={detectIp} loading={detecting} disabled={expired} className="w-full sm:w-auto">
-            {!detecting && <LocateIcon className="size-4" />} Gunakan IP saya saat ini
+            {!detecting && <LocateIcon className="size-4" />} Use my current IP
           </Button>
           {inputError && (
             <p className="flex items-center gap-1.5 text-sm font-semibold text-bad" role="alert">
@@ -149,12 +149,12 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
         </form>
 
         <div>
-          <p className={labelClass}>IP terdaftar {entries ? `(${entries.length})` : ""}</p>
+          <p className={labelClass}>Registered IPs {entries ? `(${entries.length})` : ""}</p>
           {error && !entries && <p className="rounded-2xl border-2 border-ink bg-bad-soft p-3 text-sm">{error}</p>}
           {!entries && loading && <div className="h-14 animate-pulse rounded-2xl bg-paper" />}
           {entries && entries.length === 0 && (
             <p className="rounded-2xl border-2 border-dashed border-ink/40 bg-paper p-4 text-center text-sm text-muted">
-              Belum ada IP di whitelist.
+              No IPs in the whitelist yet.
             </p>
           )}
           {entries && entries.length > 0 && (
@@ -162,7 +162,7 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
               {entries.map((entry) => (
                 <li
                   key={entry.id}
-                  className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-white px-3.5 py-2.5"
+                  className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink bg-surface px-3.5 py-2.5"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-deep" aria-hidden="true">
@@ -170,16 +170,16 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
                     </span>
                     <div className="min-w-0">
                       <p className="font-mono text-sm font-bold text-ink">{entry.ip}</p>
-                      {entry.createdAt && <p className="text-xs text-muted">Ditambahkan {formatDate(entry.createdAt)}</p>}
+                      {entry.createdAt && <p className="text-xs text-muted">Added {formatDate(entry.createdAt)}</p>}
                     </div>
                   </div>
                   {confirmId === entry.id ? (
                     <div className="flex gap-1.5">
                       <Button variant="ghost" size="xs" onClick={() => setConfirmId(null)} disabled={deletingId === entry.id}>
-                        Batal
+                        Cancel
                       </Button>
                       <Button variant="danger" size="xs" onClick={() => remove(entry)} loading={deletingId === entry.id}>
-                        Ya, hapus
+                        Yes, delete
                       </Button>
                     </div>
                   ) : (
@@ -188,9 +188,9 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
                       size="xs"
                       onClick={() => setConfirmId(entry.id)}
                       disabled={expired}
-                      aria-label={`Hapus ${entry.ip}`}
+                      aria-label={`Delete ${entry.ip}`}
                     >
-                      <TrashIcon className="size-3.5" /> Hapus
+                      <TrashIcon className="size-3.5" /> Delete
                     </Button>
                   )}
                 </li>

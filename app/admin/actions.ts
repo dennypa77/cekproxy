@@ -35,7 +35,7 @@ const ok = (message: string, details?: string[]): AdminActionState => ({ ok: tru
 const fail = (message: string, details?: string[]): AdminActionState => ({ ok: false, message, details });
 
 async function guard(): Promise<AdminActionState | null> {
-  return (await isAdmin()) ? null : fail("Sesi admin berakhir. Silakan login ulang.");
+  return (await isAdmin()) ? null : fail("Admin session expired. Please log in again.");
 }
 
 function jakartaToday(): string {
@@ -53,14 +53,14 @@ function formObject(formData: FormData): Record<string, string> {
 }
 
 function firstIssue(error: z.ZodError): string {
-  return error.issues[0]?.message ?? "Data tidak valid.";
+  return error.issues[0]?.message ?? "Invalid data.";
 }
 
 const optionalText = (max: number) =>
   z
     .string()
     .trim()
-    .max(max, { error: `Maksimal ${max} karakter.` })
+    .max(max, { error: `Maximum ${max} characters.` })
     .optional()
     .transform((value) => (value ? value : null));
 
@@ -70,50 +70,50 @@ const optionalEmail = z
   .max(200)
   .optional()
   .transform((value) => (value ? value : null))
-  .pipe(z.email({ error: "Format email tidak valid." }).nullable());
+  .pipe(z.email({ error: "Invalid email format." }).nullable());
 
 const apiKeySchema = z
-  .string({ error: "API key wajib diisi." })
+  .string({ error: "API key is required." })
   .trim()
-  .min(10, { error: "API key terlalu pendek." })
-  .max(200, { error: "API key terlalu panjang." })
-  .regex(/^\S+$/, { error: "API key tidak boleh mengandung spasi." });
+  .min(10, { error: "API key is too short." })
+  .max(200, { error: "API key is too long." })
+  .regex(/^\S+$/, { error: "API key cannot contain spaces." });
 
 const dateInputSchema = z
-  .string({ error: "Tanggal expired wajib diisi." })
-  .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Tanggal expired tidak valid." })
+  .string({ error: "Expiry date is required." })
+  .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Invalid expiry date." })
   .refine((value) => !Number.isNaN(new Date(`${value}T00:00:00+07:00`).getTime()), {
-    error: "Tanggal expired tidak valid.",
+    error: "Invalid expiry date.",
   });
 
 const quotaSchema = z.coerce
-  .number({ error: "Kuota harus berupa angka." })
-  .int({ error: "Kuota harus bilangan bulat." })
-  .min(0, { error: "Kuota minimal 0." })
-  .max(10_000, { error: "Kuota terlalu besar." });
+  .number({ error: "Quota must be a number." })
+  .int({ error: "Quota must be a whole number." })
+  .min(0, { error: "Quota must be at least 0." })
+  .max(10_000, { error: "Quota is too large." });
 
 function describeUpstream(error: unknown): string {
   if (error instanceof WebshareError) {
-    if (error.kind === "auth") return "API key ditolak (tidak valid atau sudah dicabut).";
-    return `Validasi gagal [${error.kind}${error.status ? ` ${error.status}` : ""}]: ${error.message}`;
+    if (error.kind === "auth") return "API key rejected (invalid or revoked).";
+    return `Validation failed [${error.kind}${error.status ? ` ${error.status}` : ""}]: ${error.message}`;
   }
   return error instanceof Error ? error.message : String(error);
 }
 
-function describeDb(error: unknown, duplicateMessage = "Data sudah ada."): string {
+function describeDb(error: unknown, duplicateMessage = "This record already exists."): string {
   if (error instanceof DbError) {
     if (error.code === "DUPLICATE") return duplicateMessage;
-    if (error.code === "ACCOUNT_NOT_AVAILABLE") return "Akun tidak tersedia (mungkin sudah dipakai pesanan lain).";
-    if (error.code === "ORDER_NOT_FOUND") return "Pesanan tidak ditemukan.";
-    if (error.code === "ALREADY_CLAIMED") return "Pesanan sudah diklaim akun customer lain.";
-    if (error.code === "CLAIM_CODE_INVALID") return "Kode klaim tidak dikenali.";
-    if (error.code === "CLAIM_CODE_EXPIRED") return "Kode klaim sudah kedaluwarsa.";
+    if (error.code === "ACCOUNT_NOT_AVAILABLE") return "Account is not available (it may already be used by another order).";
+    if (error.code === "ORDER_NOT_FOUND") return "Order not found.";
+    if (error.code === "ALREADY_CLAIMED") return "This order has already been claimed by another customer account.";
+    if (error.code === "CLAIM_CODE_INVALID") return "Claim code not recognized.";
+    if (error.code === "CLAIM_CODE_EXPIRED") return "Claim code has expired.";
   }
   console.error("[admin]", error);
-  return "Terjadi kesalahan database. Cek log server.";
+  return "A database error occurred. Check the server logs.";
 }
 
-/** Kolom info plan yang disimpan ke database saat API key divalidasi. */
+/** Plan info columns saved to the database when an API key is validated. */
 function planFields(info: ApiKeyInfo) {
   return {
     proxy_type: info.plan.proxy_type,
@@ -128,7 +128,7 @@ function planSummary(info: ApiKeyInfo): string[] {
   const { plan } = info;
   const type = [plan.proxy_type, plan.proxy_subtype].filter(Boolean).join(" / ") || "-";
   return [
-    `Jenis: ${planLabel(plan)}`,
+    `Type: ${planLabel(plan)}`,
     `Email: ${info.email ?? "-"}`,
     `Plan: ${type} · ${plan.proxy_count ?? "?"} proxy · bandwidth ${
       plan.bandwidth_limit > 0 ? `${plan.bandwidth_limit} GB` : "Unlimited"
@@ -142,11 +142,11 @@ function planSummary(info: ApiKeyInfo): string[] {
 
 export async function loginAction(formData: FormData): Promise<AdminActionState> {
   const ip = getClientIp(await headers());
-  if (!(await hitRateLimit("login", ip))) return fail("Terlalu banyak percobaan login. Coba lagi dalam 5 menit.");
-  if (!getAdminPassword()) return fail("ADMIN_PASSWORD belum di-set di environment variables.");
+  if (!(await hitRateLimit("login", ip))) return fail("Too many login attempts. Try again in 5 minutes.");
+  if (!getAdminPassword()) return fail("ADMIN_PASSWORD is not set in the environment variables.");
 
   const password = formData.get("password");
-  if (typeof password !== "string" || !checkAdminPassword(password)) return fail("Password salah.");
+  if (typeof password !== "string" || !checkAdminPassword(password)) return fail("Incorrect password.");
 
   await createAdminSession();
   redirect("/admin");
@@ -158,14 +158,14 @@ export async function logoutAction(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Pool akun
+// Account pool
 // ---------------------------------------------------------------------------
 
 const labelSchema = z
-  .string({ error: "Label wajib diisi." })
+  .string({ error: "Label is required." })
   .trim()
-  .min(1, { error: "Label wajib diisi." })
-  .max(100, { error: "Label maksimal 100 karakter." });
+  .min(1, { error: "Label is required." })
+  .max(100, { error: "Label must be at most 100 characters." });
 
 const newAccountSchema = z.object({
   label: labelSchema,
@@ -183,7 +183,7 @@ export async function addAccountAction(formData: FormData): Promise<AdminActionS
   const input = parsed.data;
 
   const repo = db();
-  if (await repo.findAccountByApiKey(input.api_key)) return fail("API key ini sudah ada di pool.");
+  if (await repo.findAccountByApiKey(input.api_key)) return fail("This API key is already in the pool.");
 
   let info: ApiKeyInfo;
   try {
@@ -195,10 +195,10 @@ export async function addAccountAction(formData: FormData): Promise<AdminActionS
   try {
     await repo.createAccount({ ...input, email: input.email ?? info.email, ...planFields(info) });
   } catch (error) {
-    return fail(describeDb(error, "API key ini sudah ada di pool."));
+    return fail(describeDb(error, "This API key is already in the pool."));
   }
   refreshAdmin();
-  return ok(`Akun "${input.label}" tersimpan.`, planSummary(info));
+  return ok(`Account "${input.label}" saved.`, planSummary(info));
 }
 
 const MAX_BULK = 30;
@@ -216,8 +216,8 @@ export async function bulkImportAccountsAction(formData: FormData): Promise<Admi
         .filter(Boolean),
     ),
   ];
-  if (keys.length === 0) return fail("Masukkan minimal satu API key (satu per baris).");
-  if (keys.length > MAX_BULK) return fail(`Maksimal ${MAX_BULK} API key per import.`);
+  if (keys.length === 0) return fail("Enter at least one API key (one per line).");
+  if (keys.length > MAX_BULK) return fail(`Maximum ${MAX_BULK} API keys per import.`);
 
   const repo = db();
   const details: string[] = new Array(keys.length);
@@ -235,13 +235,13 @@ export async function bulkImportAccountsAction(formData: FormData): Promise<Admi
         continue;
       }
       if (await repo.findAccountByApiKey(key)) {
-        details[index] = `– ${label} — sudah ada di pool, dilewati`;
+        details[index] = `– ${label} — already in the pool, skipped`;
         continue;
       }
       try {
         const info = await validateApiKey(key);
         await repo.createAccount({
-          label: info.email ?? `Akun ${key.slice(-4)}`,
+          label: info.email ?? `Account ${key.slice(-4)}`,
           email: info.email,
           api_key: key,
           catatan: null,
@@ -250,14 +250,14 @@ export async function bulkImportAccountsAction(formData: FormData): Promise<Admi
         success++;
         details[index] = `✓ ${label} — ${planSummary(info).join(" · ")}`;
       } catch (error) {
-        details[index] = `✗ ${label} — ${error instanceof DbError ? describeDb(error, "duplikat") : describeUpstream(error)}`;
+        details[index] = `✗ ${label} — ${error instanceof DbError ? describeDb(error, "duplicate") : describeUpstream(error)}`;
       }
     }
   }
 
   await Promise.all(Array.from({ length: Math.min(5, keys.length) }, worker));
   refreshAdmin();
-  const message = `${success} dari ${keys.length} akun berhasil diimport.`;
+  const message = `${success} of ${keys.length} accounts imported successfully.`;
   return success > 0 ? ok(message, details) : fail(message, details);
 }
 
@@ -266,9 +266,9 @@ const reserveSchema = z
   .trim()
   .optional()
   .transform((value) => (value ? value : null))
-  .refine((value) => value === null || !Number.isNaN(Number(value)), { error: "Cadangan GB harus angka." })
+  .refine((value) => value === null || !Number.isNaN(Number(value)), { error: "Reserve GB must be a number." })
   .transform((value) => (value === null ? null : Number(value)))
-  .refine((value) => value === null || (value >= 0 && value <= 100000), { error: "Cadangan GB di luar batas wajar." });
+  .refine((value) => value === null || (value >= 0 && value <= 100000), { error: "Reserve GB is out of range." });
 
 const updateAccountSchema = z.object({
   label: labelSchema,
@@ -297,7 +297,7 @@ export async function updateAccountAction(accountId: string, formData: FormData)
 
   const repo = db();
   const account = await repo.getAccount(accountId);
-  if (!account) return fail("Akun tidak ditemukan.");
+  if (!account) return fail("Account not found.");
 
   const patch: Parameters<typeof repo.updateAccount>[1] = {
     label,
@@ -310,7 +310,7 @@ export async function updateAccountAction(accountId: string, formData: FormData)
 
   if (api_key && api_key !== account.api_key) {
     const other = await repo.findAccountByApiKey(api_key);
-    if (other && other.id !== accountId) return fail("API key ini sudah dipakai akun lain.");
+    if (other && other.id !== accountId) return fail("This API key is already used by another account.");
     try {
       const info = await validateApiKey(api_key);
       details = planSummary(info);
@@ -325,7 +325,7 @@ export async function updateAccountAction(accountId: string, formData: FormData)
   try {
     await repo.updateAccount(accountId, patch);
   } catch (error) {
-    return fail(describeDb(error, "API key ini sudah dipakai akun lain."));
+    return fail(describeDb(error, "This API key is already used by another account."));
   }
   if (patch.api_key) {
     await Promise.all(
@@ -334,7 +334,7 @@ export async function updateAccountAction(accountId: string, formData: FormData)
   }
   await invalidateRotatingPool();
   refreshAdmin();
-  return ok("Akun diperbarui.", details);
+  return ok("Account updated.", details);
 }
 
 export async function checkAccountAction(accountId: string): Promise<AdminActionState> {
@@ -342,7 +342,7 @@ export async function checkAccountAction(accountId: string): Promise<AdminAction
   if (denied) return denied;
   const repo = db();
   const account = await repo.getAccount(accountId);
-  if (!account) return fail("Akun tidak ditemukan.");
+  if (!account) return fail("Account not found.");
   try {
     const info = await validateApiKey(account.api_key);
     await repo.updateAccount(accountId, {
@@ -350,20 +350,20 @@ export async function checkAccountAction(accountId: string): Promise<AdminAction
       ...(account.email ? {} : { email: info.email }),
     });
     refreshAdmin();
-    return ok("API key valid, info plan diperbarui.", planSummary(info));
+    return ok("API key valid, plan info updated.", planSummary(info));
   } catch (error) {
     return fail(describeUpstream(error));
   }
 }
 
-/** Ambil ulang info plan (jenis proxy) semua akun aktif dari Webshare. */
+/** Re-fetch the plan info (proxy type) of all active accounts from Webshare. */
 export async function syncPlansAction(): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
 
   const repo = db();
   const accounts = (await repo.listAccounts()).filter((account) => account.status !== "disabled");
-  if (accounts.length === 0) return fail("Belum ada akun aktif di pool.");
+  if (accounts.length === 0) return fail("No active accounts in the pool yet.");
 
   const details: string[] = new Array(accounts.length);
   let success = 0;
@@ -386,19 +386,19 @@ export async function syncPlansAction(): Promise<AdminActionState> {
 
   await Promise.all(Array.from({ length: Math.min(5, accounts.length) }, worker));
   refreshAdmin();
-  const message = `${success} dari ${accounts.length} akun tersinkron.`;
+  const message = `${success} of ${accounts.length} accounts synced.`;
   return success > 0 ? ok(message, details) : fail(message, details);
 }
 
-/** Aktif/nonaktifkan keikutsertaan akun di pool rotating. */
+/** Enable/disable an account's participation in the rotating pool. */
 export async function toggleAccountRotatingAction(accountId: string): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
 
   const repo = db();
   const account = await repo.getAccount(accountId);
-  if (!account) return fail("Akun tidak ditemukan.");
-  if (account.status === "disabled") return fail("Akun nonaktif tidak bisa ikut pool rotating.");
+  if (!account) return fail("Account not found.");
+  if (account.status === "disabled") return fail("A disabled account cannot join the rotating pool.");
 
   const next = !account.rotating_enabled;
   await repo.updateAccount(accountId, { rotating_enabled: next });
@@ -406,10 +406,10 @@ export async function toggleAccountRotatingAction(accountId: string): Promise<Ad
   refreshAdmin();
   return ok(
     next
-      ? `Akun "${account.label}" ikut pool rotating.`
-      : `Akun "${account.label}" dikeluarkan dari pool rotating.`,
+      ? `Account "${account.label}" joined the rotating pool.`
+      : `Account "${account.label}" removed from the rotating pool.`,
     next && account.rotating_reserve_gb === null
-      ? ["Catatan: akun ini belum punya cadangan GB, jadi bisa terpakai sampai limit akun."]
+      ? ["Note: this account has no reserve GB yet, so it can be used up to the account limit."]
       : undefined,
   );
 }
@@ -419,13 +419,13 @@ export async function toggleAccountDisabledAction(accountId: string): Promise<Ad
   if (denied) return denied;
   const repo = db();
   const account = await repo.getAccount(accountId);
-  if (!account) return fail("Akun tidak ditemukan.");
-  if (account.status === "assigned") return fail("Akun sedang tertaut ke pesanan. Lepas akun dari pesanan terlebih dahulu.");
+  if (!account) return fail("Account not found.");
+  if (account.status === "assigned") return fail("Account is linked to an order. Release it from the order first.");
 
   const next = account.status === "disabled" ? "available" : "disabled";
   await repo.updateAccount(accountId, { status: next });
   refreshAdmin();
-  return ok(next === "disabled" ? "Akun dinonaktifkan." : "Akun diaktifkan kembali (available).");
+  return ok(next === "disabled" ? "Account disabled." : "Account re-enabled (available).");
 }
 
 export async function deleteAccountAction(accountId: string): Promise<AdminActionState> {
@@ -433,10 +433,10 @@ export async function deleteAccountAction(accountId: string): Promise<AdminActio
   if (denied) return denied;
   const repo = db();
   const account = await repo.getAccount(accountId);
-  if (!account) return fail("Akun tidak ditemukan.");
+  if (!account) return fail("Account not found.");
 
   const linked = account.status === "assigned" || (await repo.listOrders()).some((o) => o.account_id === accountId);
-  if (linked) return fail("Akun masih tertaut ke pesanan dan tidak bisa dihapus.");
+  if (linked) return fail("Account is still linked to an order and cannot be deleted.");
 
   try {
     await repo.deleteAccount(accountId);
@@ -444,31 +444,31 @@ export async function deleteAccountAction(accountId: string): Promise<AdminActio
     return fail(describeDb(error));
   }
   refreshAdmin();
-  return ok(`Akun "${account.label}" dihapus.`);
+  return ok(`Account "${account.label}" deleted.`);
 }
 
 // ---------------------------------------------------------------------------
-// Pesanan
+// Orders
 // ---------------------------------------------------------------------------
 
-/** Nomor WhatsApp pembeli — opsional, dipakai kirim kode klaim & pengingat. */
+/** Buyer's WhatsApp number — optional, used to send claim codes & reminders. */
 const optionalWaSchema = z
   .string()
   .trim()
   .optional()
   .transform((value) => (value ? normalizeWaNumber(value) : null))
   .refine((value) => value === null || WA_NUMBER_PATTERN.test(value), {
-    error: "Nomor WhatsApp tidak valid. Contoh: 0812-3456-7890.",
+    error: "Invalid WhatsApp number. Example: 0812-3456-7890.",
   });
 
-/** Kode klaim berlaku 7 hari. */
+/** Claim code is valid for 7 days. */
 const CLAIM_CODE_TTL_DAYS = 7;
 
 const createOrderSchema = z.object({
   shopee_order_no: orderNoSchema,
   nama_customer: optionalText(100),
   wa_number: optionalWaSchema,
-  account_id: z.string({ error: "Pilih akun." }).min(1, { error: "Pilih akun yang tersedia." }),
+  account_id: z.string({ error: "Select an account." }).min(1, { error: "Select an available account." }),
   expires_date: dateInputSchema,
   replace_quota: quotaSchema,
   catatan: optionalText(2000),
@@ -493,20 +493,20 @@ export async function createOrderAction(formData: FormData): Promise<AdminAction
       wa_number: input.wa_number,
     });
     refreshAdmin();
-    return ok(`Pesanan ${order.shopee_order_no} dibuat.`, [
-      `Expired: ${formatDateTime(order.expires_at)}`,
-      `Halaman customer: ${customerPath(order.shopee_order_no)}`,
+    return ok(`Order ${order.shopee_order_no} created.`, [
+      `Expires: ${formatDateTime(order.expires_at)}`,
+      `Customer page: ${customerPath(order.shopee_order_no)}`,
     ]);
   } catch (error) {
-    return fail(describeDb(error, "Nomor pesanan sudah terdaftar."));
+    return fail(describeDb(error, "Order number is already registered."));
   }
 }
 
 const ratePerMinuteSchema = z.coerce
-  .number({ error: "Batas permintaan harus angka." })
-  .int({ error: "Batas permintaan harus bilangan bulat." })
-  .min(1, { error: "Batas permintaan minimal 1." })
-  .max(100_000, { error: "Batas permintaan terlalu besar." });
+  .number({ error: "Request limit must be a number." })
+  .int({ error: "Request limit must be a whole number." })
+  .min(1, { error: "Request limit must be at least 1." })
+  .max(100_000, { error: "Request limit is too large." });
 
 const rotatingOrderSchema = z.object({
   shopee_order_no: orderNoSchema,
@@ -517,7 +517,7 @@ const rotatingOrderSchema = z.object({
   catatan: optionalText(2000),
 });
 
-/** Buat pesanan rotating (pool gabungan, akses lewat kunci API). */
+/** Create a rotating order (shared pool, accessed via an API key). */
 export async function createRotatingOrderAction(formData: FormData): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
@@ -537,26 +537,26 @@ export async function createRotatingOrderAction(formData: FormData): Promise<Adm
       wa_number: input.wa_number,
     });
     refreshAdmin();
-    return ok(`Pesanan rotating ${order.shopee_order_no} dibuat.`, [
-      `Kunci API: ${order.api_key}`,
-      `Batas: ${order.rate_per_minute} permintaan/menit`,
-      `Expired: ${formatDateTime(order.expires_at)}`,
-      `Halaman customer: ${customerPath(order.shopee_order_no)}`,
+    return ok(`Rotating order ${order.shopee_order_no} created.`, [
+      `API key: ${order.api_key}`,
+      `Limit: ${order.rate_per_minute} requests/min`,
+      `Expires: ${formatDateTime(order.expires_at)}`,
+      `Customer page: ${customerPath(order.shopee_order_no)}`,
     ]);
   } catch (error) {
-    return fail(describeDb(error, "Nomor pesanan sudah terdaftar."));
+    return fail(describeDb(error, "Order number is already registered."));
   }
 }
 
-/** Ganti kunci API (kunci lama langsung tidak berlaku). */
+/** Replace the API key (the old key stops working immediately). */
 export async function regenerateRotatingKeyAction(orderId: string): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
 
   const repo = db();
   const order = await repo.getOrder(orderId);
-  if (!order) return fail("Pesanan tidak ditemukan.");
-  if (order.order_type !== "rotating") return fail("Pesanan ini bukan tipe rotating.");
+  if (!order) return fail("Order not found.");
+  if (order.order_type !== "rotating") return fail("This order is not a rotating order.");
 
   const api_key = generateRotatingKey();
   try {
@@ -565,10 +565,10 @@ export async function regenerateRotatingKeyAction(orderId: string): Promise<Admi
     return fail(describeDb(error));
   }
   refreshAdmin();
-  return ok("Kunci API diganti. Kunci lama sudah tidak berlaku.", [`Kunci baru: ${api_key}`]);
+  return ok("API key replaced. The old key no longer works.", [`New key: ${api_key}`]);
 }
 
-/** Ubah batas permintaan per menit pesanan rotating. */
+/** Change the per-minute request limit of a rotating order. */
 export async function updateRotatingLimitAction(orderId: string, formData: FormData): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
@@ -582,23 +582,23 @@ export async function updateRotatingLimitAction(orderId: string, formData: FormD
     return fail(describeDb(error));
   }
   refreshAdmin();
-  return ok(`Batas diubah menjadi ${parsed.data.rate_per_minute} permintaan/menit.`);
+  return ok(`Limit changed to ${parsed.data.rate_per_minute} requests/min.`);
 }
 
 // ---------------------------------------------------------------------------
-// Kode klaim & akun customer
+// Claim codes & customer accounts
 // ---------------------------------------------------------------------------
 
-/** Buat kode klaim baru untuk satu pesanan (kode lama langsung mati). */
+/** Create a new claim code for one order (the old code dies immediately). */
 export async function generateClaimCodeAction(orderId: string): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
 
   const repo = db();
   const order = await repo.getOrder(orderId);
-  if (!order) return fail("Pesanan tidak ditemukan.");
+  if (!order) return fail("Order not found.");
   if (order.customer_id) {
-    return fail("Pesanan ini sudah ada di akun customer. Lepas dulu kalau mau dipindah.");
+    return fail("This order is already in a customer account. Release it first if you want to move it.");
   }
 
   const claim_code = generateClaimCode();
@@ -606,16 +606,16 @@ export async function generateClaimCodeAction(orderId: string): Promise<AdminAct
   try {
     await repo.updateOrder(orderId, { claim_code, claim_code_expires_at });
   } catch (error) {
-    return fail(describeDb(error, "Kode klaim bentrok, coba sekali lagi."));
+    return fail(describeDb(error, "Claim code conflict, please try again."));
   }
   refreshAdmin();
-  return ok("Kode klaim dibuat.", [
-    `Kode: ${claim_code}`,
-    `Berlaku sampai ${formatDateTime(claim_code_expires_at)}`,
+  return ok("Claim code created.", [
+    `Code: ${claim_code}`,
+    `Valid until ${formatDateTime(claim_code_expires_at)}`,
   ]);
 }
 
-/** Batalkan kode klaim yang belum dipakai. */
+/** Revoke an unused claim code. */
 export async function revokeClaimCodeAction(orderId: string): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
@@ -626,20 +626,20 @@ export async function revokeClaimCodeAction(orderId: string): Promise<AdminActio
     return fail(describeDb(error));
   }
   refreshAdmin();
-  return ok("Kode klaim dibatalkan.");
+  return ok("Claim code revoked.");
 }
 
-/** Lepas pesanan dari akun customer (mis. salah klaim). */
+/** Release an order from a customer account (e.g. claimed by mistake). */
 export async function detachOrderCustomerAction(orderId: string): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
 
   const repo = db();
   const order = await repo.getOrder(orderId);
-  if (!order) return fail("Pesanan tidak ditemukan.");
-  if (!order.customer_id) return fail("Pesanan ini belum tertaut ke akun customer.");
+  if (!order) return fail("Order not found.");
+  if (!order.customer_id) return fail("This order is not linked to a customer account.");
 
-  const note = `[${jakartaToday()}] Dilepas dari akun customer oleh admin`;
+  const note = `[${jakartaToday()}] Released from customer account by admin`;
   try {
     await repo.updateOrder(orderId, {
       customer_id: null,
@@ -650,10 +650,10 @@ export async function detachOrderCustomerAction(orderId: string): Promise<AdminA
     return fail(describeDb(error));
   }
   refreshAdmin();
-  return ok("Pesanan dilepas dari akun customer. Buat kode klaim baru kalau mau dipindah.");
+  return ok("Order released from the customer account. Create a new claim code if you want to move it.");
 }
 
-/** Siapkan kode klaim untuk semua pesanan aktif yang belum diklaim (masa transisi). */
+/** Prepare claim codes for all active orders not yet claimed (transition period). */
 export async function bulkGenerateClaimCodesAction(): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
@@ -661,7 +661,7 @@ export async function bulkGenerateClaimCodesAction(): Promise<AdminActionState> 
   const repo = db();
   const orders = await repo.listOrders();
   const target = orders.filter((o) => o.is_active && !o.customer_id && !o.claim_code);
-  if (target.length === 0) return ok("Semua pesanan aktif sudah punya kode klaim atau sudah diklaim.");
+  if (target.length === 0) return ok("All active orders already have a claim code or have been claimed.");
 
   const expires = new Date(Date.now() + CLAIM_CODE_TTL_DAYS * 86_400_000).toISOString();
   let berhasil = 0;
@@ -670,24 +670,24 @@ export async function bulkGenerateClaimCodesAction(): Promise<AdminActionState> 
       await repo.updateOrder(order.id, { claim_code: generateClaimCode(), claim_code_expires_at: expires });
       berhasil++;
     } catch (error) {
-      console.error("[admin] gagal membuat kode klaim", order.shopee_order_no, error);
+      console.error("[admin] failed to create claim code", order.shopee_order_no, error);
     }
   }
   refreshAdmin();
-  return ok(`${berhasil} kode klaim dibuat.`, [
-    `Berlaku sampai ${formatDateTime(expires)}`,
-    "Kirim kodenya ke customer lewat halaman pesanan masing-masing.",
+  return ok(`${berhasil} claim codes created.`, [
+    `Valid until ${formatDateTime(expires)}`,
+    "Send each code to the customer via their individual order page.",
   ]);
 }
 
-/** Blokir / buka blokir akun customer. Sesi aktifnya ikut dibatalkan. */
+/** Block / unblock a customer account. Their active session is also revoked. */
 export async function toggleCustomerBlockedAction(customerId: string): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
 
   const repo = db();
   const customer = await repo.getCustomer(customerId);
-  if (!customer) return fail("Akun customer tidak ditemukan.");
+  if (!customer) return fail("Customer account not found.");
 
   const next = !customer.is_blocked;
   try {
@@ -699,17 +699,17 @@ export async function toggleCustomerBlockedAction(customerId: string): Promise<A
     return fail(describeDb(error));
   }
   refreshAdmin();
-  return ok(next ? `Akun ${customer.nama} diblokir.` : `Akun ${customer.nama} diaktifkan lagi.`);
+  return ok(next ? `Account ${customer.nama} blocked.` : `Account ${customer.nama} re-enabled.`);
 }
 
-/** Reset password customer; password sementara dikembalikan untuk dikirim lewat chat. */
+/** Reset a customer's password; the temporary password is returned to send via chat. */
 export async function resetCustomerPasswordAction(customerId: string): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
 
   const repo = db();
   const customer = await repo.getCustomer(customerId);
-  if (!customer) return fail("Akun customer tidak ditemukan.");
+  if (!customer) return fail("Customer account not found.");
 
   const sementara = generateTempPassword();
   try {
@@ -721,21 +721,21 @@ export async function resetCustomerPasswordAction(customerId: string): Promise<A
     return fail(describeDb(error));
   }
   refreshAdmin();
-  return ok(`Password ${customer.nama} direset.`, [
-    `Password sementara: ${sementara}`,
-    "Kirim ke customer lewat WhatsApp dan minta segera diganti.",
+  return ok(`Password for ${customer.nama} reset.`, [
+    `Temporary password: ${sementara}`,
+    "Send it to the customer via WhatsApp and ask them to change it right away.",
   ]);
 }
 
 // ---------------------------------------------------------------------------
-// Follow-up WhatsApp (manual, dari nomor admin sendiri)
+// WhatsApp follow-up (manual, from the admin's own number)
 // ---------------------------------------------------------------------------
 
 const TEMPLATE_VALID: WaTemplate[] = ["claim_code", "expiry_h3", "expiry_h1", "expired", "manual"];
 
 /**
- * Tandai satu follow-up sudah dikirim lewat WhatsApp. Tidak mengirim apa pun —
- * hanya mencatat supaya tidak dihubungi dua kali untuk alasan yang sama.
+ * Mark one follow-up as sent via WhatsApp. Does not send anything —
+ * it only records it so the customer isn't contacted twice for the same reason.
  */
 export async function markFollowUpSentAction(
   orderId: string,
@@ -745,11 +745,11 @@ export async function markFollowUpSentAction(
   const denied = await guard();
   if (denied) return denied;
 
-  if (!TEMPLATE_VALID.includes(template as WaTemplate)) return fail("Jenis pesan tidak dikenali.");
+  if (!TEMPLATE_VALID.includes(template as WaTemplate)) return fail("Message type not recognized.");
 
   const repo = db();
   const order = await repo.getOrder(orderId);
-  if (!order) return fail("Pesanan tidak ditemukan.");
+  if (!order) return fail("Order not found.");
 
   try {
     await repo.insertWaMessage({
@@ -763,13 +763,13 @@ export async function markFollowUpSentAction(
     });
   } catch (error) {
     if (error instanceof DbError && error.code === "DUPLICATE") {
-      return fail("Follow-up ini sudah pernah ditandai terkirim.");
+      return fail("This follow-up has already been marked as sent.");
     }
     return fail(describeDb(error));
   }
 
   refreshAdmin();
-  return ok(`Follow-up ${order.shopee_order_no} dicatat sebagai sudah dikirim.`);
+  return ok(`Follow-up ${order.shopee_order_no} recorded as sent.`);
 }
 
 const updateOrderSchema = z.object({
@@ -793,9 +793,9 @@ export async function updateOrderAction(orderId: string, formData: FormData): Pr
   try {
     const repo = db();
     const current = await repo.getOrder(orderId);
-    if (!current) return fail("Pesanan tidak ditemukan.");
+    if (!current) return fail("Order not found.");
 
-    // Jika tanggal tidak diubah, pertahankan jam expired yang lama.
+    // If the date is unchanged, keep the old expiry time.
     const sameDate =
       new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date(current.expires_at)) ===
       input.expires_date;
@@ -810,10 +810,10 @@ export async function updateOrderAction(orderId: string, formData: FormData): Pr
       wa_number: input.wa_number,
     });
   } catch (error) {
-    return fail(describeDb(error, "Nomor pesanan sudah dipakai pesanan lain."));
+    return fail(describeDb(error, "Order number is already used by another order."));
   }
   refreshAdmin();
-  return ok("Pesanan diperbarui.");
+  return ok("Order updated.");
 }
 
 export async function resetReplaceUsedAction(orderId: string): Promise<AdminActionState> {
@@ -825,15 +825,15 @@ export async function resetReplaceUsedAction(orderId: string): Promise<AdminActi
     return fail(describeDb(error));
   }
   refreshAdmin();
-  return ok("Pemakaian replace direset ke 0.");
+  return ok("Replace usage reset to 0.");
 }
 
 const extendSchema = z.object({
   days: z.coerce
-    .number({ error: "Jumlah hari harus angka." })
-    .int({ error: "Jumlah hari harus bilangan bulat." })
-    .min(1, { error: "Minimal 1 hari." })
-    .max(3650, { error: "Maksimal 3650 hari." }),
+    .number({ error: "Number of days must be a number." })
+    .int({ error: "Number of days must be a whole number." })
+    .min(1, { error: "At least 1 day." })
+    .max(3650, { error: "At most 3650 days." }),
   new_order_no: z
     .string()
     .optional()
@@ -851,12 +851,12 @@ export async function extendOrderAction(orderId: string, formData: FormData): Pr
   try {
     const order = await db().extendOrder(orderId, parsed.data.days, parsed.data.new_order_no);
     refreshAdmin();
-    return ok(`Diperpanjang ${parsed.data.days} hari.`, [
-      `Expired baru: ${formatDateTime(order.expires_at)}`,
-      `Nomor pesanan: ${order.shopee_order_no}`,
+    return ok(`Extended by ${parsed.data.days} days.`, [
+      `New expiry: ${formatDateTime(order.expires_at)}`,
+      `Order number: ${order.shopee_order_no}`,
     ]);
   } catch (error) {
-    return fail(describeDb(error, "Nomor pesanan baru sudah dipakai pesanan lain."));
+    return fail(describeDb(error, "The new order number is already used by another order."));
   }
 }
 
@@ -864,14 +864,14 @@ export async function linkOrderAccountAction(orderId: string, formData: FormData
   const denied = await guard();
   if (denied) return denied;
   const accountId = formData.get("account_id");
-  if (typeof accountId !== "string" || !accountId) return fail("Pilih akun yang tersedia.");
+  if (typeof accountId !== "string" || !accountId) return fail("Select an available account.");
   try {
     await db().setOrderAccount(orderId, accountId);
   } catch (error) {
     return fail(describeDb(error));
   }
   refreshAdmin();
-  return ok("Akun ditautkan ke pesanan.");
+  return ok("Account linked to the order.");
 }
 
 export async function releaseOrderAccountAction(orderId: string): Promise<AdminActionState> {
@@ -883,7 +883,7 @@ export async function releaseOrderAccountAction(orderId: string): Promise<AdminA
     return fail(describeDb(error));
   }
   refreshAdmin();
-  return ok("Akun dilepas dan kembali berstatus available.");
+  return ok("Account released and set back to available.");
 }
 
 const proxyCredentialSchema = z
@@ -892,16 +892,16 @@ const proxyCredentialSchema = z
   .optional()
   .transform((value) => (value ? value : undefined))
   .refine((value) => value === undefined || PROXY_CREDENTIAL_PATTERN.test(value), {
-    error: "Gunakan 8–32 karakter huruf/angka tanpa spasi.",
+    error: "Use 8–32 letters/digits with no spaces.",
   });
 
 const credentialsSchema = z
   .object({ username: proxyCredentialSchema, password: proxyCredentialSchema })
   .refine((value) => Boolean(value.username || value.password), {
-    error: "Isi username baru, password baru, atau keduanya.",
+    error: "Enter a new username, a new password, or both.",
   });
 
-/** Ganti username/password proxy pada akun yang tertaut ke pesanan ini. */
+/** Change the proxy username/password on the account linked to this order. */
 export async function updateOrderCredentialsAction(orderId: string, formData: FormData): Promise<AdminActionState> {
   const denied = await guard();
   if (denied) return denied;
@@ -911,19 +911,19 @@ export async function updateOrderCredentialsAction(orderId: string, formData: Fo
 
   const repo = db();
   const order = await repo.getOrder(orderId);
-  if (!order) return fail("Pesanan tidak ditemukan.");
-  if (!order.account_id) return fail("Pesanan belum memiliki akun.");
+  if (!order) return fail("Order not found.");
+  if (!order.account_id) return fail("This order does not have an account yet.");
   const account = await repo.getAccount(order.account_id);
-  if (!account) return fail("Akun tidak ditemukan.");
+  if (!account) return fail("Account not found.");
 
   try {
     const config = await updateProxyCredentials(account.api_key, parsed.data);
     await invalidate(cacheKeys.proxies(account.id));
     refreshAdmin();
-    return ok("Username & password proxy diganti.", [
+    return ok("Proxy username & password changed.", [
       `Username: ${config.username}`,
       `Password: ${config.password}`,
-      "Customer wajib memperbarui aplikasinya dengan kredensial baru.",
+      "The customer must update their app with the new credentials.",
     ]);
   } catch (error) {
     return fail(describeUpstream(error));
@@ -935,8 +935,122 @@ export async function toggleOrderActiveAction(orderId: string): Promise<AdminAct
   if (denied) return denied;
   const repo = db();
   const order = await repo.getOrder(orderId);
-  if (!order) return fail("Pesanan tidak ditemukan.");
+  if (!order) return fail("Order not found.");
   await repo.updateOrder(orderId, { is_active: !order.is_active });
   refreshAdmin();
-  return ok(order.is_active ? "Pesanan dinonaktifkan." : "Pesanan diaktifkan kembali.");
+  return ok(order.is_active ? "Order deactivated." : "Order reactivated.");
+}
+
+// ---------------------------------------------------------------------------
+// Invoice (checkout manual)
+// ---------------------------------------------------------------------------
+
+const approveInvoiceSchema = z.object({
+  account_id: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value ? value : null)),
+  expires_date: z.string().trim().optional(),
+  replace_quota: quotaSchema,
+  catatan: optionalText(500),
+});
+
+/**
+ * Setujui pembayaran: klaim akun + buat/perpanjang pesanan + tandai invoice
+ * lunas, semuanya dalam satu transaksi di database. Kalau akunnya ternyata
+ * sudah dipakai, tidak ada pesanan setengah jadi yang tertinggal.
+ */
+export async function approveInvoiceAction(invoiceId: string, formData: FormData): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const parsed = approveInvoiceSchema.safeParse(formObject(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error));
+
+  const repo = db();
+  const invoice = await repo.getInvoice(invoiceId);
+  if (!invoice) return fail("Invoice not found.");
+  if (invoice.status === "disetujui") return fail("This invoice has already been approved.");
+
+  const perpanjangan = invoice.jenis === "perpanjangan";
+  let expiresAt = new Date().toISOString();
+
+  if (!perpanjangan) {
+    if (!parsed.data.account_id) return fail("Pick an account to hand over.");
+    const tanggal = dateInputSchema.safeParse(parsed.data.expires_date);
+    if (!tanggal.success) return fail(firstIssue(tanggal.error));
+    expiresAt = endOfJakartaDay(tanggal.data);
+  }
+
+  let order;
+  try {
+    order = await repo.approveInvoice(
+      invoiceId,
+      perpanjangan ? null : parsed.data.account_id,
+      expiresAt,
+      parsed.data.replace_quota,
+      parsed.data.catatan,
+    );
+  } catch (error) {
+    if (error instanceof DbError && error.code === "INVOICE_STATUS_INVALID") {
+      return fail("This invoice can no longer be approved (it may have been handled already).");
+    }
+    return fail(describeDb(error));
+  }
+
+  // Pool rotating ikut berubah kalau akun baru saja dipakai.
+  invalidateRotatingPool();
+  refreshAdmin();
+  return ok(
+    perpanjangan
+      ? `Renewal done. ${order.shopee_order_no} is now active until ${formatDateTime(order.expires_at)}.`
+      : `Order ${order.shopee_order_no} created and handed to the customer.`,
+    [`Customer page: ${customerPath(order.shopee_order_no)}`],
+  );
+}
+
+const rejectInvoiceSchema = z.object({
+  alasan: z
+    .string({ error: "A reason is required." })
+    .trim()
+    .min(3, { error: "Please write a reason — the customer will see it." })
+    .max(300, { error: "Maximum 300 characters." }),
+});
+
+export async function rejectInvoiceAction(invoiceId: string, formData: FormData): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  const parsed = rejectInvoiceSchema.safeParse(formObject(formData));
+  if (!parsed.success) return fail(firstIssue(parsed.error));
+
+  try {
+    await db().rejectInvoice(invoiceId, parsed.data.alasan);
+  } catch (error) {
+    if (error instanceof DbError && error.code === "INVOICE_STATUS_INVALID") {
+      return fail("This invoice can no longer be rejected.");
+    }
+    return fail(describeDb(error));
+  }
+
+  refreshAdmin();
+  return ok("Invoice rejected. The customer can see the reason on their invoice page.");
+}
+
+export async function expireInvoiceAction(invoiceId: string): Promise<AdminActionState> {
+  const denied = await guard();
+  if (denied) return denied;
+
+  try {
+    await db().expireInvoice(invoiceId);
+  } catch (error) {
+    if (error instanceof DbError && error.code === "INVOICE_STATUS_INVALID") {
+      return fail("Only unpaid invoices can be marked expired.");
+    }
+    return fail(describeDb(error));
+  }
+
+  refreshAdmin();
+  return ok("Invoice marked as expired.");
 }

@@ -92,6 +92,6 @@ export const getCustomer = cache(async (): Promise<Customer | null> => {
 
 export async function requireCustomer(next?: string): Promise<Customer> {
   const customer = await getCustomer();
-  if (!customer) redirect(next ? `/akun/masuk?next=${encodeURIComponent(next)}` : "/akun/masuk");
+  if (!customer) redirect(next ? `/account/login?next=${encodeURIComponent(next)}` : "/account/login");
   return customer;
 }

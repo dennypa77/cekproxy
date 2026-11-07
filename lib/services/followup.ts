@@ -71,12 +71,12 @@ export async function listFollowUps(): Promise<FollowUpRow[]> {
       template,
       alasan:
         jenis === "belum_klaim"
-          ? "Kode klaim belum dipakai"
+          ? "Claim code not used yet"
           : jenis === "expired"
             ? `Expired ${expiresLabel}`
             : sisa <= 1
-              ? "Expired besok / hari ini"
-              : `${sisa} hari lagi`,
+              ? "Expires today / tomorrow"
+              : `${sisa} days left`,
       namaCustomer: pemilik?.nama ?? order.nama_customer,
       waNumber,
       punyaAkun: Boolean(pemilik),
@@ -84,8 +84,8 @@ export async function listFollowUps(): Promise<FollowUpRow[]> {
       daysLeft: sisa,
       pesan:
         jenis === "belum_klaim"
-          ? waClaimCodeMessage(order.shopee_order_no, order.claim_code ?? "", `${base}/akun/daftar`)
-          : waExpiryMessage(order.shopee_order_no, expiresLabel, sisa, `${base}/akun`),
+          ? waClaimCodeMessage(order.shopee_order_no, order.claim_code ?? "", `${base}/account/register`)
+          : waExpiryMessage(order.shopee_order_no, expiresLabel, sisa, `${base}/account`),
       sudahDihubungi: sudah.has(`${order.id}:${template}`),
     });
   };

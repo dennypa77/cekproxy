@@ -14,15 +14,15 @@ export function SearchForm() {
     event.preventDefault();
     const orderNo = value.replace(/\s+/g, "");
     if (!orderNo) {
-      setError({ title: "Nomor pesanan wajib diisi", body: "Masukkan nomor pesanan Shopee Anda.", icon: "edit" });
+      setError({ title: "Order number is required", body: "Enter your order number.", icon: "edit" });
       return;
     }
     setError(null);
     startTransition(async () => {
       const result = await searchOrder(orderNo).catch(() => ({
         error: {
-          title: "Tidak dapat terhubung",
-          body: "Periksa koneksi internet Anda lalu coba lagi.",
+          title: "Can't connect",
+          body: "Check your internet connection and try again.",
           icon: "offline" as const,
         },
       }));
@@ -31,16 +31,16 @@ export function SearchForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-3xl border-2 border-ink bg-white p-5 sm:p-7" noValidate>
+    <form onSubmit={onSubmit} className="rounded-3xl border-2 border-ink bg-surface p-5 sm:p-7" noValidate>
       <label htmlFor="order-no" className={labelClass}>
-        Nomor Pesanan
+        Order number
       </label>
       <input
         id="order-no"
         name="order_no"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="Contoh: 240913ABCD1234"
+        placeholder="e.g. 240913ABCD1234"
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="characters"
@@ -51,12 +51,12 @@ export function SearchForm() {
       />
       <Button type="submit" size="lg" loading={pending} className="mt-4 w-full">
         {!pending && <SearchIcon className="size-5" />}
-        {pending ? "Mengecek…" : "Cek Pesanan"}
+        {pending ? "Checking…" : "Check order"}
       </Button>
 
       {error && (
         <div className="animate-pop-in mt-5 flex gap-3 rounded-2xl border-2 border-ink bg-warn-soft p-3.5 text-sm text-ink" role="alert">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink text-white" aria-hidden="true">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink text-paper" aria-hidden="true">
             <StatusIcon name={error.icon ?? "alert"} className="size-4" />
           </span>
           <div>

@@ -26,5 +26,5 @@ export async function apiFetch<T>(url: string, init?: RequestInit): Promise<ApiR
 }
 
 export function orderApi(orderNo: string, path: string): string {
-  return `/api/pesanan/${encodeURIComponent(orderNo)}/${path}`;
+  return `/api/orders/${encodeURIComponent(orderNo)}/${path}`;
 }

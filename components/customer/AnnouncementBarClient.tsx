@@ -37,7 +37,7 @@ export function AnnouncementBarClient({ id, text }: { id: string; text: string }
       <button
         type="button"
         onClick={close}
-        aria-label="Tutup pengumuman"
+        aria-label="Dismiss announcement"
         className="absolute top-1.5 right-2 flex size-8 items-center justify-center rounded-full text-ink transition-colors hover:bg-ink/10 focus-visible:ring-4 focus-visible:ring-brand/30 focus-visible:outline-none"
       >
         <XIcon className="size-4" strokeWidth={3} />

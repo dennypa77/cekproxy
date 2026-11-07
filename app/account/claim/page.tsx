@@ -8,38 +8,37 @@ import { requireCustomer } from "@/lib/customer-session";
 import { waHelpLink } from "@/lib/links";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Klaim Pesanan" };
+export const metadata: Metadata = { title: "Claim Order" };
 
 export default async function KlaimPage({ searchParams }: { searchParams: Promise<{ pesanan?: string }> }) {
-  const customer = await requireCustomer("/akun/klaim");
+  const customer = await requireCustomer("/account/claim");
   const { pesanan } = await searchParams;
 
   return (
     <AccountShell nama={customer.nama}>
       <Card>
         <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-          Klaim <span className="text-brand">pesanan</span>
+          Claim an <span className="text-brand">order</span>
         </h2>
         <p className="mt-2 mb-5 text-sm text-muted">
           {pesanan
-            ? `Masukkan kode klaim untuk pesanan ${pesanan}. Kodenya dikirim admin lewat WhatsApp.`
-            : "Masukkan kode klaim yang dikirim admin lewat WhatsApp. Satu kode untuk satu pesanan."}
+            ? `Enter the claim code for order ${pesanan}. We send the code to you on WhatsApp.`
+            : "Enter the claim code we send you on WhatsApp. One code for one order."}
         </p>
         <ClaimForm />
       </Card>
 
       <Card>
-        <h3 className="font-display text-base font-extrabold tracking-tight text-ink uppercase">Belum punya kode?</h3>
+        <h3 className="font-display text-base font-extrabold tracking-tight text-ink uppercase">Don&apos;t have a code?</h3>
         <p className="mt-2 text-sm text-muted">
-          Minta ke admin lewat WhatsApp dengan menyebutkan nomor pesanan Anda. Kode berlaku 7 hari dan hanya bisa
-          dipakai sekali.
+          Ask us on WhatsApp and include your order number. The code is valid for 7 days and can only be used once.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <a href={waHelpLink(pesanan)} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "md")}>
-            <WhatsAppIcon className="size-4" /> Minta kode klaim
+            <WhatsAppIcon className="size-4" /> Request a claim code
           </a>
-          <Link href="/akun" className={buttonClass("ghost", "md")}>
-            Kembali ke daftar pesanan
+          <Link href="/account" className={buttonClass("ghost", "md")}>
+            Back to my orders
           </Link>
         </div>
       </Card>

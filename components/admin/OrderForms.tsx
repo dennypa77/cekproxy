@@ -39,7 +39,7 @@ function DateWithShortcuts({
       />
       {shortcuts.map((days) => (
         <Button key={days} variant="secondary" size="md" onClick={() => onChange(jakartaDateInput(days))}>
-          +{days} hari
+          +{days} days
         </Button>
       ))}
     </div>
@@ -63,7 +63,7 @@ export function AddOrderForm({ accounts, defaultDate }: { accounts: AccountOptio
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className={labelClass} htmlFor="shopee_order_no">
-            Nomor pesanan Shopee
+            Order number
           </label>
           <input
             id="shopee_order_no"
@@ -75,26 +75,26 @@ export function AddOrderForm({ accounts, defaultDate }: { accounts: AccountOptio
         </div>
         <div>
           <label className={labelClass} htmlFor="nama_customer">
-            Nama customer (opsional)
+            Customer name (optional)
           </label>
           <input id="nama_customer" name="nama_customer" maxLength={100} className={inputClass} />
         </div>
       </div>
       <div>
         <label className={labelClass} htmlFor="wa_number">
-          Nomor WhatsApp pembeli (opsional)
+          Buyer's WhatsApp number (optional)
         </label>
         <input id="wa_number" name="wa_number" type="tel" inputMode="numeric" placeholder="0812-3456-7890" className={inputClass} />
-        <p className="mt-1 text-xs text-muted">Dipakai mengirim kode klaim dan pengingat sebelum pesanan expired.</p>
+        <p className="mt-1 text-xs text-muted">Used to send the claim code and reminders before the order expires.</p>
       </div>
 
       <div>
         <label className={labelClass} htmlFor="account_id">
-          Akun ({accounts.length} available)
+          Account ({accounts.length} available)
         </label>
         <select id="account_id" name="account_id" required className={inputClass} defaultValue="">
           <option value="" disabled>
-            {accounts.length ? "Pilih akun…" : "Tidak ada akun available"}
+            {accounts.length ? "Select an account…" : "No available accounts"}
           </option>
           {accounts.map((account) => (
             <option key={account.id} value={account.id}>
@@ -107,30 +107,30 @@ export function AddOrderForm({ accounts, defaultDate }: { accounts: AccountOptio
       <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
         <div>
           <label className={labelClass} htmlFor="expires_date">
-            Tanggal expired (23:59 WIB)
+            Expiry date (23:59 WIB)
           </label>
           <DateWithShortcuts name="expires_date" value={date} onChange={setDate} shortcuts={[7, 30]} />
         </div>
         <div>
           <label className={labelClass} htmlFor="replace_quota">
-            Kuota replace
+            Replace quota
           </label>
           <input id="replace_quota" name="replace_quota" type="number" min={0} defaultValue={10} required className={inputClass} />
         </div>
       </div>
       <div>
         <label className={labelClass} htmlFor="order_catatan">
-          Catatan (opsional)
+          Notes (optional)
         </label>
         <input id="order_catatan" name="catatan" maxLength={2000} className={inputClass} />
       </div>
       <Button type="submit" loading={pending} disabled={accounts.length === 0}>
-        Simpan pesanan
+        Save order
       </Button>
       <ResultDetails state={state} />
       {state?.ok && createdPath && (
         <Link href={createdPath} target="_blank" className="inline-block text-sm text-brand-deep hover:underline">
-          Buka halaman customer →
+          Open customer page →
         </Link>
       )}
     </form>
@@ -152,7 +152,7 @@ export function EditOrderForm({
     catatan: string | null;
     wa_number: string | null;
   };
-  /** Pesanan rotating tidak memakai kuota replace, jadi kolomnya disembunyikan. */
+  /** Rotating orders don't use a replace quota, so the fields are hidden. */
   hideReplace?: boolean;
 }) {
   const [date, setDate] = useState(order.expiresDate);
@@ -163,7 +163,7 @@ export function EditOrderForm({
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className={labelClass} htmlFor="edit_order_no">
-            Nomor pesanan Shopee
+            Order number
           </label>
           <input
             id="edit_order_no"
@@ -175,22 +175,22 @@ export function EditOrderForm({
         </div>
         <div>
           <label className={labelClass} htmlFor="edit_nama">
-            Nama customer
+            Customer name
           </label>
           <input id="edit_nama" name="nama_customer" defaultValue={order.nama_customer ?? ""} className={inputClass} />
         </div>
       </div>
       <div>
         <label className={labelClass} htmlFor="edit_wa">
-          Nomor WhatsApp pembeli (opsional)
+          Buyer's WhatsApp number (optional)
         </label>
         <input id="edit_wa" name="wa_number" type="tel" inputMode="numeric" placeholder="0812-3456-7890" defaultValue={order.wa_number ?? ""} className={inputClass} />
-        <p className="mt-1 text-xs text-muted">Dipakai mengirim kode klaim dan pengingat sebelum pesanan expired.</p>
+        <p className="mt-1 text-xs text-muted">Used to send the claim code and reminders before the order expires.</p>
       </div>
 
       <div>
         <label className={labelClass} htmlFor="expires_date">
-          Tanggal expired
+          Expiry date
         </label>
         <DateWithShortcuts name="expires_date" value={date} onChange={setDate} shortcuts={[7, 30]} />
       </div>
@@ -203,7 +203,7 @@ export function EditOrderForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass} htmlFor="edit_quota">
-            Kuota replace
+            Replace quota
           </label>
           <input
             id="edit_quota"
@@ -217,7 +217,7 @@ export function EditOrderForm({
         </div>
         <div>
           <label className={labelClass} htmlFor="edit_used">
-            Replace terpakai
+            Replace used
           </label>
           <input
             id="edit_used"
@@ -233,12 +233,12 @@ export function EditOrderForm({
       )}
       <div>
         <label className={labelClass} htmlFor="edit_catatan">
-          Catatan
+          Notes
         </label>
         <textarea id="edit_catatan" name="catatan" rows={4} defaultValue={order.catatan ?? ""} className={inputClass} />
       </div>
       <Button type="submit" loading={pending}>
-        Simpan perubahan
+        Save changes
       </Button>
       <ResultDetails state={state} />
     </form>
@@ -256,7 +256,7 @@ export function ExtendOrderForm({ action }: { action: (formData: FormData) => Pr
     <form ref={formRef} onSubmit={onSubmit} className="space-y-3">
       <div>
         <label className={labelClass} htmlFor="extend_days">
-          Tambah hari
+          Add days
         </label>
         <div className="flex flex-wrap gap-2">
           <input
@@ -272,27 +272,27 @@ export function ExtendOrderForm({ action }: { action: (formData: FormData) => Pr
           />
           {[7, 30].map((value) => (
             <Button key={value} variant="secondary" onClick={() => setDays(String(value))}>
-              {value} hari
+              {value} days
             </Button>
           ))}
         </div>
-        <p className="mt-1 text-xs text-muted">Jika pesanan sudah expired, perpanjangan dihitung dari hari ini.</p>
+        <p className="mt-1 text-xs text-muted">If the order has already expired, the extension is counted from today.</p>
       </div>
       <div>
         <label className={labelClass} htmlFor="new_order_no">
-          Nomor pesanan Shopee baru (opsional)
+          New order number (optional)
         </label>
         <input
           id="new_order_no"
           name="new_order_no"
           autoComplete="off"
-          placeholder="Kosongkan jika tetap memakai nomor lama"
+          placeholder="Leave blank to keep the old number"
           className={`${inputClass} font-mono uppercase`}
         />
-        <p className="mt-1 text-xs text-muted">Nomor lama otomatis dicatat di kolom catatan.</p>
+        <p className="mt-1 text-xs text-muted">The old number is automatically recorded in the notes field.</p>
       </div>
       <Button type="submit" loading={pending}>
-        Perpanjang
+        Extend
       </Button>
       <ResultDetails state={state} />
     </form>
@@ -314,13 +314,13 @@ export function CredentialsForm({ action }: { action: (formData: FormData) => Pr
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-3">
       <p className="text-sm text-muted">
-        Kosongkan salah satu jika tidak ingin diubah. Berlaku untuk semua proxy di akun ini, dan customer wajib
-        memperbarui aplikasinya.
+        Leave either field blank if you don't want to change it. Applies to all proxies on this account, and the
+        customer must update their app.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className={labelClass} htmlFor="cred_username">
-            Username baru
+            New username
           </label>
           <div className="flex gap-2">
             <input
@@ -333,13 +333,13 @@ export function CredentialsForm({ action }: { action: (formData: FormData) => Pr
               className={`${inputClass} font-mono`}
             />
             <Button variant="secondary" onClick={() => setUsername(random())}>
-              Acak
+              Random
             </Button>
           </div>
         </div>
         <div>
           <label className={labelClass} htmlFor="cred_password">
-            Password baru
+            New password
           </label>
           <div className="flex gap-2">
             <input
@@ -352,13 +352,13 @@ export function CredentialsForm({ action }: { action: (formData: FormData) => Pr
               className={`${inputClass} font-mono`}
             />
             <Button variant="secondary" onClick={() => setPassword(random())}>
-              Acak
+              Random
             </Button>
           </div>
         </div>
       </div>
       <Button type="submit" loading={pending} disabled={!username && !password}>
-        Ganti kredensial
+        Change credentials
       </Button>
       <ResultDetails state={state} />
     </form>
@@ -377,7 +377,7 @@ export function LinkAccountForm({
     <form onSubmit={onSubmit} className="flex flex-col gap-2 sm:flex-row">
       <select name="account_id" required defaultValue="" className={inputClass}>
         <option value="" disabled>
-          {accounts.length ? "Pilih akun available…" : "Tidak ada akun available"}
+          {accounts.length ? "Select an available account…" : "No available accounts"}
         </option>
         {accounts.map((account) => (
           <option key={account.id} value={account.id}>
@@ -387,7 +387,7 @@ export function LinkAccountForm({
         ))}
       </select>
       <Button type="submit" loading={pending} disabled={!accounts.length}>
-        Tautkan
+        Link
       </Button>
     </form>
   );

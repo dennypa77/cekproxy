@@ -54,12 +54,12 @@ export function CredentialsModal({
     if (changedPassword) patch.password = password.trim();
 
     if (!patch.username && !patch.password) {
-      setError("Belum ada perubahan. Ubah username atau password terlebih dahulu.");
+      setError("Nothing has changed yet. Edit the username or password first.");
       return;
     }
     for (const value of Object.values(patch)) {
       if (!PATTERN.test(value)) {
-        setError("Gunakan 8-32 karakter huruf dan angka saja, tanpa spasi atau simbol.");
+        setError("Use 8-32 letters and numbers only, with no spaces or symbols.");
         return;
       }
     }
@@ -77,30 +77,30 @@ export function CredentialsModal({
       toast.error(result.error);
       return;
     }
-    toast.success("Username & password proxy berhasil diganti");
+    toast.success("Proxy username & password changed successfully");
     onChanged(result.data);
   }
 
   async function copyBoth() {
     const ok = await copyText(username + ":" + password);
-    if (ok) toast.success("Username & password disalin");
-    else toast.error("Gagal menyalin.");
+    if (ok) toast.success("Username & password copied");
+    else toast.error("Failed to copy.");
   }
 
   return (
-    <Modal open={open} title="Ganti" accent="User & Password" onClose={onClose} dismissible={!submitting}>
+    <Modal open={open} title="Change" accent="User & Password" onClose={onClose} dismissible={!submitting}>
       <div className="space-y-4">
         <div className="flex gap-3 rounded-2xl border-2 border-ink bg-warn-soft p-3.5 text-sm">
           <AlertIcon className="mt-0.5 size-4 shrink-0" />
           <p>
-            Setelah diganti, <b>semua aplikasi yang memakai proxy ini harus diperbarui</b> dengan username dan password
-            baru. Koneksi dengan kredensial lama akan langsung ditolak.
+            After changing these, <b>every app using this proxy must be updated</b> with the new username and password.
+            Connections using the old credentials will be rejected immediately.
           </p>
         </div>
 
         <div>
           <label htmlFor="cred-username" className={labelClass}>
-            Username baru
+            New username
           </label>
           <div className="flex gap-2">
             <input
@@ -120,7 +120,7 @@ export function CredentialsModal({
               variant="secondary"
               onClick={() => setUsername(randomCredential())}
               disabled={submitting}
-              aria-label="Acak username"
+              aria-label="Randomize username"
             >
               <RefreshIcon className="size-4" />
             </Button>
@@ -129,7 +129,7 @@ export function CredentialsModal({
 
         <div>
           <label htmlFor="cred-password" className={labelClass}>
-            Password baru
+            New password
           </label>
           <div className="flex gap-2">
             <input
@@ -149,16 +149,16 @@ export function CredentialsModal({
               variant="secondary"
               onClick={() => setPassword(randomCredential())}
               disabled={submitting}
-              aria-label="Acak password"
+              aria-label="Randomize password"
             >
               <RefreshIcon className="size-4" />
             </Button>
           </div>
-          <p className="mt-1.5 text-xs text-muted">8-32 karakter, huruf dan angka saja.</p>
+          <p className="mt-1.5 text-xs text-muted">8-32 characters, letters and numbers only.</p>
         </div>
 
         <Button variant="secondary" size="sm" onClick={copyBoth} disabled={submitting} className="w-full">
-          <CopyIcon className="size-4" /> Salin user:pass
+          <CopyIcon className="size-4" /> Copy user:pass
         </Button>
 
         {error && !submitting && (
@@ -169,10 +169,10 @@ export function CredentialsModal({
 
         <div className="grid grid-cols-2 gap-3 pt-1">
           <Button variant="secondary" size="lg" onClick={onClose} disabled={submitting}>
-            Batal
+            Cancel
           </Button>
           <Button variant="brand" size="lg" onClick={submit} loading={submitting} disabled={nothingChanged}>
-            {submitting ? "Menyimpan" : "Simpan"}
+            {submitting ? "Saving" : "Save"}
           </Button>
         </div>
       </div>

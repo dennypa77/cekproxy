@@ -14,9 +14,9 @@ export interface ClaimCodeCardProps {
   orderNo: string;
   claimCode: string | null;
   claimExpiresLabel: string | null;
-  /** Akun customer yang sudah mengklaim pesanan ini. */
+  /** The customer account that has already claimed this order. */
   customer: { nama: string; waNumber: string; claimedLabel: string } | null;
-  /** Nomor WhatsApp pembeli yang dicatat admin di pesanan. */
+  /** The buyer's WhatsApp number recorded by the admin on the order. */
   orderWaNumber: string | null;
   generateAction: () => Promise<AdminActionState>;
   revokeAction: () => Promise<AdminActionState>;
@@ -33,8 +33,8 @@ export function ClaimCodeCard(props: ClaimCodeCardProps) {
 
   async function salin(text: string, label: string) {
     const ok = await copyText(text);
-    if (ok) toast.success(`${label} disalin`);
-    else toast.error("Gagal menyalin.");
+    if (ok) toast.success(`${label} copied`);
+    else toast.error("Failed to copy.");
   }
 
   if (customer) {
@@ -43,11 +43,11 @@ export function ClaimCodeCard(props: ClaimCodeCardProps) {
         <div className="text-sm">
           <p className="font-medium text-ink">{customer.nama}</p>
           <p className="text-muted">{formatWaNumber(customer.waNumber)}</p>
-          <p className="mt-1 text-xs text-muted">Diklaim {customer.claimedLabel}</p>
+          <p className="mt-1 text-xs text-muted">Claimed {customer.claimedLabel}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <a
-            href={waTo(customer.waNumber, `Halo ${customer.nama}, soal pesanan ${orderNo}:`)}
+            href={waTo(customer.waNumber, `Hi ${customer.nama}, regarding order ${orderNo}:`)}
             target="_blank"
             rel="noopener noreferrer"
             className={buttonClass("secondary", "sm")}
@@ -58,9 +58,9 @@ export function ClaimCodeCard(props: ClaimCodeCardProps) {
             action={props.detachAction}
             variant="dangerSoft"
             size="sm"
-            confirm="Lepas pesanan ini dari akun customer? Setelah itu pesanan bisa diklaim ulang dengan kode baru."
+            confirm="Release this order from the customer account? After that the order can be claimed again with a new code."
           >
-            Lepas dari akun
+            Release from account
           </ActionButton>
         </div>
       </div>
@@ -71,32 +71,32 @@ export function ClaimCodeCard(props: ClaimCodeCardProps) {
     return (
       <div className="space-y-3">
         <p className="text-sm text-muted">
-          Pesanan ini belum ada di akun customer mana pun. Buat kode klaim, lalu kirimkan ke pembeli lewat WhatsApp.
+          This order isn't in any customer account yet. Create a claim code, then send it to the buyer via WhatsApp.
         </p>
         <ActionButton action={props.generateAction} variant="primary" size="sm">
-          Buat kode klaim
+          Create claim code
         </ActionButton>
       </div>
     );
   }
 
-  const pesan = waClaimCodeMessage(orderNo, claimCode, `${origin}/akun/daftar`);
+  const pesan = waClaimCodeMessage(orderNo, claimCode, `${origin}/account/register`);
 
   return (
     <div className="space-y-4">
       <div>
-        <p className={labelClass}>Kode klaim</p>
+        <p className={labelClass}>Claim code</p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <code className="flex-1 rounded-2xl border-2 border-ink bg-paper px-3.5 py-2.5 text-center font-mono text-lg font-bold tracking-widest">
             {claimCode}
           </code>
-          <Button variant="secondary" onClick={() => salin(claimCode, "Kode klaim")}>
-            <CopyIcon className="size-4" /> Salin
+          <Button variant="secondary" onClick={() => salin(claimCode, "Claim code")}>
+            <CopyIcon className="size-4" /> Copy
           </Button>
         </div>
         {claimExpiresLabel && (
           <p className="mt-1.5 text-xs text-muted">
-            Berlaku sampai {claimExpiresLabel} · <Badge tone="yellow">belum diklaim</Badge>
+            Valid until {claimExpiresLabel} · <Badge tone="yellow">not claimed</Badge>
           </p>
         )}
       </div>
@@ -109,29 +109,29 @@ export function ClaimCodeCard(props: ClaimCodeCardProps) {
             rel="noopener noreferrer"
             className={buttonClass("primary", "sm")}
           >
-            <WhatsAppIcon className="size-4" /> Kirim ke {formatWaNumber(orderWaNumber)}
+            <WhatsAppIcon className="size-4" /> Send to {formatWaNumber(orderWaNumber)}
           </a>
         ) : (
-          <Button variant="secondary" size="sm" onClick={() => salin(pesan, "Pesan klaim")}>
-            <CopyIcon className="size-4" /> Salin pesan untuk customer
+          <Button variant="secondary" size="sm" onClick={() => salin(pesan, "Claim message")}>
+            <CopyIcon className="size-4" /> Copy message for customer
           </Button>
         )}
         <ActionButton
           action={props.generateAction}
           size="sm"
-          confirm="Buat kode baru? Kode yang sekarang langsung tidak berlaku."
+          confirm="Create a new code? The current code stops working immediately."
         >
-          Buat ulang kode
+          Regenerate code
         </ActionButton>
-        <ActionButton action={props.revokeAction} variant="dangerSoft" size="sm" confirm="Batalkan kode klaim ini?">
-          Batalkan kode
+        <ActionButton action={props.revokeAction} variant="dangerSoft" size="sm" confirm="Revoke this claim code?">
+          Revoke code
         </ActionButton>
       </div>
 
       {!orderWaNumber && (
         <p className="text-xs text-muted">
-          Isi nomor WhatsApp pembeli di form “Edit pesanan” supaya kode bisa dikirim sekali klik dan pengingat expired
-          otomatis bisa jalan.
+          Enter the buyer's WhatsApp number in the “Edit order” form so the code can be sent in one click and
+          automatic expiry reminders can run.
         </p>
       )}
     </div>

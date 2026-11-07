@@ -2,7 +2,7 @@ export const DAY_MS = 86_400_000;
 export const TIME_ZONE = "Asia/Jakarta";
 
 export function formatDateTime(iso: string): string {
-  const text = new Intl.DateTimeFormat("id-ID", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -10,11 +10,10 @@ export function formatDateTime(iso: string): string {
     minute: "2-digit",
     timeZone: TIME_ZONE,
   }).format(new Date(iso));
-  return `${text} WIB`;
 }
 
 export function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("id-ID", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -23,7 +22,7 @@ export function formatDate(iso: string): string {
 }
 
 export function formatTime(iso: string): string {
-  return new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: TIME_ZONE }).format(
+  return new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", timeZone: TIME_ZONE }).format(
     new Date(iso),
   );
 }
@@ -51,13 +50,13 @@ export function startOfJakartaDay(dateInput: string): string {
 
 export function formatGb(value: number): string {
   const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2;
-  return `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: digits }).format(value)} GB`;
+  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: digits }).format(value)} GB`;
 }
 
 export function countryName(code: string | null | undefined): string {
-  if (!code) return "Tidak diketahui";
+  if (!code) return "Unknown";
   try {
-    return new Intl.DisplayNames(["id"], { type: "region" }).of(code.toUpperCase()) ?? code;
+    return new Intl.DisplayNames(["en"], { type: "region" }).of(code.toUpperCase()) ?? code;
   } catch {
     return code;
   }

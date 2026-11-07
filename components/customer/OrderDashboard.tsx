@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 import { LogoTab, ServicePill } from "@/components/Brand";
 import { Decor } from "@/components/Decor";
-import { ChevronLeftIcon, ClockIcon, ServerIcon, ShopIcon, UserIcon, WhatsAppIcon } from "@/components/icons";
+import { ChevronLeftIcon, ClockIcon, ServerIcon, UserIcon, WhatsAppIcon } from "@/components/icons";
 import { buttonClass, Card, CardHeader, cn, Pill } from "@/components/ui";
-import { SHOPEE_STORE_URL, waExtendLink, waHelpLink } from "@/lib/links";
+import { waExtendLink, waHelpLink } from "@/lib/links";
 import { BandwidthCard } from "./BandwidthCard";
 import { ExpiryBanner } from "./ExpiryBanner";
 import { OtherPlansCard } from "./OtherPlansCard";
@@ -24,7 +24,7 @@ export interface OrderDashboardProps {
   jenisProxy: string | null;
   initialReplaceUsed: number;
   initialReplaceQuota: number;
-  /** Tujuan tombol kembali: "/akun" kalau pesanan ini ada di akun customer. */
+  /** Tujuan tombol kembali: "/account" kalau pesanan ini ada di akun customer. */
   backHref?: string;
   backLabel?: string;
 }
@@ -34,7 +34,7 @@ export const WARNING_DAYS = 3;
 export function OrderDashboard(props: OrderDashboardProps) {
   const { orderNo, namaCustomer, expiresAtLabel, expiresDateShort, graceEndsLabel, daysLeft, expired, jenisProxy } = props;
   const backHref = props.backHref ?? "/";
-  const backLabel = props.backLabel ?? "Cek pesanan lain";
+  const backLabel = props.backLabel ?? "Check another order";
   const [quota, setQuota] = useState({ used: props.initialReplaceUsed, total: props.initialReplaceQuota });
   const onQuotaChange = useCallback((used: number, total: number) => setQuota({ used, total }), []);
   const expiringSoon = !expired && daysLeft <= WARNING_DAYS;
@@ -46,7 +46,7 @@ export function OrderDashboard(props: OrderDashboardProps) {
       <div className="flex items-start justify-between gap-3">
         <Link
           href={backHref}
-          className="mt-5 inline-flex items-center gap-1 rounded-full border-2 border-ink bg-white px-3 py-1.5 text-sm font-semibold transition hover:bg-brand-softer"
+          className="mt-5 inline-flex items-center gap-1 rounded-full border-2 border-ink bg-surface px-3 py-1.5 text-sm font-semibold transition hover:bg-brand-softer"
         >
           <ChevronLeftIcon className="size-4" /> {backLabel}
         </Link>
@@ -54,7 +54,7 @@ export function OrderDashboard(props: OrderDashboardProps) {
       </div>
 
       <header className="mt-4 mb-6">
-        <p className="text-xs font-bold tracking-widest text-muted uppercase">Nomor pesanan</p>
+        <p className="text-xs font-bold tracking-widest text-muted uppercase">Order number</p>
         <h1 className="font-mono text-2xl font-bold break-all text-brand-deep sm:text-3xl">{orderNo}</h1>
         <div className="mt-3 flex flex-wrap gap-2">
           <Pill
@@ -64,7 +64,7 @@ export function OrderDashboard(props: OrderDashboardProps) {
               />
             }
           >
-            {expired ? "Expired" : expiringSoon ? "Segera expired" : "Aktif"}
+            {expired ? "Expired" : expiringSoon ? "Expiring soon" : "Active"}
           </Pill>
           {jenisProxy && (
             <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-brand-soft px-3 py-1 text-xs font-bold">
@@ -72,7 +72,7 @@ export function OrderDashboard(props: OrderDashboardProps) {
             </span>
           )}
           {namaCustomer && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-white px-3 py-1 text-xs font-bold">
+            <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-surface px-3 py-1 text-xs font-bold">
               <UserIcon className="size-3.5" /> {namaCustomer}
             </span>
           )}
@@ -91,7 +91,7 @@ export function OrderDashboard(props: OrderDashboardProps) {
 
         <div className="grid gap-6 md:grid-cols-5">
           <Card className="flex flex-col md:col-span-2">
-            <CardHeader title="Masa" accent="Aktif" icon={<ClockIcon className="size-5" />} />
+            <CardHeader title="Validity" accent="Period" icon={<ClockIcon className="size-5" />} />
             <div
               className={cn(
                 "rounded-2xl border-2 border-ink p-4 text-center",
@@ -103,32 +103,24 @@ export function OrderDashboard(props: OrderDashboardProps) {
               ) : (
                 <p className="font-display">
                   <span className="text-6xl leading-none font-extrabold text-ink">{daysLeft}</span>
-                  <span className="ml-2 text-lg font-bold uppercase">hari lagi</span>
+                  <span className="ml-2 text-lg font-bold uppercase">days left</span>
                 </p>
               )}
             </div>
-            <p className="mt-4 text-sm text-muted">Berlaku hingga</p>
+            <p className="mt-4 text-sm text-muted">Valid until</p>
             <p className="font-bold text-ink">{expiresAtLabel}</p>
 
             <div className="mt-auto pt-5">
-              <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">Perpanjang</p>
+              <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">Renew</p>
               <a
                 href={waExtendLink(orderNo, expiresDateShort)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={buttonClass("primary", "sm", "w-full")}
               >
-                <WhatsAppIcon className="size-4" /> Perpanjang langsung
+                <WhatsAppIcon className="size-4" /> Renew now
               </a>
-              <p className="mt-1.5 text-center text-xs text-muted">Bebas biaya admin, harga sama.</p>
-              <a
-                href={SHOPEE_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 flex items-center justify-center gap-1.5 text-xs font-bold text-muted transition-colors hover:text-ink"
-              >
-                <ShopIcon className="size-3.5" /> atau lewat Shopee
-              </a>
+              <p className="mt-1.5 text-center text-xs text-muted">No service fee, same price.</p>
             </div>
           </Card>
 
@@ -149,7 +141,7 @@ export function OrderDashboard(props: OrderDashboardProps) {
 
         <div className="flex flex-col items-center gap-3 pt-4">
           <a href={waHelpLink(orderNo)} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "sm")}>
-            <WhatsAppIcon className="size-4" /> Butuh bantuan? Chat admin
+            <WhatsAppIcon className="size-4" /> Need help? Chat with the admin
           </a>
           <ServicePill />
         </div>

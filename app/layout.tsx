@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Poppins } from "next/font/google";
 import { Toaster } from "sonner";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
@@ -8,23 +9,41 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "sw
 const poppins = Poppins({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--font-poppins", display: "swap" });
 
 const DESCRIPTION =
-  "Jual proxy datacenter & residential. Pesan langsung ke admin, bebas biaya admin, lengkap dengan dashboard cek bandwidth, ganti IP, dan IP whitelist.";
+  "Buy fast datacenter & residential proxies. Same-day activation, self-service dashboard to check bandwidth, replace IPs, and manage your IP whitelist.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: { default: "dmproxy — Jual Proxy Datacenter & Residential", template: "%s · dmproxy" },
+  title: { default: "dmproxy — Datacenter & Residential Proxies", template: "%s · dmproxy" },
   description: DESCRIPTION,
   applicationName: "dmproxy",
-  // Kartu preview saat link dibagikan di WhatsApp / chat Shopee.
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    locale: "id_ID",
+    locale: "en_US",
     url: "/",
     siteName: "dmproxy",
-    title: "dmproxy — Jual Proxy Datacenter & Residential",
+    title: "dmproxy — Datacenter & Residential Proxies",
     description: DESCRIPTION,
   },
   twitter: { card: "summary_large_image", title: "dmproxy", description: DESCRIPTION },
+};
+
+// Structured data for the site/brand, shown on every page.
+const ORG_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "dmproxy",
+  url: siteUrl(),
+  logo: `${siteUrl()}/icon.svg`,
+  description: DESCRIPTION,
+  sameAs: [] as string[],
+};
+
+const WEBSITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "dmproxy",
+  url: siteUrl(),
 };
 
 export const viewport: Viewport = {
@@ -35,8 +54,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${geist.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${geist.variable} ${poppins.variable}`}>
       <body className="min-h-dvh">
+        <JsonLd data={[ORG_JSON_LD, WEBSITE_JSON_LD]} />
         {children}
         <Toaster
           position="top-center"

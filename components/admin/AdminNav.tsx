@@ -6,11 +6,12 @@ import { cn } from "@/components/ui";
 
 const LINKS = [
   { href: "/admin", label: "Dashboard" },
-  { href: "/admin/akun", label: "Pool Akun" },
-  { href: "/admin/pesanan", label: "Pesanan" },
-  { href: "/admin/proxy", label: "Semua Proxy" },
-  { href: "/admin/customer", label: "Customer" },
-  { href: "/admin/followup", label: "Follow Up" },
+  { href: "/admin/account", label: "Account Pool" },
+  { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/invoice", label: "Invoices" },
+  { href: "/admin/proxy", label: "All Proxies" },
+  { href: "/admin/customer", label: "Customers" },
+  { href: "/admin/followup", label: "Follow-up" },
 ];
 
 export function AdminNav() {
@@ -25,7 +26,7 @@ export function AdminNav() {
             href={link.href}
             className={cn(
               "rounded-full border-2 px-4 py-1.5 text-sm font-bold whitespace-nowrap transition-colors",
-              active ? "border-ink bg-ink text-white" : "border-transparent text-ink hover:border-ink",
+              active ? "border-ink bg-ink text-paper" : "border-transparent text-ink hover:border-ink",
             )}
           >
             {link.label}

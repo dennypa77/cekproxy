@@ -32,32 +32,32 @@ export function RotatingOrderCard({
 
   async function copy(text: string, label: string) {
     const ok = await copyText(text);
-    if (ok) toast.success(`${label} disalin`);
-    else toast.error("Gagal menyalin.");
+    if (ok) toast.success(`${label} copied`);
+    else toast.error("Failed to copy.");
   }
 
   return (
     <div className="space-y-4">
       <div>
-        <p className={labelClass}>Kunci API</p>
+        <p className={labelClass}>API key</p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <code className="flex-1 rounded-2xl border-2 border-ink bg-paper px-3.5 py-2.5 font-mono text-sm break-all">
             {apiKey}
           </code>
-          <Button variant="secondary" onClick={() => copy(apiKey, "Kunci API")}>
-            <CopyIcon className="size-4" /> Salin
+          <Button variant="secondary" onClick={() => copy(apiKey, "API key")}>
+            <CopyIcon className="size-4" /> Copy
           </Button>
         </div>
       </div>
 
       <div>
-        <p className={labelClass}>Endpoint customer</p>
+        <p className={labelClass}>Customer endpoint</p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <code className="flex-1 rounded-2xl border-2 border-ink bg-paper px-3.5 py-2.5 font-mono text-xs break-all">
-            {endpoint || "memuat…"}
+            {endpoint || "loading…"}
           </code>
           <Button variant="secondary" onClick={() => copy(endpoint, "Endpoint")} disabled={!origin}>
-            <CopyIcon className="size-4" /> Salin
+            <CopyIcon className="size-4" /> Copy
           </Button>
         </div>
       </div>
@@ -65,7 +65,7 @@ export function RotatingOrderCard({
       <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2">
         <div>
           <label className={labelClass} htmlFor="rate_per_minute">
-            Batas permintaan / menit
+            Request limit / min
           </label>
           <input
             id="rate_per_minute"
@@ -79,7 +79,7 @@ export function RotatingOrderCard({
           />
         </div>
         <Button type="submit" loading={pending}>
-          Simpan batas
+          Save limit
         </Button>
       </form>
       <ResultDetails state={state} />
@@ -89,9 +89,9 @@ export function RotatingOrderCard({
           action={regenerateAction}
           variant="dangerSoft"
           size="sm"
-          confirm="Ganti kunci API? Kunci lama langsung berhenti bekerja dan customer harus memakai kunci baru."
+          confirm="Replace the API key? The old key stops working immediately and the customer must use the new one."
         >
-          Ganti kunci API
+          Replace API key
         </ActionButton>
       </div>
     </div>

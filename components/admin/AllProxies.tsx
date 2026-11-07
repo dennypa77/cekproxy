@@ -69,7 +69,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
         while (cursor < accounts.length) {
           const account = accounts[cursor++];
           const result = await apiFetch<PublicProxy[]>(
-            `/api/admin/akun/${account.id}/proxies${fresh ? "?fresh=1" : ""}`,
+            `/api/admin/account/${account.id}/proxies${fresh ? "?fresh=1" : ""}`,
           );
           if (result.ok) {
             for (const proxy of result.data) {
@@ -94,7 +94,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
       setRows(collected);
       setErrors(failed);
       setLoading(false);
-      if (fresh) toast.success(collected.length + " proxy dimuat ulang");
+      if (fresh) toast.success(collected.length + " proxies reloaded");
     },
     [accounts],
   );
@@ -153,19 +153,19 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
   async function copyAll() {
     if (!filtered.length) return;
     const ok = await copyText(filtered.map((row) => formatProxy(row, format)).join("\n"));
-    if (ok) toast.success(filtered.length + " proxy disalin");
-    else toast.error("Gagal menyalin.");
+    if (ok) toast.success(filtered.length + " proxies copied");
+    else toast.error("Failed to copy.");
   }
 
   function downloadTxt() {
     if (!filtered.length) return;
     downloadText("proxy-pool.txt", filtered.map((row) => formatProxy(row, format)).join("\n") + "\n");
-    toast.success(filtered.length + " proxy diunduh (.txt)");
+    toast.success(filtered.length + " proxies downloaded (.txt)");
   }
 
   function downloadCsv() {
     if (!filtered.length) return;
-    const header = "ip,port,username,password,negara,status,jenis,akun,pesanan";
+    const header = "ip,port,username,password,country,status,type,account,order";
     const lines = filtered.map((row) =>
       [
         row.ip,
@@ -173,14 +173,14 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
         row.username,
         row.password,
         row.country ?? "",
-        row.valid ? "valid" : "tidak valid",
+        row.valid ? "valid" : "invalid",
         KIND_SHORT[row.kind],
         row.accountLabel.replaceAll(",", " "),
         row.orderNo ?? "",
       ].join(","),
     );
     downloadText("proxy-pool.csv", [header, ...lines].join("\n") + "\n");
-    toast.success(filtered.length + " baris diunduh (.csv)");
+    toast.success(filtered.length + " rows downloaded (.csv)");
   }
 
   return (
@@ -190,22 +190,22 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
           <div>
             <p className="text-sm text-muted">
               {loading
-                ? `Memuat ${done} dari ${accounts.length} akun…`
-                : `${filtered.length} proxy ditampilkan · ${validCount} valid · dari ${accounts.length} akun`}
+                ? `Loading ${done} of ${accounts.length} accounts…`
+                : `${filtered.length} proxies shown · ${validCount} valid · from ${accounts.length} accounts`}
             </p>
             {!loading && filtered.length !== rows.length && (
-              <p className="text-xs text-muted">Total tanpa filter: {rows.length} proxy</p>
+              <p className="text-xs text-muted">Total without filters: {rows.length} proxies</p>
             )}
           </div>
           <Button variant="secondary" size="sm" onClick={() => load(true)} disabled={loading}>
-            <RefreshIcon className={cn("size-4", loading && "animate-spin")} /> Muat ulang
+            <RefreshIcon className={cn("size-4", loading && "animate-spin")} /> Reload
           </Button>
         </div>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <div>
             <label className={labelClass} htmlFor="proxy-q">
-              Cari
+              Search
             </label>
             <div className="relative">
               <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
@@ -213,7 +213,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
                 id="proxy-q"
                 value={q}
                 onChange={(event) => reset(setQ)(event.target.value)}
-                placeholder="IP, port, username, akun, pesanan"
+                placeholder="IP, port, username, account, order"
                 className={inputClass + " pl-9"}
               />
             </div>
@@ -221,7 +221,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
 
           <div>
             <label className={labelClass} htmlFor="proxy-account">
-              Akun
+              Account
             </label>
             <select
               id="proxy-account"
@@ -229,11 +229,11 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
               onChange={(event) => reset(setAccountId)(event.target.value)}
               className={inputClass}
             >
-              <option value={ALL}>Semua akun ({accounts.length})</option>
+              <option value={ALL}>All accounts ({accounts.length})</option>
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.label}
-                  {account.orderNo ? ` — ${account.orderNo}` : " — belum tertaut"}
+                  {account.orderNo ? ` — ${account.orderNo}` : " — not linked"}
                 </option>
               ))}
             </select>
@@ -241,7 +241,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
 
           <div>
             <label className={labelClass} htmlFor="proxy-country">
-              Negara
+              Country
             </label>
             <select
               id="proxy-country"
@@ -249,7 +249,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
               onChange={(event) => reset(setCountry)(event.target.value)}
               className={inputClass}
             >
-              <option value={ALL}>Semua negara</option>
+              <option value={ALL}>All countries</option>
               {countryCounts.map(([code, count]) => (
                 <option key={code || "unknown"} value={code}>
                   {countryFlag(code)} {countryName(code)} ({count})
@@ -260,7 +260,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
 
           <div>
             <label className={labelClass} htmlFor="proxy-kind">
-              Jenis proxy
+              Proxy type
             </label>
             <select
               id="proxy-kind"
@@ -268,7 +268,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
               onChange={(event) => reset(setKind)(event.target.value)}
               className={inputClass}
             >
-              <option value={ALL}>Semua jenis</option>
+              <option value={ALL}>All types</option>
               {kindCounts.map(([value, count]) => (
                 <option key={value} value={value}>
                   {KIND_SHORT[value]} ({count})
@@ -287,9 +287,9 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
               onChange={(event) => reset(setStatus)(event.target.value)}
               className={inputClass}
             >
-              <option value={ALL}>Semua status</option>
-              <option value="valid">Valid saja</option>
-              <option value="invalid">Tidak valid saja</option>
+              <option value={ALL}>All statuses</option>
+              <option value="valid">Valid only</option>
+              <option value="invalid">Invalid only</option>
             </select>
           </div>
         </div>
@@ -297,7 +297,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div>
             <label className={labelClass} htmlFor="proxy-format">
-              Format ekspor
+              Export format
             </label>
             <select
               id="proxy-format"
@@ -320,7 +320,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
               <DownloadIcon className="size-4" /> .txt
             </Button>
             <Button variant="primary" size="md" onClick={downloadCsv} disabled={!filtered.length}>
-              <DownloadIcon className="size-4" /> .csv lengkap
+              <DownloadIcon className="size-4" /> full .csv
             </Button>
           </div>
         </div>
@@ -329,7 +329,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
       {errors.length > 0 && (
         <Card className="bg-bad-soft">
           <p className="flex items-center gap-2 font-bold">
-            <AlertIcon className="size-4" /> {errors.length} akun gagal dimuat
+            <AlertIcon className="size-4" /> {errors.length} accounts failed to load
           </p>
           <ul className="mt-2 space-y-1 font-mono text-xs break-all">
             {errors.map((error, index) => (
@@ -352,7 +352,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
 
         {!loading && filtered.length === 0 && (
           <p className="rounded-2xl border-2 border-dashed border-ink/40 bg-paper p-6 text-center text-sm text-muted">
-            Tidak ada proxy yang cocok dengan filter.
+            No proxies match the filter.
           </p>
         )}
 
@@ -360,18 +360,18 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
           <>
             <div className="overflow-x-auto rounded-2xl border-2 border-ink">
               <table className="w-full min-w-[1100px] text-left text-sm">
-                <thead className="bg-ink text-xs font-bold tracking-wider text-white uppercase">
+                <thead className="bg-ink text-xs font-bold tracking-wider text-paper uppercase">
                   <tr>
                     <th className="px-3 py-2.5">#</th>
                     <th className="px-3 py-2.5">IP</th>
                     <th className="px-3 py-2.5">Port</th>
                     <th className="px-3 py-2.5">Username</th>
                     <th className="px-3 py-2.5">Password</th>
-                    <th className="px-3 py-2.5">Negara</th>
+                    <th className="px-3 py-2.5">Country</th>
                     <th className="px-3 py-2.5">Status</th>
-                    <th className="px-3 py-2.5">Jenis</th>
-                    <th className="px-3 py-2.5">Akun</th>
-                    <th className="px-3 py-2.5">Pesanan</th>
+                    <th className="px-3 py-2.5">Type</th>
+                    <th className="px-3 py-2.5">Account</th>
+                    <th className="px-3 py-2.5">Order</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -388,19 +388,19 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
                         {countryFlag(row.country)} {countryName(row.country)}
                       </td>
                       <td className="px-3 py-2">
-                        {row.valid ? <Badge tone="green">✓ Valid</Badge> : <Badge tone="red">✕ Tidak valid</Badge>}
+                        {row.valid ? <Badge tone="green">✓ Valid</Badge> : <Badge tone="red">✕ Invalid</Badge>}
                       </td>
                       <td className="px-3 py-2">
                         <Badge tone={KIND_TONE[row.kind]}>{KIND_SHORT[row.kind]}</Badge>
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
-                        <Link href={`/admin/akun/${row.accountId}`} className="text-brand-deep hover:underline">
+                        <Link href={`/admin/account/${row.accountId}`} className="text-brand-deep hover:underline">
                           {row.accountLabel}
                         </Link>
                       </td>
                       <td className="px-3 py-2 font-mono whitespace-nowrap">
                         {row.orderId && row.orderNo ? (
-                          <Link href={`/admin/pesanan/${row.orderId}`} className="text-brand-deep hover:underline">
+                          <Link href={`/admin/orders/${row.orderId}`} className="text-brand-deep hover:underline">
                             {row.orderNo}
                           </Link>
                         ) : (
@@ -414,11 +414,11 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
             </div>
 
             {totalPages > 1 && (
-              <nav className="mt-4 flex items-center justify-between gap-2" aria-label="Paginasi proxy">
+              <nav className="mt-4 flex items-center justify-between gap-2" aria-label="Proxy pagination">
                 <Button variant="secondary" size="sm" onClick={() => setPage(currentPage - 1)} disabled={currentPage <= 1}>
-                  <ChevronLeftIcon className="size-4" /> Sebelumnya
+                  <ChevronLeftIcon className="size-4" /> Previous
                 </Button>
-                <span className="rounded-full bg-ink px-4 py-1.5 text-sm font-bold text-white">
+                <span className="rounded-full bg-ink px-4 py-1.5 text-sm font-bold text-paper">
                   {currentPage} / {totalPages}
                 </span>
                 <Button
@@ -427,7 +427,7 @@ export function AllProxies({ accounts }: { accounts: ProxyAccountInfo[] }) {
                   onClick={() => setPage(currentPage + 1)}
                   disabled={currentPage >= totalPages}
                 >
-                  Berikutnya <ChevronRightIcon className="size-4" />
+                  Next <ChevronRightIcon className="size-4" />
                 </Button>
               </nav>
             )}

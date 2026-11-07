@@ -80,28 +80,28 @@ export function ReplaceModal({
     onReplaced(result.data);
   }
 
-  const stage = elapsed < 4 ? "Mengirim permintaan…" : elapsed < 15 ? "Mencari IP pengganti…" : "Hampir selesai, mohon tunggu…";
+  const stage = elapsed < 4 ? "Sending request…" : elapsed < 15 ? "Finding a replacement IP…" : "Almost done, please wait…";
   const sortedCountries = countries
-    ? [...countries].sort((a, b) => countryName(a.code).localeCompare(countryName(b.code), "id"))
+    ? [...countries].sort((a, b) => countryName(a.code).localeCompare(countryName(b.code), "en"))
     : [];
 
   return (
-    <Modal open={open} title="Ganti" accent="IP Proxy" onClose={onClose} dismissible={!submitting}>
+    <Modal open={open} title="Replace" accent="Proxy IP" onClose={onClose} dismissible={!submitting}>
       {proxy && (
         <div className="space-y-4">
-          <div className="rounded-2xl bg-ink p-4 text-white">
-            <p className="text-xs font-bold tracking-wider text-white/60 uppercase">IP yang akan diganti</p>
+          <div className="rounded-2xl border-2 border-line bg-surface-2 p-4 text-ink">
+            <p className="text-xs font-bold tracking-wider text-muted uppercase">IP to replace</p>
             <p className="mt-0.5 font-mono text-base font-bold break-all">
               {proxy.ip}:{proxy.port}
             </p>
-            <p className="text-xs text-white/70">
+            <p className="text-xs text-muted">
               {countryFlag(proxy.country)} {countryName(proxy.country)}
             </p>
           </div>
 
           <div>
             <label htmlFor="replace-country" className={labelClass}>
-              Negara IP baru
+              New IP country
             </label>
             <select
               id="replace-country"
@@ -110,35 +110,35 @@ export function ReplaceModal({
               disabled={submitting}
               className={`${inputClass} h-12`}
             >
-              <option value="ANY">Acak (negara apa saja)</option>
+              <option value="ANY">Random (any country)</option>
               {sortedCountries.map((option) => (
                 <option key={option.code} value={option.code}>
                   {countryFlag(option.code)} {countryName(option.code)}
                 </option>
               ))}
             </select>
-            {!countries && !countriesError && <p className="mt-1.5 text-xs text-muted">Memuat daftar negara…</p>}
+            {!countries && !countriesError && <p className="mt-1.5 text-xs text-muted">Loading country list…</p>}
             {countriesError && <p className="mt-1.5 text-xs font-semibold text-ink">{countriesError}</p>}
           </div>
 
           <ul className="list-disc space-y-1 rounded-2xl border-2 border-line bg-paper py-3 pr-4 pl-8 text-sm text-ink">
             <li>
-              Kuota terpakai 1. Sisa setelah ini:{" "}
+              Uses 1 replace. Remaining after this:{" "}
               <b>
-                {Math.max(remaining - 1, 0)} dari {quota}
+                {Math.max(remaining - 1, 0)} of {quota}
               </b>
             </li>
-            <li>IP lama tidak bisa dipakai lagi setelah diganti.</li>
-            <li>Proses bisa sampai ±30 detik. Jangan tutup halaman.</li>
+            <li>The old IP can no longer be used once replaced.</li>
+            <li>This can take up to ±30 seconds. Do not close the page.</li>
           </ul>
 
           {submitting && (
             <div className="rounded-2xl border-2 border-ink bg-brand-softer p-3.5 text-sm font-semibold" aria-live="polite">
               <div className="flex items-center justify-between">
                 <span>{stage}</span>
-                <span className="rounded-full bg-ink px-2 py-0.5 font-mono text-xs text-white">{elapsed} dtk</span>
+                <span className="rounded-full bg-ink px-2 py-0.5 font-mono text-xs text-paper">{elapsed}s</span>
               </div>
-              <div className="mt-2.5 h-2.5 overflow-hidden rounded-full border-2 border-ink bg-white">
+              <div className="mt-2.5 h-2.5 overflow-hidden rounded-full border-2 border-ink bg-surface">
                 <div className="animate-indeterminate h-full w-2/5 rounded-full bg-brand" />
               </div>
             </div>
@@ -152,11 +152,11 @@ export function ReplaceModal({
 
           <div className="grid grid-cols-2 gap-3 pt-1">
             <Button variant="secondary" size="lg" onClick={onClose} disabled={submitting}>
-              Batal
+              Cancel
             </Button>
             <Button variant="brand" size="lg" onClick={submit} loading={submitting} disabled={remaining <= 0}>
               {!submitting && <SwapIcon className="size-5" />}
-              {submitting ? "Memproses" : "Ganti IP"}
+              {submitting ? "Processing" : "Replace IP"}
             </Button>
           </div>
         </div>

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Crosses, LogoTab, ServicePill } from "@/components/Brand";
 import { Decor } from "@/components/Decor";
-import { SearchIcon, ShopIcon, StatusIcon, WhatsAppIcon } from "@/components/icons";
+import { SearchIcon, StatusIcon, WhatsAppIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui";
-import { SHOPEE_STORE_URL, waHelpLink, waOrderGeneralLink } from "@/lib/links";
+import { waHelpLink } from "@/lib/links";
 import type { StatusIconName } from "@/lib/public-types";
 
 export function NotAvailable({
@@ -11,13 +11,11 @@ export function NotAvailable({
   body,
   icon = "search",
   orderNo,
-  showShopee = false,
 }: {
   title: string;
   body: string;
   icon?: StatusIconName;
   orderNo?: string;
-  showShopee?: boolean;
 }) {
   return (
     <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-10">
@@ -28,45 +26,25 @@ export function NotAvailable({
       </div>
 
       <div className="my-auto pt-8">
-        <div className="animate-pop-in rounded-3xl border-2 border-ink bg-white p-6 text-center">
-          <span className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-ink text-white" aria-hidden="true">
+        <div className="animate-pop-in rounded-3xl border-2 border-ink bg-surface p-6 text-center">
+          <span className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-ink text-paper" aria-hidden="true">
             <StatusIcon name={icon} className="size-7" />
           </span>
           <h1 className="font-display text-2xl leading-tight font-extrabold tracking-tight text-ink">{title}</h1>
           <p className="mt-3 text-sm text-muted">{body}</p>
           {orderNo && (
             <p className="mt-4 inline-block rounded-full border-2 border-ink bg-paper px-3 py-1 font-mono text-xs font-semibold">
-              No. pesanan: {orderNo}
+              Order no.: {orderNo}
             </p>
           )}
 
           <div className="mt-6 flex flex-col gap-3">
             <Link href="/" className={buttonClass("primary", "lg", "w-full")}>
-              <SearchIcon className="size-5" /> Cek nomor pesanan lain
+              <SearchIcon className="size-5" /> Check another order number
             </Link>
-            {showShopee && (
-              <a
-                href={waOrderGeneralLink()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonClass("brand", "lg", "w-full")}
-              >
-                <WhatsAppIcon className="size-5" /> Pesan lagi langsung
-              </a>
-            )}
             <a href={waHelpLink(orderNo)} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "lg", "w-full")}>
-              <WhatsAppIcon className="size-5" /> Hubungi admin
+              <WhatsAppIcon className="size-5" /> Contact admin
             </a>
-            {showShopee && (
-              <a
-                href={SHOPEE_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted transition-colors hover:text-ink"
-              >
-                <ShopIcon className="size-3.5" /> atau lewat Shopee
-              </a>
-            )}
           </div>
         </div>
         <div className="mt-8 flex justify-center">

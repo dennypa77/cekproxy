@@ -17,7 +17,7 @@ export function jsonError(error: string, status: number): NextResponse {
 
 export const EXPIRED_MESSAGE = "Masa aktif proxy sudah berakhir. Perpanjang pesanan untuk menggunakan fitur ini.";
 
-/** Semua API customer di bawah /api/pesanan butuh akun yang tertaut. */
+/** Semua API customer di bawah /api/orders butuh akun yang tertaut. */
 type RouteLoad =
   | { ok: true; ctx: CustomerContext & { account: WebshareAccount }; ip: string }
   | { ok: false; response: NextResponse };

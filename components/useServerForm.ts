@@ -36,7 +36,7 @@ export function useServerForm(
         if (error && typeof error === "object" && "digest" in error && String(error.digest).startsWith("NEXT_REDIRECT")) {
           throw error;
         }
-        toast.error("Terjadi kesalahan. Silakan coba lagi.");
+        toast.error("Something went wrong. Please try again.");
       }
     });
   }

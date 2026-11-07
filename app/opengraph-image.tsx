@@ -1,11 +1,19 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { siteHost } from "@/lib/site";
 
-export const alt = "dmproxy — jual proxy datacenter & residential";
+export const alt = "dmproxy — datacenter & residential proxies";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-/** Gambar preview saat link dibagikan di WhatsApp / chat Shopee. */
+/**
+ * Logo dibaca dari disk saat gambar dirender (bukan <img src="/logo.png">):
+ * satu-satunya cara yang pasti jalan, karena saat build belum ada URL publik.
+ */
+const LOGO = `data:image/png;base64,${readFileSync(join(process.cwd(), "public/logo.png")).toString("base64")}`;
+
+/** Preview card shown when a link is shared on WhatsApp / social. */
 export default function OpengraphImage() {
   return new ImageResponse(
     (
@@ -16,37 +24,23 @@ export default function OpengraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#f4f5f7",
+          background: "#0a0e14",
           padding: 64,
           fontFamily: "sans-serif",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 112,
-              height: 112,
-              borderRadius: 32,
-              background: "#111111",
-            }}
-          >
-            <svg width="76" height="76" viewBox="0 0 100 100" fill="none" stroke="#ffffff">
-              <circle cx="50" cy="50" r="40" strokeWidth="7" />
-              <path d="M30 73 V29 L52 61 L74 29 V73" strokeWidth="10" strokeLinejoin="miter" />
-            </svg>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO} width={104} height={104} alt="" />
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: 2, color: "#111111" }}>DMPROXY</div>
-            <div style={{ fontSize: 26, color: "#5b6270" }}>{siteHost()}</div>
+            <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: 2, color: "#e8eef6" }}>DMPROXY</div>
+            <div style={{ fontSize: 26, color: "#93a3b8" }}>{siteHost()}</div>
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 108, fontWeight: 800, lineHeight: 1, color: "#111111" }}>CEK STATUS</div>
-          <div style={{ fontSize: 108, fontWeight: 800, lineHeight: 1.1, color: "#1e8bff" }}>PROXY</div>
+          <div style={{ fontSize: 96, fontWeight: 800, lineHeight: 1, color: "#e8eef6" }}>FAST PROXIES</div>
+          <div style={{ fontSize: 96, fontWeight: 800, lineHeight: 1.1, color: "#2e95ff" }}>FOR ANY JOB</div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -55,15 +49,15 @@ export default function OpengraphImage() {
               display: "flex",
               fontSize: 28,
               fontWeight: 700,
-              color: "#ffffff",
-              background: "#111111",
+              color: "#06101c",
+              background: "#e8eef6",
               borderRadius: 999,
               padding: "14px 32px",
             }}
           >
-            Bandwidth · Daftar IP · Replace · Whitelist
+            Datacenter · Residential · Rotating API
           </div>
-          <div style={{ display: "flex", fontSize: 26, color: "#5b6270" }}>Cukup pakai nomor pesanan Shopee</div>
+          <div style={{ display: "flex", fontSize: 26, color: "#93a3b8" }}>Same-day activation</div>
         </div>
       </div>
     ),

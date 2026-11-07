@@ -18,12 +18,12 @@ export interface SearchResult {
 export async function searchOrder(rawOrderNo: string): Promise<SearchResult> {
   const ip = getClientIp(await headers());
   if (!(await hitRateLimit("search", ip))) {
-    return { error: { title: "Terlalu banyak percobaan", body: RATE_LIMIT_MESSAGE, icon: "slow" } };
+    return { error: { title: "Too many attempts", body: RATE_LIMIT_MESSAGE, icon: "slow" } };
   }
 
   const parsed = orderNoSchema.safeParse(typeof rawOrderNo === "string" ? rawOrderNo : "");
   if (!parsed.success) {
-    return { error: { title: "Nomor pesanan tidak valid", body: parsed.error.issues[0]?.message ?? "" } };
+    return { error: { title: "Invalid order number", body: parsed.error.issues[0]?.message ?? "" } };
   }
 
   let access;
@@ -34,9 +34,9 @@ export async function searchOrder(rawOrderNo: string): Promise<SearchResult> {
     return {
       error: {
         icon: "alert",
-        title: "Terjadi gangguan",
+        title: "Something went wrong",
         body:
-          devConfigHint(error) ?? "Server sedang mengalami gangguan. Silakan coba lagi beberapa saat lagi.",
+          devConfigHint(error) ?? "The server is having trouble right now. Please try again in a moment.",
       },
     };
   }

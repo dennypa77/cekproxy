@@ -19,7 +19,7 @@ import { getRotatingPool, poolCountries } from "@/lib/services/rotating";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Detail Pesanan",
+  title: "Order Details",
   robots: { index: false, follow: false },
 };
 
@@ -31,7 +31,7 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
   const requestHeaders = await headers();
   const ip = getClientIp(requestHeaders);
   if (await isRateLimited("search", ip)) {
-    return <NotAvailable icon="slow" title="Terlalu banyak percobaan" body={RATE_LIMIT_MESSAGE} />;
+    return <NotAvailable icon="slow" title="Too many attempts" body={RATE_LIMIT_MESSAGE} />;
   }
 
   let access;
@@ -42,8 +42,8 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
     return (
       <NotAvailable
         icon="alert"
-        title="Terjadi gangguan"
-        body={devConfigHint(error) ?? "Server sedang mengalami gangguan. Silakan muat ulang halaman beberapa saat lagi."}
+        title="Something went wrong"
+        body={devConfigHint(error) ?? "The server is having trouble. Please reload the page in a moment."}
       />
     );
   }
@@ -57,7 +57,6 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
         title={message.title}
         body={message.body}
         orderNo={access.reason === "not_found" ? undefined : orderNo}
-        showShopee={access.reason === "expired_long"}
       />
     );
   }
@@ -67,21 +66,21 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
 
   // Akun customer: wajib masuk setelah tanggal yang ditetapkan admin.
   const akses = await resolveOrderAccess(order);
-  if (akses.gate === "login") redirect(`/akun/masuk?next=${encodeURIComponent(customerPath(order.shopee_order_no))}`);
-  if (akses.gate === "claim") redirect(`/akun/klaim?pesanan=${encodeURIComponent(order.shopee_order_no)}`);
+  if (akses.gate === "login") redirect(`/account/login?next=${encodeURIComponent(customerPath(order.shopee_order_no))}`);
+  if (akses.gate === "claim") redirect(`/account/claim?pesanan=${encodeURIComponent(order.shopee_order_no)}`);
   if (akses.gate === "other") {
     return (
       <NotAvailable
         icon="alert"
-        title="Pesanan ada di akun lain"
-        body="Nomor pesanan ini sudah ditautkan ke akun customer lain. Kalau ini pesanan Anda, hubungi admin lewat WhatsApp."
+        title="Order belongs to another account"
+        body="This order number is already linked to another customer's account. If this is your order, contact the admin on WhatsApp."
         orderNo={order.shopee_order_no}
       />
     );
   }
 
-  const backHref = akses.mine ? "/akun" : "/";
-  const backLabel = akses.mine ? "Semua pesanan saya" : "Cek pesanan lain";
+  const backHref = akses.mine ? "/account" : "/";
+  const backLabel = akses.mine ? "All my orders" : "Check another order";
   const notice = !akses.mine ? <LoginNotice orderNo={order.shopee_order_no} enforceFrom={akses.enforceFrom} /> : null;
 
   // Pesanan rotating: tampilkan endpoint + kunci API, bukan daftar proxy tetap.

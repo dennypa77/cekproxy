@@ -34,7 +34,7 @@ export const KIND_LABEL: Record<ProxyKind, string> = {
   isp: "ISP (Static Residential)",
   datacenter: "Datacenter",
   mixed: "Datacenter + ISP",
-  unknown: "Belum diketahui",
+  unknown: "Unknown",
 };
 
 /** Label pendek untuk kolom tabel / badge. */

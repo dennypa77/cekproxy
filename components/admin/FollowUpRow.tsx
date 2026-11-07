@@ -22,15 +22,15 @@ export interface FollowUpRowData {
   sudahDihubungi: boolean;
 }
 
-/** Satu baris follow-up: chat sekali klik, salin pesan, lalu tandai selesai. */
+/** One follow-up row: one-click chat, copy the message, then mark done. */
 export function FollowUpRow({ row }: { row: FollowUpRowData }) {
   const [ditandai, setDitandai] = useState(row.sudahDihubungi);
   const [pending, startTransition] = useTransition();
 
   const salin = async () => {
     const ok = await copyText(row.pesan);
-    if (ok) toast.success("Pesan disalin");
-    else toast.error("Gagal menyalin.");
+    if (ok) toast.success("Message copied");
+    else toast.error("Failed to copy.");
   };
 
   const tandai = () => {
@@ -49,7 +49,7 @@ export function FollowUpRow({ row }: { row: FollowUpRowData }) {
     <tr className="align-top">
       <td className="py-2.5 pr-3">
         <p className="font-mono font-medium text-ink">{row.orderNo}</p>
-        <p className="text-xs text-muted">{row.namaCustomer ?? "Tanpa nama"}</p>
+        <p className="text-xs text-muted">{row.namaCustomer ?? "No name"}</p>
       </td>
       <td className="py-2.5 pr-3">
         <Badge tone={row.alasan.startsWith("Expired") ? "red" : row.template === "claim_code" ? "blue" : "yellow"}>
@@ -61,10 +61,10 @@ export function FollowUpRow({ row }: { row: FollowUpRowData }) {
         {row.waNumber ? (
           <>
             <p className="whitespace-nowrap">{formatWaNumber(row.waNumber)}</p>
-            <p className="text-xs text-muted">{row.punyaAkun ? "dari akun customer" : "dicatat di pesanan"}</p>
+            <p className="text-xs text-muted">{row.punyaAkun ? "from customer account" : "recorded on order"}</p>
           </>
         ) : (
-          <span className="text-xs text-bad">Belum ada nomor</span>
+          <span className="text-xs text-bad">No number yet</span>
         )}
       </td>
       <td className="py-2.5">
@@ -79,16 +79,16 @@ export function FollowUpRow({ row }: { row: FollowUpRowData }) {
               <WhatsAppIcon className="size-3.5" /> Chat
             </a>
           ) : (
-            <span className="text-xs text-muted">Isi nomor di Edit pesanan</span>
+            <span className="text-xs text-muted">Add a number in Edit order</span>
           )}
           <Button variant="secondary" size="xs" onClick={salin}>
-            <CopyIcon className="size-3.5" /> Salin pesan
+            <CopyIcon className="size-3.5" /> Copy message
           </Button>
           {ditandai ? (
-            <Badge tone="green">sudah dihubungi</Badge>
+            <Badge tone="green">contacted</Badge>
           ) : (
             <Button variant="ghost" size="xs" loading={pending} onClick={tandai}>
-              Tandai sudah
+              Mark done
             </Button>
           )}
         </div>

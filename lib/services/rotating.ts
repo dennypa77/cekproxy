@@ -48,14 +48,14 @@ async function collect(account: WebshareAccount): Promise<{ status: PoolAccountS
       const budget = usage.limitGb > 0 ? usage.limitGb - account.rotating_reserve_gb : Infinity;
       if (usage.usedGb >= budget) {
         return {
-          status: { ...base, included: false, proxies: 0, reason: "cadangan bandwidth tercapai" },
+          status: { ...base, included: false, proxies: 0, reason: "bandwidth reserve reached" },
           proxies: [],
         };
       }
     } catch (error) {
       console.error("[rotating] bandwidth tidak terbaca", account.label, error);
       return {
-        status: { ...base, included: false, proxies: 0, reason: "bandwidth tidak terbaca" },
+        status: { ...base, included: false, proxies: 0, reason: "could not read bandwidth" },
         proxies: [],
       };
     }
@@ -76,7 +76,7 @@ async function collect(account: WebshareAccount): Promise<{ status: PoolAccountS
     return { status: { ...base, included: true, proxies: proxies.length, reason: null }, proxies };
   } catch (error) {
     console.error("[rotating] daftar proxy gagal", account.label, error);
-    return { status: { ...base, included: false, proxies: 0, reason: "daftar proxy gagal dimuat" }, proxies: [] };
+    return { status: { ...base, included: false, proxies: 0, reason: "failed to load proxy list" }, proxies: [] };
   }
 }
 

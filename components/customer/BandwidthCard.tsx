@@ -17,9 +17,9 @@ type BandwidthData = Extract<BandwidthResponse, { available: true }>;
  * Warning (#fab219) < 3:1 terhadap putih → label terlihat wajib (sudah ada).
  */
 const SEVERITY = {
-  normal: { fill: "#1e8bff", track: "#dcebff", Icon: CheckIcon, label: "Aman", chip: "bg-ok-soft" },
-  warning: { fill: "#fab219", track: "#fff1c7", Icon: AlertIcon, label: "Hampir habis", chip: "bg-warn-soft" },
-  critical: { fill: "#d03b3b", track: "#fbdcdc", Icon: AlertIcon, label: "Kritis", chip: "bg-bad-soft" },
+  normal: { fill: "#1e8bff", track: "#dcebff", Icon: CheckIcon, label: "Healthy", chip: "bg-ok-soft" },
+  warning: { fill: "#fab219", track: "#fff1c7", Icon: AlertIcon, label: "Running low", chip: "bg-warn-soft" },
+  critical: { fill: "#d03b3b", track: "#fbdcdc", Icon: AlertIcon, label: "Critical", chip: "bg-bad-soft" },
 } as const;
 
 function severityOf(percent: number): keyof typeof SEVERITY {
@@ -39,7 +39,7 @@ export function BandwidthCard({ orderNo, className }: { orderNo: string; classNa
       setLoading(false);
       if (result.ok) {
         setData(result.data);
-        if (refresh && result.data.available) toast.success("Data bandwidth diperbarui");
+        if (refresh && result.data.available) toast.success("Bandwidth data updated");
       } else {
         setData({ available: false, message: result.error });
         if (refresh) toast.error(result.error);
@@ -55,7 +55,7 @@ export function BandwidthCard({ orderNo, className }: { orderNo: string; classNa
   return (
     <Card className={className}>
       <CardHeader
-        title="Sisa"
+        title="Remaining"
         accent="Bandwidth"
         icon={<GaugeIcon className="size-5" />}
         action={
@@ -70,11 +70,11 @@ export function BandwidthCard({ orderNo, className }: { orderNo: string; classNa
 
       {data && !data.available && (
         <div className="rounded-2xl border-2 border-dashed border-ink/40 bg-paper p-5 text-center">
-          <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-ink text-white" aria-hidden="true">
+          <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-ink text-paper" aria-hidden="true">
             <WifiOffIcon className="size-5" />
           </span>
-          <p className="mt-3 font-bold text-ink">Data bandwidth sedang tidak tersedia</p>
-          <p className="mt-0.5 text-sm text-muted">Silakan tekan Refresh beberapa saat lagi.</p>
+          <p className="mt-3 font-bold text-ink">Bandwidth data is currently unavailable</p>
+          <p className="mt-0.5 text-sm text-muted">Please press Refresh again in a moment.</p>
         </div>
       )}
 
@@ -82,7 +82,7 @@ export function BandwidthCard({ orderNo, className }: { orderNo: string; classNa
 
       {data?.available && (
         <p className="mt-4 text-center text-xs text-muted">
-          Periode {formatDate(data.periodStart)} – {formatDate(data.periodEnd)} · Diperbarui {formatTime(data.updatedAt)} WIB
+          Period {formatDate(data.periodStart)} – {formatDate(data.periodEnd)} · Updated {formatTime(data.updatedAt)}
         </p>
       )}
     </Card>
@@ -107,8 +107,8 @@ function BandwidthMeter({ data }: { data: BandwidthData }) {
   }, [percent]);
 
   const [hover, setHover] = useState(false);
-  const percentText = `${rawPercent.toLocaleString("id-ID")}%`;
-  const summary = `Terpakai ${formatGb(data.usedGb)} (${percentText}) · Sisa ${formatGb(remainingGb)} dari ${formatGb(data.limitGb)}`;
+  const percentText = `${rawPercent.toLocaleString("en-US")}%`;
+  const summary = `Used ${formatGb(data.usedGb)} (${percentText}) · ${formatGb(remainingGb)} remaining of ${formatGb(data.limitGb)}`;
 
   return (
     <div>
@@ -160,13 +160,13 @@ function BandwidthMeter({ data }: { data: BandwidthData }) {
 
         {/* Teks di tengah, bertumpu pada garis dasar busur (130/156 ≈ 17% dari bawah) */}
         <div className="pointer-events-none absolute inset-x-0 bottom-[17%] text-center">
-          <p className="text-[11px] font-bold tracking-widest text-muted uppercase">Sisa</p>
+          <p className="text-[11px] font-bold tracking-widest text-muted uppercase">Remaining</p>
           <p className="font-display text-3xl leading-none font-extrabold text-ink sm:text-4xl">{formatGb(remainingGb)}</p>
-          <p className="mt-1 text-xs text-muted">dari {formatGb(data.limitGb)}</p>
+          <p className="mt-1 text-xs text-muted">of {formatGb(data.limitGb)}</p>
         </div>
 
         {hover && (
-          <div className="animate-pop-in pointer-events-none absolute -top-3 left-1/2 z-10 w-max max-w-[260px] -translate-x-1/2 rounded-xl bg-ink px-3 py-1.5 text-center text-xs font-semibold text-white">
+          <div className="animate-pop-in pointer-events-none absolute -top-3 left-1/2 z-10 w-max max-w-[260px] -translate-x-1/2 rounded-xl bg-ink px-3 py-1.5 text-center text-xs font-semibold text-paper">
             {summary}
           </div>
         )}
@@ -174,17 +174,17 @@ function BandwidthMeter({ data }: { data: BandwidthData }) {
 
       {/* Ringkasan angka (legend + tabel mini) */}
       <dl className="mt-5 grid grid-cols-3 gap-2 text-center">
-        <div className="rounded-2xl border-2 border-ink bg-white px-2 py-2.5">
+        <div className="rounded-2xl border-2 border-ink bg-surface px-2 py-2.5">
           <dt className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted">
             <span className="size-3 rounded-full border-2 border-ink" style={{ background: severity.fill }} aria-hidden="true" />
-            Terpakai
+            Used
           </dt>
           <dd className="mt-0.5 text-sm font-extrabold text-ink sm:text-base">{formatGb(data.usedGb)}</dd>
         </div>
-        <div className="rounded-2xl border-2 border-ink bg-white px-2 py-2.5">
+        <div className="rounded-2xl border-2 border-ink bg-surface px-2 py-2.5">
           <dt className="flex items-center justify-center gap-1.5 text-xs font-bold text-muted">
             <span className="size-3 rounded-full border-2 border-ink" style={{ background: severity.track }} aria-hidden="true" />
-            Sisa
+            Remaining
           </dt>
           <dd className="mt-0.5 text-sm font-extrabold text-ink sm:text-base">{formatGb(remainingGb)}</dd>
         </div>
@@ -198,7 +198,7 @@ function BandwidthMeter({ data }: { data: BandwidthData }) {
 
       {rawPercent > 95 && (
         <p className="mt-3 flex items-center justify-center gap-2 rounded-2xl border-2 border-ink bg-bad-soft px-3 py-2 text-center text-sm font-semibold">
-          <AlertIcon className="size-4 shrink-0" /> Bandwidth hampir habis. Hubungi admin untuk menambah kuota.
+          <AlertIcon className="size-4 shrink-0" /> Bandwidth is almost used up. Contact the admin to add more quota.
         </p>
       )}
     </div>
@@ -218,7 +218,7 @@ function UnlimitedView({ data }: { data: BandwidthData }) {
         <span className="text-brand">Unlimited</span>
       </p>
       <p className="mt-1 text-sm text-muted">
-        Terpakai <b className="text-ink">{formatGb(data.usedGb)}</b> pada periode ini
+        <b className="text-ink">{formatGb(data.usedGb)}</b> used this period
       </p>
     </div>
   );
@@ -226,7 +226,7 @@ function UnlimitedView({ data }: { data: BandwidthData }) {
 
 function MeterSkeleton() {
   return (
-    <div className="animate-pulse" aria-busy="true" aria-label="Memuat data bandwidth">
+    <div className="animate-pulse" aria-busy="true" aria-label="Loading bandwidth data">
       <svg viewBox={VIEWBOX} className="mx-auto w-full max-w-[340px]" aria-hidden="true">
         <path d={ARC} fill="none" stroke="#e3e6eb" strokeWidth={28} strokeLinecap="round" />
       </svg>
