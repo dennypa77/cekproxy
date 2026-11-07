@@ -247,6 +247,32 @@ Nomor tujuan diambil dari akun customer (kalau pesanan sudah diklaim) atau dari 
 
 ---
 
+## Checkout mandiri (invoice & pembayaran manual)
+
+Customer yang sudah masuk bisa membeli sendiri lewat **/account/buy** tanpa menunggu balasan chat.
+
+**Alurnya:**
+
+1. Customer memilih paket (atau memperpanjang pesanan yang sudah ada) dan metode bayar: QRIS, BCA, atau BRI.
+2. Sistem membuat invoice `INV-YYYYMMDD-XXXX` dengan **nominal unik**: harga paket + 3 digit acak (1-999). Nominal itu dijamin unik di antara invoice yang masih berjalan oleh *index* di database, bukan oleh kode aplikasi.
+3. Customer transfer **persis** sampai 3 digit terakhir, lalu menekan **I've sent the payment**. Invoice pindah ke status *menunggu verifikasi* dan Discord dikabari.
+4. Admin mencocokkan nominal itu di mutasi bank, lalu menekan **Payment received - activate** di `/admin/invoice`.
+
+**Yang penting diketahui:**
+
+- **Tidak ada auto-approve.** Tombol di sisi customer hanya mencatat pengakuan; uang tetap dicek manusia. Teks di halaman customer menjanjikan *konfirmasi diterima 1-3 menit* dan *aktif dalam 0-2 jam*, bukan verifikasi otomatis.
+- **Harga tidak pernah datang dari form.** Form hanya mengirim SKU paket; harga, jumlah IP, dan bandwidth dibaca ulang dari [`lib/pricing.ts`](lib/pricing.ts) di server.
+- **Persetujuan berjalan dalam satu transaksi** (`approve_invoice`): akun diklaim dari pool, pesanan dibuat sudah menempel ke akun customer, dan invoice ditandai lunas. Kalau akunnya ternyata sudah dipakai admin lain, seluruhnya dibatalkan - tidak ada pesanan yatim.
+- Invoice hangus setelah **24 jam**, maksimal **3 invoice berjalan** per customer. Penyapuan dilakukan sambil lalu saat halaman invoice dibuka (maksimal sekali per menit), jadi tidak perlu cron.
+- Invoice yang sudah kedaluwarsa **tetap bisa disetujui admin** - kadang transferannya memang masuk terlambat.
+- Nomor rekening hanya dirender di halaman invoice milik customer yang bersangkutan, dan hilang begitu customer menyatakan sudah bayar (supaya tidak transfer dua kali).
+
+**Sebelum fitur ini dipakai di produksi:** jalankan migrasi [`supabase/migrations/0005_invoices.sql`](supabase/migrations/0005_invoices.sql) di Supabase, lalu isi `DISCORD_WEBHOOK_URL` dan `DISCORD_MENTION_ID` di Vercel.
+
+Ganti gambar QRIS dengan menimpa `public/qris.png`, dan nomor rekening lewat env `BANK_BCA` / `BANK_BRI` (format `nomor|atas nama`).
+
+---
+
 ## 6. Environment variables
 
 | Nama | Wajib | Keterangan |
@@ -260,6 +286,10 @@ Nomor tujuan diambil dari akun customer (kalau pesanan sudah diklaim) atau dari 
 | `LEGACY_HOST` | Tidak | Alamat lama yang dialihkan ke `SITE_URL`, mis. `namaproject.vercel.app`. Kosong = tidak ada redirect. |
 | `PENGUMUMAN` | Tidak | Teks pita pengumuman di halaman customer. Kosong = pita tidak tampil. |
 | `PENGUMUMAN_SAMPAI` | Tidak | `YYYY-MM-DD`. Lewat 23:59 WIB tanggal itu, pita pengumuman hilang sendiri. |
+| `DISCORD_WEBHOOK_URL` | Tidak | Webhook kabar invoice. **Rahasia.** Kosong = notifikasi Discord mati. |
+| `DISCORD_MENTION_ID` | Tidak | ID Discord yang di-mention saat ada invoice perlu dicek (17-20 digit). |
+| `BANK_BCA` / `BANK_BRI` | Tidak | Rekening tujuan, format `nomor|atas nama`. Kosong = nilai bawaan di `lib/payment.ts`. |
+| `QRIS_NAMA` / `QRIS_IMAGE` | Tidak | Nama di QRIS dan letak gambarnya. Bawaan: `/qris.png`. |
 | `CUSTOMER_LOGIN_REQUIRED_FROM` | Tidak | `YYYY-MM-DD`. Mulai tanggal itu halaman pesanan hanya bisa dibuka lewat akun customer. Kosong = masa transisi (link lama tetap jalan). |
 
 `DATABASE_URL` tidak diperlukan karena aplikasi terhubung ke Supabase lewat `SUPABASE_URL` + service role key.
