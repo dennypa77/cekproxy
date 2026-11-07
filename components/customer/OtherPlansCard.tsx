@@ -36,7 +36,7 @@ export function OtherPlansCard() {
         </div>
 
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-          <Link href="/account/buy" className={buttonClass("primary", "sm")}>
+          <Link href="/#pricing" className={buttonClass("primary", "sm")}>
             See all plans
           </Link>
           <a

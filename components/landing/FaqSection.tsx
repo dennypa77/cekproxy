@@ -1,8 +1,12 @@
 import { JsonLd } from "@/components/seo/JsonLd";
+import { checkoutEnabled } from "@/lib/env";
 import { WhatsAppIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui";
 import { waHelpLink } from "@/lib/links";
 import { MASA_AKTIF_HARI } from "@/lib/pricing";
+
+// Dibaca sekali saat modul dimuat; mengubah env tetap butuh deploy ulang.
+const CHECKOUT = checkoutEnabled();
 
 /** Plain-text FAQ so the same content powers both the UI and FAQPage JSON-LD. */
 export const FAQ_ITEMS: { q: string; a: string }[] = [
@@ -36,7 +40,9 @@ export const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: "How do I order and pay?",
-    a: "Create an account, press Order on the plan you want, and you'll get an invoice with an exact amount to transfer by QRIS, BCA or BRI. There's no payment gateway, so we check each transfer by hand — proxies are usually live within 2 hours. Prices shown are final, with no marketplace service fee added.",
+    a: CHECKOUT
+      ? "Create an account, press Order on the plan you want, and you'll get an invoice with an exact amount to transfer by QRIS, BCA or BRI. There's no payment gateway, so we check each transfer by hand — proxies are usually live within 2 hours. Prices shown are final, with no marketplace service fee added."
+      : "Press Order on the plan you want and WhatsApp opens with your choice pre-filled. We'll reply with payment details, then activate your proxies and send a claim code. Prices shown are final, with no marketplace service fee added.",
   },
   {
     q: "Why is ordering directly cheaper?",

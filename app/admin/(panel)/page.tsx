@@ -5,6 +5,7 @@ import { daysLeft, formatDate, formatDateTime } from "@/lib/format";
 import { customerPath, waExpiryMessage, waTo } from "@/lib/links";
 import { orderState } from "@/lib/order-status";
 import { KIND_LABEL, KIND_TONE, proxyKind, type ProxyKind } from "@/lib/plan-type";
+import { checkoutEnabled } from "@/lib/env";
 import { requireAdmin } from "@/lib/session";
 import { siteUrl } from "@/lib/site";
 
@@ -18,7 +19,7 @@ export default async function AdminDashboardPage() {
     repo.listAccounts(),
     repo.listOrders(),
     repo.listCustomers(),
-    repo.listInvoices(),
+    checkoutEnabled() ? repo.listInvoices() : Promise.resolve([]),
   ]);
   const customerById = new Map(customers.map((c) => [c.id, c]));
   const now = Date.now();
@@ -48,7 +49,9 @@ export default async function AdminDashboardPage() {
   const perluVerifikasi = invoices.filter((invoice) => invoice.status === "menunggu_verifikasi").length;
 
   const stats = [
-    { label: "Payments to check", value: perluVerifikasi, href: "/admin/invoice?filter=perlu_verifikasi" },
+    ...(checkoutEnabled()
+      ? [{ label: "Payments to check", value: perluVerifikasi, href: "/admin/invoice?filter=perlu_verifikasi" }]
+      : []),
     { label: "Available accounts", value: availableAccounts, href: "/admin/account" },
     { label: "Active orders", value: activeOrders, href: "/admin/orders?filter=aktif" },
     { label: "Expiring in ≤3 days", value: expiring.length, href: "/admin/orders?filter=akan_expired" },

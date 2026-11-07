@@ -6,9 +6,10 @@ import { ServerIcon, WhatsAppIcon } from "@/components/icons";
 import { Badge, buttonClass, Card } from "@/components/ui";
 import { requireCustomer } from "@/lib/customer-session";
 import { db } from "@/lib/db";
+import { checkoutEnabled } from "@/lib/env";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { INVOICE_AKTIF, INVOICE_BADGE } from "@/lib/invoice-status";
-import { customerPath, waHelpLink } from "@/lib/links";
+import { customerPath, waExtendLink, waHelpLink, waOrderGeneralLink } from "@/lib/links";
 import type { OrderState } from "@/lib/order-status";
 import { rupiah } from "@/lib/pricing";
 import { listAccountOrders } from "@/lib/services/account";
@@ -26,11 +27,15 @@ const STATE_BADGE: Record<OrderState, { tone: "green" | "yellow" | "red" | "gray
 
 export default async function AkunPage() {
   const customer = await requireCustomer();
-  // Tidak ada cron: invoice lewat tempo disapu sambil lalu, maksimal sekali semenit.
-  await sapuInvoiceKedaluwarsa();
+  const checkout = checkoutEnabled();
+  // Selama checkout mati, tabel invoices tidak disentuh sama sekali.
+  if (checkout) {
+    // Tidak ada cron: invoice lewat tempo disapu sambil lalu, maksimal sekali semenit.
+    await sapuInvoiceKedaluwarsa();
+  }
   const [rows, invoices] = await Promise.all([
     listAccountOrders(customer.id),
-    db().listInvoicesByCustomer(customer.id),
+    checkout ? db().listInvoicesByCustomer(customer.id) : Promise.resolve([]),
   ]);
   const invoiceAktif = invoices.filter((invoice) => INVOICE_AKTIF.includes(invoice.status));
 
@@ -39,9 +44,20 @@ export default async function AkunPage() {
       nama={customer.nama}
       action={
         <>
-          <Link href="/account/buy" className={buttonClass("primary", "sm")}>
-            + Buy a plan
-          </Link>
+          {checkout ? (
+            <Link href="/account/buy" className={buttonClass("primary", "sm")}>
+              + Buy a plan
+            </Link>
+          ) : (
+            <a
+              href={waOrderGeneralLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClass("primary", "sm")}
+            >
+              <WhatsAppIcon className="size-4" /> Order a plan
+            </a>
+          )}
           <Link href="/account/claim" className={buttonClass("secondary", "sm")}>
             Claim order
           </Link>
@@ -88,13 +104,25 @@ export default async function AkunPage() {
             No <span className="text-brand">orders</span> yet
           </h2>
           <p className="mt-2 text-sm text-muted">
-            Pick a plan and pay by QRIS or bank transfer — or, if you already ordered elsewhere, enter the claim code we
-            gave you.
+            {checkout
+              ? "Pick a plan and pay by QRIS or bank transfer — or, if you already ordered elsewhere, enter the claim code we gave you."
+              : "Message us on WhatsApp to order a plan — or, if you already ordered, enter the claim code we gave you."}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link href="/account/buy" className={buttonClass("primary", "md")}>
-              Browse plans
-            </Link>
+            {checkout ? (
+              <Link href="/account/buy" className={buttonClass("primary", "md")}>
+                Browse plans
+              </Link>
+            ) : (
+              <a
+                href={waOrderGeneralLink()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClass("primary", "md")}
+              >
+                <WhatsAppIcon className="size-4" /> Order on WhatsApp
+              </a>
+            )}
             <Link href="/account/claim" className={buttonClass("secondary", "md")}>
               Claim an order with a code
             </Link>
@@ -146,9 +174,20 @@ export default async function AkunPage() {
                     ) : (
                       <span className="text-xs font-semibold text-muted">This order page is now closed</span>
                     )}
-                    <Link href="/account/buy#renew" className={buttonClass("secondary", "sm")}>
-                      Renew
-                    </Link>
+                    {checkout ? (
+                      <Link href="/account/buy#renew" className={buttonClass("secondary", "sm")}>
+                        Renew
+                      </Link>
+                    ) : (
+                      <a
+                        href={waExtendLink(order.shopee_order_no, formatDate(order.expires_at))}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={buttonClass("secondary", "sm")}
+                      >
+                        <WhatsAppIcon className="size-4" /> Renew
+                      </a>
+                    )}
                   </div>
                 </div>
               </Card>

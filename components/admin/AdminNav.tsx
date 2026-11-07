@@ -8,17 +8,20 @@ const LINKS = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/account", label: "Account Pool" },
   { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/invoice", label: "Invoices" },
   { href: "/admin/proxy", label: "All Proxies" },
   { href: "/admin/customer", label: "Customers" },
   { href: "/admin/followup", label: "Follow-up" },
 ];
 
-export function AdminNav() {
+/** `checkout` dari server: menu Invoice hanya ada kalau checkout mandiri aktif. */
+export function AdminNav({ checkout = false }: { checkout?: boolean }) {
   const pathname = usePathname();
+  const links = checkout
+    ? [...LINKS.slice(0, 3), { href: "/admin/invoice", label: "Invoices" }, ...LINKS.slice(3)]
+    : LINKS;
   return (
     <nav className="-mx-1 flex gap-1.5 overflow-x-auto px-1 py-1">
-      {LINKS.map((link) => {
+      {links.map((link) => {
         const active = link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href);
         return (
           <Link

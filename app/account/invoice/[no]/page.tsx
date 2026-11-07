@@ -7,6 +7,7 @@ import { WhatsAppIcon } from "@/components/icons";
 import { Badge, buttonClass } from "@/components/ui";
 import { requireCustomer } from "@/lib/customer-session";
 import { db } from "@/lib/db";
+import { checkoutEnabled } from "@/lib/env";
 import { formatDateTime } from "@/lib/format";
 import { INVOICE_BADGE } from "@/lib/invoice-status";
 import { waHelpLink } from "@/lib/links";
@@ -18,6 +19,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Invoice" };
 
 export default async function InvoicePage({ params }: { params: Promise<{ no: string }> }) {
+  if (!checkoutEnabled()) notFound();
   const [{ no }, customer] = await Promise.all([params, requireCustomer()]);
   await sapuInvoiceKedaluwarsa();
 

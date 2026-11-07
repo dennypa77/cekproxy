@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { CheckIcon, WhatsAppIcon } from "@/components/icons";
+import { OrderButton } from "@/components/landing/OrderButton";
 import { Badge, buttonClass } from "@/components/ui";
 import { waOrderGeneralLink } from "@/lib/links";
 import {
@@ -39,13 +39,7 @@ function BarisPaket({ paket, kategori }: { paket: Paket; kategori: string }) {
       </td>
       <td className="hidden py-3 pr-3 whitespace-nowrap text-muted sm:table-cell">≈{usdPerIp(paket)} / IP</td>
       <td className="py-3 text-right">
-        <Link
-          href={`/account/buy?sku=${encodeURIComponent(paket.sku)}`}
-          className={buttonClass("primary", "sm")}
-          title={`Order ${kategori} ${paket.ip} IP`}
-        >
-          Order
-        </Link>
+        <OrderButton paket={paket} kategori={kategori} />
       </td>
     </tr>
   );

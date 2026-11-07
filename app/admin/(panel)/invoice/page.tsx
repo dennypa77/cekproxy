@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Badge, Card, cn } from "@/components/ui";
 import { db } from "@/lib/db";
+import { checkoutEnabled } from "@/lib/env";
 import { formatDateTime } from "@/lib/format";
 import { cocokFilter, INVOICE_BADGE, INVOICE_FILTERS, type InvoiceFilter } from "@/lib/invoice-status";
 import { waTo } from "@/lib/links";
@@ -14,6 +16,7 @@ export const metadata = { title: "Invoices" };
 
 export default async function InvoicePage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   await requireAdmin();
+  if (!checkoutEnabled()) notFound();
   await sapuInvoiceKedaluwarsa();
 
   const params = await searchParams;

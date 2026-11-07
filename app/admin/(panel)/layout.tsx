@@ -4,7 +4,7 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { LogoMark } from "@/components/Brand";
 import { buttonClass } from "@/components/ui";
 import { isMemoryDb } from "@/lib/db";
-import { isTestMode } from "@/lib/env";
+import { checkoutEnabled, isTestMode } from "@/lib/env";
 import { requireAdmin } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
             </form>
           </div>
           <div className="flex items-center gap-2">
-            <AdminNav />
+            <AdminNav checkout={checkoutEnabled()} />
             <form action={logoutAction} className="hidden sm:block">
               <button type="submit" className={buttonClass("secondary", "sm")}>
                 Log out

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/Brand";
-
+import { WhatsAppIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui";
+import { checkoutEnabled } from "@/lib/env";
+import { waOrderGeneralLink } from "@/lib/links";
 
 
 const NAV = [
@@ -45,9 +47,21 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <Link href="/account/buy" className={buttonClass("primary", "sm", "hidden shrink-0 sm:inline-flex")}>
-          Order now
-        </Link>
+        {/* Checkout mandiri bisa dimatikan; tombolnya lalu kembali ke WhatsApp. */}
+        {checkoutEnabled() ? (
+          <Link href="/account/buy" className={buttonClass("primary", "sm", "hidden shrink-0 sm:inline-flex")}>
+            Order now
+          </Link>
+        ) : (
+          <a
+            href={waOrderGeneralLink()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonClass("primary", "sm", "hidden shrink-0 sm:inline-flex")}
+          >
+            <WhatsAppIcon className="size-4" /> Order
+          </a>
+        )}
 
       </div>
     </header>

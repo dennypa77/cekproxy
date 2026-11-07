@@ -249,7 +249,11 @@ Nomor tujuan diambil dari akun customer (kalau pesanan sudah diklaim) atau dari 
 
 ## Checkout mandiri (invoice & pembayaran manual)
 
-Customer yang sudah masuk bisa membeli sendiri lewat **/account/buy** tanpa menunggu balasan chat.
+> **Bawaannya mati.** Selama `CHECKOUT_ENABLED` belum `true`, situs berjalan seperti sebelumnya: tombol **Order** di daftar harga membuka WhatsApp dengan paket yang sudah terisi, `/account/buy` dan `/account/invoice/...` mengembalikan 404, menu **Invoices** tidak muncul di panel admin, dan **tidak ada satu pun kueri ke tabel `invoices`**. Jadi kode ini aman dipasang lebih dulu, sebelum migrasi 0005 dijalankan.
+>
+> Menyalakannya: jalankan migrasi 0005 di Supabase → isi `CHECKOUT_ENABLED=true` (plus env Discord) → **deploy ulang**, karena halaman harga dirender saat build.
+
+Kalau sudah aktif, customer yang sudah masuk bisa membeli sendiri lewat **/account/buy** tanpa menunggu balasan chat.
 
 **Alurnya:**
 
@@ -286,6 +290,7 @@ Ganti gambar QRIS dengan menimpa `public/qris.png`, dan nomor rekening lewat env
 | `LEGACY_HOST` | Tidak | Alamat lama yang dialihkan ke `SITE_URL`, mis. `namaproject.vercel.app`. Kosong = tidak ada redirect. |
 | `PENGUMUMAN` | Tidak | Teks pita pengumuman di halaman customer. Kosong = pita tidak tampil. |
 | `PENGUMUMAN_SAMPAI` | Tidak | `YYYY-MM-DD`. Lewat 23:59 WIB tanggal itu, pita pengumuman hilang sendiri. |
+| `CHECKOUT_ENABLED` | Tidak | `true` = checkout mandiri aktif. Kosong/`false` = pembelian lewat WhatsApp, tabel `invoices` tidak disentuh. Butuh deploy ulang. |
 | `DISCORD_WEBHOOK_URL` | Tidak | Webhook kabar invoice. **Rahasia.** Kosong = notifikasi Discord mati. |
 | `DISCORD_MENTION_ID` | Tidak | ID Discord yang di-mention saat ada invoice perlu dicek (17-20 digit). |
 | `BANK_BCA` / `BANK_BRI` | Tidak | Rekening tujuan, format `nomor|atas nama`. Kosong = nilai bawaan di `lib/payment.ts`. |

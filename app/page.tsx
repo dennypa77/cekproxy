@@ -10,7 +10,8 @@ import { PricingSection } from "@/components/landing/PricingSection";
 import { SiteFooter } from "@/components/landing/SiteFooter";
 import { SiteHeader } from "@/components/landing/SiteHeader";
 import { buttonClass } from "@/components/ui";
-import { waHelpLink } from "@/lib/links";
+import { checkoutEnabled } from "@/lib/env";
+import { waHelpLink, waOrderGeneralLink } from "@/lib/links";
 import { MASA_AKTIF_HARI } from "@/lib/pricing";
 
 // Dirender per permintaan supaya pita pengumuman (dan tanggal kedaluwarsanya)
@@ -47,7 +48,7 @@ const KEUNGGULAN = [
   },
 ];
 
-const LANGKAH = [
+const LANGKAH_CHECKOUT = [
   {
     judul: "Create an account",
     isi: "Sign up with your WhatsApp number and a password. That account is where every order of yours lives.",
@@ -63,7 +64,27 @@ const LANGKAH = [
   },
 ];
 
+const LANGKAH_WA = [
+  { judul: "Pick a plan", isi: "Choose the IP count and bandwidth you need from the pricing above." },
+  {
+    judul: "Message us",
+    isi: "Press Order — your chosen plan is pre-filled in the chat. We'll reply with how to pay.",
+  },
+  {
+    judul: "Pay and get your code",
+    isi: "Once the payment arrives we activate your proxies and send you a claim code over chat.",
+  },
+  {
+    judul: "Open your dashboard",
+    isi: "Create an account with your WhatsApp number, enter the code, and manage every order in one place.",
+  },
+];
+
 export default function HomePage() {
+  // Checkout mandiri bisa dimatikan; teks & tombol ikut menyesuaikan.
+  const checkout = checkoutEnabled();
+  const LANGKAH = checkout ? LANGKAH_CHECKOUT : LANGKAH_WA;
+
   return (
     <>
       <AnnouncementBar />
@@ -82,14 +103,26 @@ export default function HomePage() {
                 <span className="block text-5xl text-brand sm:text-7xl">any online job</span>
               </h1>
               <p className="mx-auto mt-5 max-w-xl text-sm text-muted sm:text-base lg:mx-0">
-                Datacenter and residential, ready the same day. Order online and manage all your orders from a single
+                Datacenter and residential, ready the same day.{" "}
+                {checkout ? "Order online and manage" : "Order over chat and manage"} all your orders from a single
                 dashboard.
               </p>
 
               <div className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
-                <Link href="/account/buy" className={buttonClass("primary", "lg")}>
-                  Order now
-                </Link>
+                {checkout ? (
+                  <Link href="/account/buy" className={buttonClass("primary", "lg")}>
+                    Order now
+                  </Link>
+                ) : (
+                  <a
+                    href={waOrderGeneralLink()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonClass("primary", "lg")}
+                  >
+                    <WhatsAppIcon className="size-5" /> Order on WhatsApp
+                  </a>
+                )}
                 <a href="#pricing" className={buttonClass("secondary", "lg")}>
                   See pricing
                 </a>
@@ -101,8 +134,8 @@ export default function HomePage() {
                 Already have an account?{" "}
                 <Link href="/account/login" className="font-semibold text-brand hover:underline">
                   Log in here
-                </Link>{" "}
-                · new buyers get a claim code from us.
+                </Link>
+                {checkout ? " · new orders are paid online." : " · new buyers get a claim code from us."}
               </p>
 
               <FeatureBadges className="mt-8 lg:justify-start" />

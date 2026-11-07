@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { Badge, buttonClass } from "@/components/ui";
+import { OrderButton } from "@/components/landing/OrderButton";
+import { Badge } from "@/components/ui";
 import {
   labelBandwidth,
   MASA_AKTIF_HARI,
@@ -49,13 +49,7 @@ export function CategoryPricingTable({ kategori }: { kategori: KategoriHarga }) 
                       ≈{usdPerIp(paket)} / IP
                     </td>
                     <td className="py-3 text-right">
-                      <Link
-                        href={`/account/buy?sku=${encodeURIComponent(paket.sku)}`}
-                        className={buttonClass("primary", "sm")}
-                        title={`Order ${kategori.nama} ${paket.ip} IP`}
-                      >
-                        Order
-                      </Link>
+                      <OrderButton paket={paket} kategori={kategori.nama} />
                     </td>
                   </tr>
                 ))}

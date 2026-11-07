@@ -6,6 +6,7 @@ import { ApproveInvoiceForm, RejectInvoiceForm } from "@/components/admin/Invoic
 import { Badge, Card } from "@/components/ui";
 import { expireInvoiceAction } from "@/app/admin/actions";
 import { db } from "@/lib/db";
+import { checkoutEnabled } from "@/lib/env";
 import { formatDateTime, jakartaDateInput } from "@/lib/format";
 import { INVOICE_AKTIF, INVOICE_BADGE } from "@/lib/invoice-status";
 import { customerPath, waTo } from "@/lib/links";
@@ -18,6 +19,7 @@ export const metadata = { title: "Invoice" };
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
+  if (!checkoutEnabled()) notFound();
   const { id } = await params;
 
   const repo = db();

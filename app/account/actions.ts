@@ -8,6 +8,7 @@ import { z } from "@/lib/zod";
 import { normalizeClaimCode, CLAIM_CODE_PATTERN } from "@/lib/claim-code";
 import { createCustomerSession, destroyCustomerSession, getCustomer } from "@/lib/customer-session";
 import { db, DbError } from "@/lib/db";
+import { checkoutEnabled } from "@/lib/env";
 import { getClientIp } from "@/lib/ip";
 import {
   hashPassword,
@@ -276,6 +277,17 @@ const catatanSchema = z
   .optional()
   .transform((value) => (value ? value : null));
 
+/**
+ * Pagar kedua untuk checkout: halamannya memang 404 saat fitur dimatikan,
+ * tapi server action tetap bisa dipanggil langsung, jadi setiap aksi ikut
+ * diperiksa di sini.
+ */
+function checkoutMati(): AdminActionState | null {
+  return checkoutEnabled()
+    ? null
+    : fail("Online checkout isn't available right now. Please message us on WhatsApp to order.");
+}
+
 const createInvoiceSchema = z.object({
   sku: z.string({ error: "Please choose a plan." }).trim().min(1, { error: "Please choose a plan." }),
   metode: z.string({ error: "Please choose a payment method." }).trim().min(1, { error: "Please choose a payment method." }),
@@ -298,6 +310,9 @@ async function invoiceMilikSaya(invoiceNo: string, customerId: string) {
 }
 
 export async function createInvoiceAction(formData: FormData): Promise<AdminActionState> {
+  const mati = checkoutMati();
+  if (mati) return mati;
+
   const customer = await getCustomer();
   if (!customer) return fail("Your session has expired. Please log in again.");
 
@@ -351,6 +366,9 @@ export async function createInvoiceAction(formData: FormData): Promise<AdminActi
 }
 
 export async function markInvoicePaidAction(formData: FormData): Promise<AdminActionState> {
+  const mati = checkoutMati();
+  if (mati) return mati;
+
   const customer = await getCustomer();
   if (!customer) return fail("Your session has expired. Please log in again.");
 
@@ -386,6 +404,9 @@ export async function markInvoicePaidAction(formData: FormData): Promise<AdminAc
 }
 
 export async function cancelInvoiceAction(formData: FormData): Promise<AdminActionState> {
+  const mati = checkoutMati();
+  if (mati) return mati;
+
   const customer = await getCustomer();
   if (!customer) return fail("Your session has expired. Please log in again.");
 

@@ -7,7 +7,7 @@ import { z } from "@/lib/zod";
 import { generateClaimCode, generateRotatingKey } from "@/lib/api-key";
 import { cacheKeys, invalidate } from "@/lib/cache";
 import { db, DbError, type WaTemplate } from "@/lib/db";
-import { getAdminPassword } from "@/lib/env";
+import { checkoutEnabled, getAdminPassword } from "@/lib/env";
 import { endOfJakartaDay, formatDateTime, maskSecret } from "@/lib/format";
 import { getClientIp } from "@/lib/ip";
 import { customerPath } from "@/lib/links";
@@ -945,6 +945,11 @@ export async function toggleOrderActiveAction(orderId: string): Promise<AdminAct
 // Invoice (checkout manual)
 // ---------------------------------------------------------------------------
 
+/** Sama seperti sisi customer: aksi invoice mati total saat checkout dimatikan. */
+function checkoutMati(): AdminActionState | null {
+  return checkoutEnabled() ? null : fail("Checkout is disabled (CHECKOUT_ENABLED is not set to true).");
+}
+
 const approveInvoiceSchema = z.object({
   account_id: z
     .string()
@@ -962,7 +967,7 @@ const approveInvoiceSchema = z.object({
  * sudah dipakai, tidak ada pesanan setengah jadi yang tertinggal.
  */
 export async function approveInvoiceAction(invoiceId: string, formData: FormData): Promise<AdminActionState> {
-  const denied = await guard();
+  const denied = (await guard()) ?? checkoutMati();
   if (denied) return denied;
 
   const parsed = approveInvoiceSchema.safeParse(formObject(formData));
@@ -1019,7 +1024,7 @@ const rejectInvoiceSchema = z.object({
 });
 
 export async function rejectInvoiceAction(invoiceId: string, formData: FormData): Promise<AdminActionState> {
-  const denied = await guard();
+  const denied = (await guard()) ?? checkoutMati();
   if (denied) return denied;
 
   const parsed = rejectInvoiceSchema.safeParse(formObject(formData));
@@ -1039,7 +1044,7 @@ export async function rejectInvoiceAction(invoiceId: string, formData: FormData)
 }
 
 export async function expireInvoiceAction(invoiceId: string): Promise<AdminActionState> {
-  const denied = await guard();
+  const denied = (await guard()) ?? checkoutMati();
   if (denied) return denied;
 
   try {

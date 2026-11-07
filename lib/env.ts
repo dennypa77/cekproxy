@@ -13,6 +13,18 @@ export function devConfigHint(error: unknown): string | null {
   return `[Mode development] ${error.message} Buat file .env.local (lihat .env.example) lalu jalankan ulang npm run dev.`;
 }
 
+/**
+ * Checkout mandiri (katalog + invoice + pembayaran manual).
+ *
+ * Mati secara bawaan. Dinyalakan hanya setelah migrasi 0005 dijalankan di
+ * Supabase — selama mati, halaman invoice tidak ada dan tombol pesan kembali
+ * mengarah ke WhatsApp, jadi tidak ada kode yang menyentuh tabel invoices.
+ * Mengubah nilainya perlu deploy ulang (halaman harga dirender saat build).
+ */
+export function checkoutEnabled(): boolean {
+  return process.env.CHECKOUT_ENABLED?.trim().toLowerCase() === "true";
+}
+
 export function isTestMode(): boolean {
   return process.env.WEBSHARE_TEST_MODE?.trim().toLowerCase() === "true";
 }
