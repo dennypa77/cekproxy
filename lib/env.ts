@@ -54,8 +54,12 @@ export function getSessionSecret(): string {
 }
 
 /**
- * Tanggal (YYYY-MM-DD, WIB) mulai halaman pesanan hanya bisa dibuka lewat akun.
- * Kosong = belum diwajibkan (masa transisi masih berjalan tanpa batas).
+ * Tanggal (YYYY-MM-DD, WIB) mulai PESANAN BARU wajib dibuka lewat akun.
+ *
+ * Pembandingnya tanggal pesanan dibuat, bukan tanggal hari ini: pesanan yang
+ * dibuat sebelum tanggal ini selamanya bisa dibuka cukup dengan nomornya,
+ * jadi customer lama tidak pernah kehilangan akses. Kosong = belum berlaku
+ * untuk siapa pun.
  */
 export function customerLoginRequiredFrom(): string | null {
   const value = process.env.CUSTOMER_LOGIN_REQUIRED_FROM?.trim();

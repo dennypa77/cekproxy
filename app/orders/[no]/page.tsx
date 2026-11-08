@@ -81,7 +81,7 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
 
   const backHref = akses.mine ? "/account" : "/";
   const backLabel = akses.mine ? "All my orders" : "Check another order";
-  const notice = !akses.mine ? <LoginNotice orderNo={order.shopee_order_no} enforceFrom={akses.enforceFrom} /> : null;
+  const notice = !akses.mine ? <LoginNotice orderNo={order.shopee_order_no} /> : null;
 
   // Pesanan rotating: tampilkan endpoint + kunci API, bukan daftar proxy tetap.
   if (order.order_type === "rotating" && order.api_key) {

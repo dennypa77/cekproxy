@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FeatureBadges, ServicePill } from "@/components/Brand";
+import { Crosses, FeatureBadges, ServicePill } from "@/components/Brand";
 import { AnnouncementBar } from "@/components/customer/AnnouncementBar";
+import { SearchForm } from "@/components/customer/SearchForm";
 import { GaugeIcon, ServerIcon, ShieldCheckIcon, SwapIcon, WhatsAppIcon } from "@/components/icons";
 import { FaqSection } from "@/components/landing/FaqSection";
 import { DatacenterBackdrop, TerminalHero } from "@/components/landing/TerminalHero";
@@ -219,6 +220,51 @@ export default function HomePage() {
                 </li>
               ))}
             </ol>
+          </div>
+        </section>
+
+        {/* Cek pesanan */}
+        <section id="check-order" className="scroll-mt-20 border-y-2 border-ink bg-surface py-14 sm:py-20">
+          <div className="mx-auto max-w-5xl px-4">
+            <div className="mx-auto max-w-2xl text-center">
+              <Crosses className="justify-center" />
+              <h2 className="mt-4 font-display text-3xl leading-tight font-extrabold tracking-tight text-ink uppercase sm:text-4xl">
+                Check your <span className="text-brand">order</span>
+              </h2>
+              <p className="mt-3 text-sm text-muted sm:text-base">
+                Already bought? Enter your order number to see your proxy list, remaining bandwidth, and validity. Have
+                more than one order? Create an account to keep them all in one place.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-5 lg:grid-cols-[1fr_320px]">
+              <SearchForm />
+
+              <div className="rounded-3xl border-2 border-ink bg-paper p-5">
+                <h3 className="font-display text-base font-extrabold tracking-tight text-ink uppercase">
+                  Have several orders?
+                </h3>
+                <p className="mt-2 text-sm text-muted">
+                  Create an account with your WhatsApp number, then claim each order with the code we send — all on one
+                  page.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link href="/account/register" className={buttonClass("primary", "sm")}>
+                    Create account
+                  </Link>
+                  <Link href="/account/login" className={buttonClass("secondary", "sm")}>
+                    Log in
+                  </Link>
+                </div>
+
+                <h3 className="mt-6 font-display text-base font-extrabold tracking-tight text-ink uppercase">
+                  Where's my order number?
+                </h3>
+                <p className="mt-2 text-sm text-muted">
+                  We send your order number over WhatsApp right after your proxies are activated — keep that chat handy.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 

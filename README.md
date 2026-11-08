@@ -224,14 +224,17 @@ Catatan penting:
 - Halaman **Customer** di panel admin memuat daftar akun, tombol **Reset password** (menghasilkan password sementara untuk dikirim lewat chat), **Blokir**, dan tombol **Buat kode klaim massal** untuk menyiapkan kode semua pesanan lama sekaligus.
 - Belum ada layanan email, jadi lupa password ditangani admin lewat tombol reset itu.
 
-### Mewajibkan login (masa transisi)
+### Mewajibkan akun untuk pesanan baru
 
-Selama `CUSTOMER_LOGIN_REQUIRED_FROM` kosong, halaman pesanan tetap bisa dibuka hanya dengan nomor pesanan seperti dulu. Isi env itu dengan tanggal (mis. `2026-12-01`) untuk mulai mewajibkan akun:
+Cek pesanan lewat nomor di halaman utama **tidak pernah dimatikan**. Yang bisa diatur hanyalah: sejak kapan **pesanan baru** wajib dibuka lewat akun.
 
-- **Sebelum** tanggal tersebut: halaman pesanan terbuka, tapi muncul pita peringatan berisi tanggal dan tombol daftar/masuk.
-- **Sesudahnya**: pengunjung tanpa akun dialihkan ke halaman masuk; yang sudah masuk tapi pesanannya belum diklaim diarahkan ke halaman klaim; pesanan milik akun lain ditolak dengan pesan jelas. Aturan yang sama berlaku untuk semua API `/api/pesanan/*`, jadi tidak ada pintu belakang.
+Yang dibandingkan adalah **tanggal pesanan dibuat**, bukan tanggal hari ini. Jadi:
 
-Beri jarak minimal 2–4 minggu dan kirimkan kode klaim lebih dulu, supaya customer lama tidak kaget kehilangan akses.
+- Pesanan yang dibuat **sebelum** `CUSTOMER_LOGIN_REQUIRED_FROM` **selamanya** bisa dibuka cukup dengan nomornya. Customer lama tidak pernah kehilangan akses, berapa lama pun waktu berjalan. Mereka tetap melihat ajakan membuat akun, tapi nadanya ajakan — bukan tenggat.
+- Pesanan yang dibuat **sejak** tanggal itu wajib lewat akun: pengunjung tanpa akun dialihkan ke halaman masuk; yang sudah masuk tapi pesanannya belum diklaim diarahkan ke halaman klaim; pesanan milik akun lain ditolak dengan pesan jelas. Aturan yang sama berlaku untuk semua API `/api/orders/*`, jadi tidak ada pintu belakang.
+- Kosong = belum berlaku untuk siapa pun; semua pesanan bisa dibuka dengan nomor.
+
+Karena pesanan lama tidak terdampak, tanggalnya aman diisi kapan saja — tidak perlu masa transisi atau pengumuman.
 
 ---
 
@@ -299,7 +302,7 @@ Ganti gambar QRIS dengan menimpa `public/qris.png`, dan nomor rekening lewat env
 | `DISCORD_MENTION_ID` | Tidak | ID Discord yang di-mention saat ada invoice perlu dicek (17-20 digit). |
 | `BANK_BCA` / `BANK_BRI` | Tidak | Rekening tujuan, format `nomor|atas nama`. Kosong = nilai bawaan di `lib/payment.ts`. |
 | `QRIS_NAMA` / `QRIS_IMAGE` | Tidak | Nama di QRIS dan letak gambarnya. Bawaan: `/qris.png`. |
-| `CUSTOMER_LOGIN_REQUIRED_FROM` | Tidak | `YYYY-MM-DD`. Mulai tanggal itu halaman pesanan hanya bisa dibuka lewat akun customer. Kosong = masa transisi (link lama tetap jalan). |
+| `CUSTOMER_LOGIN_REQUIRED_FROM` | Tidak | `YYYY-MM-DD`. Pesanan yang **dibuat** sejak tanggal itu wajib dibuka lewat akun. Pesanan lama selamanya bisa dibuka dengan nomor pesanan. Kosong = belum berlaku. |
 
 `DATABASE_URL` tidak diperlukan karena aplikasi terhubung ke Supabase lewat `SUPABASE_URL` + service role key.
 
