@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LogoMark } from "@/components/Brand";
 import { WhatsAppIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui";
+import { checkoutEnabled } from "@/lib/env";
 import { waHelpLink, waOrderGeneralLink } from "@/lib/links";
 
 const PRODUCTS = [
@@ -36,9 +37,16 @@ export function SiteFooter() {
         </nav>
 
         <div className="flex flex-wrap gap-2 sm:flex-col">
-          <a href={waOrderGeneralLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "sm")}>
-            <WhatsAppIcon className="size-4" /> Order on WhatsApp
-          </a>
+          {/* Checkout mandiri bisa dimatikan; tombolnya lalu kembali ke WhatsApp. */}
+          {checkoutEnabled() ? (
+            <Link href="/account/buy" className={buttonClass("primary", "sm")}>
+              Buy a plan
+            </Link>
+          ) : (
+            <a href={waOrderGeneralLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "sm")}>
+              <WhatsAppIcon className="size-4" /> Order on WhatsApp
+            </a>
+          )}
           <a href={waHelpLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "sm")}>
             <WhatsAppIcon className="size-4" /> Help
           </a>
