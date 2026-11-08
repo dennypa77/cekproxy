@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AccountShell } from "@/components/customer/account/AccountShell";
 import { BuyCatalog, type PaketRow } from "@/components/customer/BuyCatalog";
 import { Badge, buttonClass } from "@/components/ui";
-import { requireCustomer } from "@/lib/customer-session";
+import { getCustomer } from "@/lib/customer-session";
 import { checkoutEnabled } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 import { INVOICE_AKTIF, INVOICE_BADGE } from "@/lib/invoice-status";
@@ -32,12 +32,22 @@ const ROWS: PaketRow[] = SEMUA_PAKET.map((paket) => ({
 export default async function BeliPage({ searchParams }: { searchParams: Promise<{ sku?: string }> }) {
   // Checkout masih dimatikan → halaman ini memang tidak ada.
   if (!checkoutEnabled()) notFound();
-  const customer = await requireCustomer("/account/buy");
+
+  // sku dibaca lebih dulu supaya ikut terbawa kalau pengunjung belum punya akun.
+  const { sku } = await searchParams;
+  const customer = await getCustomer();
+  if (!customer) {
+    // Pembeli yang menekan "Buy" dari daftar harga hampir selalu orang baru,
+    // jadi diarahkan ke pendaftaran — halaman itu sendiri menyediakan tautan
+    // "Log in here" bagi yang ternyata sudah punya akun.
+    const tujuan = sku ? `/account/buy?sku=${encodeURIComponent(sku)}` : "/account/buy";
+    redirect(`/account/register?next=${encodeURIComponent(tujuan)}`);
+  }
+
   // Tidak ada cron: invoice lewat tempo disapu sambil lalu, maksimal sekali semenit.
   await sapuInvoiceKedaluwarsa();
 
-  const [{ sku }, perpanjang, invoices] = await Promise.all([
-    searchParams,
+  const [perpanjang, invoices] = await Promise.all([
     listPerpanjang(customer.id),
     db().listInvoicesByCustomer(customer.id),
   ]);

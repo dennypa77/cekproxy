@@ -8,6 +8,15 @@ import { Button, inputClass, labelClass } from "@/components/ui";
 import { useServerForm } from "@/components/useServerForm";
 import { normalizeClaimCode } from "@/lib/claim-code";
 
+/**
+ * Membawa ?next saat pembeli berpindah antara halaman masuk dan daftar.
+ * Tanpa ini, orang yang menekan "Buy" pada satu paket lalu memilih "Sign up"
+ * akan mendarat di /account dan kehilangan paket yang tadi dipilihnya.
+ */
+function tautan(path: string, next?: string): string {
+  return next ? `${path}?next=${encodeURIComponent(next)}` : path;
+}
+
 function WaField({ id = "wa_number" }: { id?: string }) {
   return (
     <div>
@@ -83,7 +92,7 @@ export function RegisterForm({ next }: { next?: string }) {
 
       <p className="text-center text-sm text-muted">
         Already have an account?{" "}
-        <Link href="/account/login" className="font-semibold text-brand-deep hover:underline">
+        <Link href={tautan("/account/login", next)} className="font-semibold text-brand-deep hover:underline">
           Log in here
         </Link>
       </p>
@@ -121,7 +130,7 @@ export function LoginForm({ next }: { next?: string }) {
 
       <p className="text-center text-sm text-muted">
         Don't have an account yet?{" "}
-        <Link href="/account/register" className="font-semibold text-brand-deep hover:underline">
+        <Link href={tautan("/account/register", next)} className="font-semibold text-brand-deep hover:underline">
           Sign up first
         </Link>
       </p>
