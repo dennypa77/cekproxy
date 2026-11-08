@@ -1,0 +1,22 @@
+# Konfigurasi deploy Netlify.
+#
+# Netlify sebenarnya mengenali proyek Next.js tanpa file ini, tapi nilainya
+# ditulis eksplisit supaya hasil build tidak berubah diam-diam kalau Netlify
+# mengganti tebakan bawaannya.
+#
+# Adapter Next.js-nya (@netlify/plugin-nextjs / OpenNext) SENGAJA tidak dipasang
+# sebagai dependency dan tidak dikunci versinya — Netlify memasangnya otomatis
+# dan memperbaruinya mengikuti rilis Next.js. Mengunci versi berarti ikut
+# menanggung sendiri setiap pembaruan.
+
+[build]
+  command = "next build"
+  publish = ".next"
+
+[build.environment]
+  # Next 16 butuh Node >= 20.9. Dikunci supaya sama dengan mesin pengembangan.
+  NODE_VERSION = "22"
+
+[dev]
+  command = "next dev"
+  targetPort = 3000

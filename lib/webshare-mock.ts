@@ -12,7 +12,7 @@ import {
 
 /*
  * Mock API Webshare untuk WEBSHARE_TEST_MODE=true.
- * State disimpan di memori proses (hilang saat restart; di Vercel tiap instance punya state sendiri).
+ * State disimpan di memori proses (hilang saat restart; tiap instance serverless punya state sendiri).
  *
  * API key khusus:
  *   mock-key-1        → 150 proxy (uji paginasi), bandwidth 210/250 GB (kuning)

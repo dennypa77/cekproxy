@@ -1,12 +1,24 @@
 import { isIPv4 } from "node:net";
 import { z } from "./zod";
 
-/** IP client dari header request (Vercel mengisi x-forwarded-for / x-real-ip). */
+/**
+ * IP client dari header request.
+ *
+ * Urutannya penting untuk keamanan: header yang DIISI PLATFORM lebih dulu,
+ * karena isinya ditimpa di edge dan tidak bisa dipalsukan client. "x-forwarded-for"
+ * baru dipakai sebagai cadangan (mis. saat jalan di belakang nginx sendiri) —
+ * kalau dipakai duluan, siapa pun bisa mengirim header itu sendiri dan lolos
+ * dari rate limit per IP.
+ *
+ * - "x-nf-client-connection-ip" → Netlify
+ * - "x-vercel-forwarded-for"    → Vercel
+ */
 export function getClientIp(headers: Headers): string {
   const candidates = [
+    headers.get("x-nf-client-connection-ip"),
+    headers.get("x-vercel-forwarded-for")?.split(",")[0],
     headers.get("x-forwarded-for")?.split(",")[0],
     headers.get("x-real-ip"),
-    headers.get("x-vercel-forwarded-for")?.split(",")[0],
   ];
   for (const candidate of candidates) {
     const value = candidate?.trim();

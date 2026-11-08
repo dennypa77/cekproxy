@@ -12,7 +12,7 @@ Selain paket **statis** (1 pesanan = 1 akun), aplikasi ini juga melayani paket *
 
 Aplikasi ini **tidak menjual apa pun** dan tidak ada pembayaran. Admin mengelola pool akun Webshare dan pesanan di `/admin`.
 
-**Stack:** Next.js 16 (App Router) + TypeScript + Tailwind CSS 4 · Supabase Postgres · Deploy di Vercel.
+**Stack:** Next.js 16 (App Router) + TypeScript + Tailwind CSS 4 · Supabase Postgres · Deploy di Netlify.
 
 ---
 
@@ -20,7 +20,7 @@ Aplikasi ini **tidak menjual apa pun** dan tidak ada pembayaran. Admin mengelola
 
 1. [Coba cepat di komputer sendiri (tanpa Supabase)](#1-coba-cepat-di-komputer-sendiri-tanpa-supabase)
 2. [Siapkan Supabase](#2-siapkan-supabase)
-3. [Deploy ke Vercel](#3-deploy-ke-vercel)
+3. [Deploy ke Netlify](#3-deploy-ke-netlify)
 4. [Beralih ke mode produksi (API Webshare asli)](#4-beralih-ke-mode-produksi-api-webshare-asli)
 5. [Cara pakai panel admin](#5-cara-pakai-panel-admin)
 6. [Environment variables](#6-environment-variables)
@@ -90,12 +90,12 @@ Semua tabel memakai Row Level Security tanpa policy, jadi kunci publik (`anon`) 
 
 ---
 
-## 3. Deploy ke Vercel
+## 3. Deploy ke Netlify
 
 1. Upload proyek ini ke repository GitHub (bisa private).
-2. Login ke https://vercel.com dengan akun GitHub, klik **Add New… → Project**, lalu pilih repository tersebut.
-3. Framework akan terdeteksi otomatis sebagai **Next.js**. Tidak ada pengaturan build yang perlu diubah.
-4. Buka bagian **Environment Variables** dan isi:
+2. Login ke https://app.netlify.com dengan akun GitHub, klik **Add new project → Import an existing project**, lalu pilih repository tersebut.
+3. Netlify mendeteksi Next.js sendiri dan memasang adapter-nya. Pengaturan build sudah terkunci di [`netlify.toml`](netlify.toml) (`next build`, publish `.next`, Node 22), jadi tidak ada yang perlu diubah di layar ini.
+4. Buka **Environment variables → Add a variable** dan isi:
 
    | Nama | Nilai |
    | --- | --- |
@@ -109,16 +109,20 @@ Semua tabel memakai Row Level Security tanpa policy, jadi kunci publik (`anon`) 
    - di terminal: `openssl rand -hex 32`
    - atau di Node: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
-5. Klik **Deploy**. Setelah selesai, buka `https://nama-proyek.vercel.app`.
-6. *(Opsional)* Hubungkan domain sendiri di **Settings → Domains** — lihat bagian berikutnya.
+   Isi semuanya dengan scope **All scopes / Same value for all deploy contexts**, kecuali Anda memang ingin nilai berbeda di Deploy Preview.
 
-Setiap perubahan environment variable baru berlaku setelah **Redeploy** (menu Deployments, lalu ⋯ → Redeploy).
+5. Klik **Deploy**. Setelah selesai, buka `https://nama-proyek.netlify.app`.
+6. *(Opsional)* Hubungkan domain sendiri di **Domain management** — lihat bagian berikutnya.
+
+Setiap perubahan environment variable baru berlaku setelah **deploy ulang** (menu **Deploys**, lalu **Trigger deploy → Deploy site**).
+
+> **Perhatikan kuota.** Paket gratis Netlify memakai sistem kredit: **300 kredit/bulan, batas keras**. Satu deploy produksi memakan **15 kredit**, jadi kira-kira **20 deploy produksi per bulan** sebelum sisa kredit terpakai untuk bandwidth dan request. Kalau kredit habis, **seluruh project di akun itu dipause** dan pengunjung melihat halaman *Site not available* — bukan sekadar melambat. Deploy Preview dan branch deploy tidak memakan kredit, jadi pakai itu untuk uji coba dan simpan deploy produksi untuk perubahan yang benar-benar dirilis. Kalau mulai mepet, paket **Personal ($9/bulan, 1.000 kredit)** sudah cukup dan masih di bawah Vercel Pro.
 
 ### Memasang domain sendiri
 
-1. Beli domain, lalu tambahkan di **Vercel → Settings → Domains**. Ikuti instruksi DNS yang ditampilkan (ganti nameserver, atau tambah record A + CNAME). Sertifikat HTTPS dibuat otomatis.
+1. Beli domain, lalu tambahkan di **Netlify → Domain management → Add a domain**. Ikuti instruksi DNS yang ditampilkan (ganti nameserver ke Netlify DNS, atau tambah record A/ALIAS + CNAME). Sertifikat HTTPS (Let's Encrypt) dibuat otomatis.
 2. Set env `SITE_URL` ke domain itu, mis. `https://dmproxy.xyz`, lalu **Redeploy**. Ini membuat judul dan gambar preview link memakai domain baru.
-3. Alamat `*.vercel.app` tetap hidup dan tidak otomatis mengalihkan. Kalau ingin dialihkan, isi env `LEGACY_HOST` dengan alamat lama (mis. `namaproject.vercel.app`); semua kunjungan ke alamat lama diarahkan ke `SITE_URL` dengan path yang sama.
+3. Alamat `*.netlify.app` tetap hidup dan tidak otomatis mengalihkan. Kalau ingin dialihkan, isi env `LEGACY_HOST` dengan alamat lama (mis. `namaproject.netlify.app`, atau alamat Vercel lama selama domainnya masih mengarah ke sini); semua kunjungan ke alamat lama diarahkan ke `SITE_URL` dengan path yang sama.
    Redirect-nya **sementara (307)**. Setelah yakin lancar, ubah `permanent: false` → `true` di [`next.config.ts`](next.config.ts) agar browser menyimpannya.
 4. Endpoint rotating mengikuti alamat yang sedang dibuka customer, jadi halaman pesanan otomatis menampilkan `https://domain-baru/api/rotating?key=…` tanpa perubahan kode.
 5. Untuk memberi tahu customer, isi env `PENGUMUMAN` (dan opsional `PENGUMUMAN_SAMPAI`) — lihat bagian berikutnya.
@@ -145,7 +149,7 @@ PENGUMUMAN_SAMPAI=2026-12-31
    delete from orders where shopee_order_no in ('DEMOAKTIF001', 'DEMOEXPIRE002');
    delete from webshare_accounts where api_key like 'mock-key-%';
    ```
-2. Di Vercel, ubah `WEBSHARE_TEST_MODE` menjadi `false`, lalu Redeploy.
+2. Di Netlify, ubah `WEBSHARE_TEST_MODE` menjadi `false`, lalu deploy ulang.
 3. Masukkan akun Webshare asli di **/admin → Pool Akun**. API key ada di dashboard Webshare, menu **API Keys**.
 
 ---
@@ -271,7 +275,7 @@ Kalau sudah aktif, customer yang sudah masuk bisa membeli sendiri lewat **/accou
 - Invoice yang sudah kedaluwarsa **tetap bisa disetujui admin** - kadang transferannya memang masuk terlambat.
 - Nomor rekening hanya dirender di halaman invoice milik customer yang bersangkutan, dan hilang begitu customer menyatakan sudah bayar (supaya tidak transfer dua kali).
 
-**Sebelum fitur ini dipakai di produksi:** jalankan migrasi [`supabase/migrations/0005_invoices.sql`](supabase/migrations/0005_invoices.sql) di Supabase, lalu isi `DISCORD_WEBHOOK_URL` dan `DISCORD_MENTION_ID` di Vercel.
+**Sebelum fitur ini dipakai di produksi:** jalankan migrasi [`supabase/migrations/0005_invoices.sql`](supabase/migrations/0005_invoices.sql) di Supabase, lalu isi `DISCORD_WEBHOOK_URL` dan `DISCORD_MENTION_ID` di Netlify.
 
 Ganti gambar QRIS dengan menimpa `public/qris.png`, dan nomor rekening lewat env `BANK_BCA` / `BANK_BRI` (format `nomor|atas nama`).
 
@@ -287,7 +291,7 @@ Ganti gambar QRIS dengan menimpa `public/qris.png`, dan nomor rekening lewat env
 | `SESSION_SECRET` | Ya (produksi) | Kunci tanda tangan cookie sesi, minimal 32 karakter |
 | `WEBSHARE_TEST_MODE` | Tidak | `true` = data proxy palsu. Jika `true` dan Supabase kosong, memakai DB memori. |
 | `SITE_URL` | Tidak | Alamat publik aplikasi, mis. `https://dmproxy.xyz`. Dipakai untuk kartu preview link. Default `https://dmproxy.xyz`. |
-| `LEGACY_HOST` | Tidak | Alamat lama yang dialihkan ke `SITE_URL`, mis. `namaproject.vercel.app`. Kosong = tidak ada redirect. |
+| `LEGACY_HOST` | Tidak | Alamat lama yang dialihkan ke `SITE_URL`, mis. `namaproject.netlify.app`. Kosong = tidak ada redirect. |
 | `PENGUMUMAN` | Tidak | Teks pita pengumuman di halaman customer. Kosong = pita tidak tampil. |
 | `PENGUMUMAN_SAMPAI` | Tidak | `YYYY-MM-DD`. Lewat 23:59 WIB tanggal itu, pita pengumuman hilang sendiri. |
 | `CHECKOUT_ENABLED` | Tidak | `true` = checkout mandiri aktif. Kosong/`false` = pembelian lewat WhatsApp, tabel `invoices` tidak disentuh. Butuh deploy ulang. |
@@ -309,7 +313,7 @@ Ganti gambar QRIS dengan menimpa `public/qris.png`, dan nomor rekening lewat env
 - API key tidak pernah dikirim ke browser, termasuk di panel admin (hanya ditampilkan tersamar, misalnya `abcd…wxyz`).
 - Pesan error untuk customer selalu bersih: tanpa kata "Webshare", tanpa URL API, dan tanpa pesan mentah dari upstream. Detail teknis hanya ada di log server dan log replace admin.
 - Sesi admin berupa cookie `httpOnly` yang ditandatangani HMAC-SHA256.
-- **Rate limit per IP** disimpan di tabel `rate_limits`, sehingga berlaku di semua instance Vercel:
+- **Rate limit per IP** disimpan di tabel `rate_limits`, sehingga berlaku di semua instance serverless:
   | Aksi | Batas |
   | --- | --- |
   | Pencarian nomor pesanan + setiap nomor yang tidak ditemukan | 10 / menit |
@@ -361,7 +365,7 @@ Semua endpoint diakhiri `/` dan memakai header `Authorization: Token <API_KEY>`.
 - Jika akun punya **cadangan bandwidth** (`rotating_reserve_gb`), pemakaiannya dicek lebih dulu. Akun dikeluarkan dari pool bila `terpakai >= limit - cadangan`, atau bila data bandwidth-nya gagal dibaca (tidak ada asumsi diam-diam bahwa pemakaiannya 0).
 - Hanya proxy berstatus `valid` yang masuk pool. Hasilnya di-cache 60 detik, dan cache langsung dibuang saat admin mengubah akun atau menyalakan/mematikan keikutsertaan pool.
 - Kunci API dibuat acak 128-bit (`dmr_` + 32 hex, lihat [`lib/api-key.ts`](lib/api-key.ts)) dan disimpan unik di tabel `orders`. Pesanan rotating tidak memakai `account_id` maupun kuota replace.
-- Validasi akses ada di [`lib/services/rotating-access.ts`](lib/services/rotating-access.ts): format kunci → pesanan rotating → aktif → belum expired → batas permintaan per menit (tabel `rate_limits`, kunci `rotating:<order_id>`, jadi batasnya berlaku lintas instance Vercel).
+- Validasi akses ada di [`lib/services/rotating-access.ts`](lib/services/rotating-access.ts): format kunci → pesanan rotating → aktif → belum expired → batas permintaan per menit (tabel `rate_limits`, kunci `rotating:<order_id>`, jadi batasnya berlaku lintas instance serverless).
 - Semua balasan API rotating memakai `cache-control: no-store`.
 
 ### Aturan masa aktif
@@ -409,8 +413,8 @@ supabase/
 | --- | --- |
 | `Database belum dikonfigurasi` | Isi `SUPABASE_URL` dan `SUPABASE_SERVICE_ROLE_KEY`, lalu Redeploy. |
 | Error `relation "orders" does not exist` | Migrasi SQL belum dijalankan (lihat langkah 2). |
-| Tidak bisa login admin | Cek `ADMIN_PASSWORD` di Vercel, lalu Redeploy. Setelah 5 kali salah, tunggu 5 menit. |
+| Tidak bisa login admin | Cek `ADMIN_PASSWORD` di Netlify, lalu deploy ulang. Setelah 5 kali salah, tunggu 5 menit. |
 | Error `SESSION_SECRET` | Isi dengan minimal 32 karakter acak. |
 | "API key ditolak" saat tambah akun | Pastikan `WEBSHARE_TEST_MODE=false` dan API key benar serta punya plan aktif. |
-| Bandwidth "tidak tersedia" | Lihat log di Vercel (Deployments → Functions/Logs). Akun mungkin tanpa langganan aktif. Pesan teknisnya terlihat di kolom bandwidth panel admin (arahkan kursor). |
+| Bandwidth "tidak tersedia" | Lihat log di Netlify (**Logs → Functions**). Akun mungkin tanpa langganan aktif. Pesan teknisnya terlihat di kolom bandwidth panel admin (arahkan kursor). |
 | Customer IPv6 tidak bisa "Gunakan IP saya" | Whitelist hanya menerima IPv4. Customer perlu mengisi IPv4 secara manual. |

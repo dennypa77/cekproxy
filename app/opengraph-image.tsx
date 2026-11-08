@@ -10,8 +10,22 @@ export const contentType = "image/png";
 /**
  * Logo dibaca dari disk saat gambar dirender (bukan <img src="/logo.png">):
  * satu-satunya cara yang pasti jalan, karena saat build belum ada URL publik.
+ *
+ * Dibungkus try/catch dengan sengaja. Gambar ini biasanya dibuat saat build,
+ * tapi kalau suatu saat dirender di server (host lain membundel `public/`
+ * dengan cara berbeda), file-nya bisa saja tidak ikut terbawa. Lebih baik
+ * kartu preview tampil tanpa logo daripada seluruh halaman balas 500.
  */
-const LOGO = `data:image/png;base64,${readFileSync(join(process.cwd(), "public/logo.png")).toString("base64")}`;
+function bacaLogo(): string | null {
+  try {
+    return `data:image/png;base64,${readFileSync(join(process.cwd(), "public/logo.png")).toString("base64")}`;
+  } catch (error) {
+    console.error("[og] logo.png tidak terbaca, kartu preview dibuat tanpa logo", error);
+    return null;
+  }
+}
+
+const LOGO = bacaLogo();
 
 /** Preview card shown when a link is shared on WhatsApp / social. */
 export default function OpengraphImage() {
@@ -31,7 +45,7 @@ export default function OpengraphImage() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LOGO} width={104} height={104} alt="" />
+          {LOGO ? <img src={LOGO} width={104} height={104} alt="" /> : null}
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: 2, color: "#e8eef6" }}>DMPROXY</div>
             <div style={{ fontSize: 26, color: "#93a3b8" }}>{siteHost()}</div>

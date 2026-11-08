@@ -16,7 +16,11 @@ import { getCountries, getProxies } from "./proxy-data";
 
 /** Kunci proses replace per pesanan (lebih lama dari batas polling + overhead). */
 const REPLACE_LOCK_SECONDS = 90;
-/** Batas polling agar tidak melewati timeout function Vercel (maxDuration route = 60 detik). */
+/**
+ * Batas polling agar tidak melewati timeout serverless function.
+ * Netlify memotong function sinkron di 60 detik (tidak bisa diubah), sama
+ * dengan maxDuration route ini. 25 detik menyisakan banyak ruang.
+ */
 const POLL_TIMEOUT_MS = 25_000;
 const POLL_INTERVAL_MS = 2_000;
 /** Replace 'pending' yang tidak kunjung selesai dianggap gagal setelah ini. */
