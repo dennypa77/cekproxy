@@ -524,6 +524,7 @@ export function createMemoryRepo(): Repo {
         invoice_no: `INV-${jakartaDate().replace(/-/g, "")}-${kodeAcak()}`,
         customer_id: input.customer_id,
         jenis: input.jenis,
+        produk: input.produk,
         paket_sku: input.paket_sku,
         paket_nama: input.paket_nama,
         kategori: input.kategori,
@@ -531,6 +532,7 @@ export function createMemoryRepo(): Repo {
         bandwidth_gb: input.bandwidth_gb,
         masa_aktif_hari: input.masa_aktif_hari,
         harga_rp: input.harga_rp,
+        rate_per_minute: input.rate_per_minute,
         kode_unik: kodeUnik,
         total_rp: input.harga_rp + kodeUnik,
         metode: input.metode,
@@ -588,6 +590,32 @@ export function createMemoryRepo(): Repo {
         const note = `[${jakartaDate()}] Diperpanjang ${invoice.masa_aktif_hari} hari dari invoice ${invoice.invoice_no}`;
         target.catatan = target.catatan ? `${target.catatan}\n${note}` : note;
         order = target;
+      } else if (invoice.produk === "rotating") {
+        // Pool gabungan: tanpa akun, tanpa kuota replace, wajib punya api_key.
+        const note = `[${jakartaDate()}] Dari invoice ${invoice.invoice_no} (${invoice.paket_nama})`;
+        order = {
+          id: randomUUID(),
+          shopee_order_no: `DMP-${jakartaDate().replace(/-/g, "")}-${kodeAcak()}`,
+          order_type: "rotating",
+          api_key: `dmr_${randomUUID().replace(/-/g, "")}`,
+          rate_per_minute: invoice.rate_per_minute ?? 60,
+          account_id: null,
+          nama_customer: customer?.nama ?? null,
+          expires_at: expiresAt,
+          replace_quota: 0,
+          replace_used: 0,
+          replace_lock_until: null,
+          is_active: true,
+          catatan: catatanBersih ? `${note}
+${catatanBersih}` : note,
+          created_at: new Date().toISOString(),
+          customer_id: invoice.customer_id,
+          claimed_at: new Date().toISOString(),
+          claim_code: null,
+          claim_code_expires_at: null,
+          wa_number: customer?.wa_number ?? null,
+        };
+        s.orders.push(order);
       } else {
         const account = s.accounts.find((a) => a.id === accountId);
         if (!account || account.status !== "available") {

@@ -147,3 +147,129 @@ export function namaPaket(paket: Paket & { kategoriNama?: string }): string {
   const kategori = paket.kategoriNama ? `${paket.kategoriNama} ` : "";
   return `${kategori}${paket.ip} IP · ${labelBandwidth(paket.bandwidthGb)}`;
 }
+
+// ---------------------------------------------------------------------------
+// Paket rotating (pool gabungan, dijual per durasi)
+// ---------------------------------------------------------------------------
+
+/**
+ * Batas permintaan API per menit untuk semua paket rotating.
+ *
+ * Ini membatasi seberapa sering customer MENGAMBIL daftar proxy, bukan
+ * berapa banyak data yang dialirkannya — trafiknya langsung ke Webshare,
+ * tidak lewat server ini. Jadi angka ini bukan pengaman bandwidth; yang
+ * menjaga pool adalah rotating_reserve_gb di tiap akun.
+ */
+export const ROTATING_RATE_PER_MINUTE = 60;
+
+/** Batas wajar yang diumumkan ke customer (GB per 30 hari). */
+export const ROTATING_FAIR_USE_GB = 100;
+
+export interface PaketRotating {
+  /** Pengenal stabil yang dirujuk invoice, mis. "rot-dc-30d". */
+  sku: string;
+  kategoriId: string;
+  kategoriNama: string;
+  hari: number;
+  hargaRp: number;
+  populer?: boolean;
+}
+
+/**
+ * Dijual per DURASI, bukan per bandwidth: pemakaian tiap customer tidak bisa
+ * diukur karena proxy-nya dipakai langsung ke Webshare.
+ *
+ * Harga 7 hari sengaja 40% dari harga 30 hari (bukan 23%) supaya durasi
+ * pendek tidak jadi celah murah untuk menguras pool lalu pergi.
+ */
+export const PAKET_ROTATING: PaketRotating[] = [
+  { sku: "rot-dc-7d", kategoriId: "datacenter", kategoriNama: "Datacenter", hari: 7, hargaRp: 38_000 },
+  { sku: "rot-dc-14d", kategoriId: "datacenter", kategoriNama: "Datacenter", hari: 14, hargaRp: 61_000 },
+  { sku: "rot-dc-30d", kategoriId: "datacenter", kategoriNama: "Datacenter", hari: 30, hargaRp: 95_000, populer: true },
+  { sku: "rot-res-7d", kategoriId: "residential", kategoriNama: "Residential", hari: 7, hargaRp: 76_000 },
+  { sku: "rot-res-14d", kategoriId: "residential", kategoriNama: "Residential", hari: 14, hargaRp: 118_000 },
+  { sku: "rot-res-30d", kategoriId: "residential", kategoriNama: "Residential", hari: 30, hargaRp: 171_000, populer: true },
+];
+
+const ROTATING_BY_SKU = new Map(PAKET_ROTATING.map((paket) => [paket.sku, paket]));
+// Ketahuan saat build, bukan saat customer memesan.
+if (ROTATING_BY_SKU.size !== PAKET_ROTATING.length) {
+  throw new Error("SKU paket rotating duplikat");
+}
+for (const sku of ROTATING_BY_SKU.keys()) {
+  if (PAKET_BY_SKU.has(sku)) throw new Error(`SKU ${sku} dipakai paket statis dan rotating sekaligus`);
+}
+
+export function findPaketRotating(sku: string): PaketRotating | null {
+  return ROTATING_BY_SKU.get(sku.trim().toLowerCase()) ?? null;
+}
+
+export function labelDurasi(hari: number): string {
+  return `${hari} ${hari === 1 ? "day" : "days"}`;
+}
+
+export function namaPaketRotating(paket: PaketRotating): string {
+  return `${paket.kategoriNama} Rotating · ${labelDurasi(paket.hari)}`;
+}
+
+/** Harga per hari, untuk menunjukkan durasi mana yang paling hemat. */
+export function usdPerHari(paket: PaketRotating): string {
+  const nilai = paket.hargaRp / paket.hari / IDR_PER_USD;
+  return nilai >= 10 ? `${Math.round(nilai)}` : `${nilai.toFixed(2)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Satu pintu untuk checkout: statis maupun rotating
+// ---------------------------------------------------------------------------
+
+/**
+ * Bentuk seragam yang dipakai invoice. Kolom yang tidak relevan diisi 0
+ * (bukan dikarang), dan migrasi 0006 menegakkan aturan itu di database:
+ * rotating wajib ip = 0 dan bandwidth_gb = 0, statis wajib keduanya > 0.
+ */
+export interface ItemBeli {
+  produk: "statis" | "rotating";
+  sku: string;
+  nama: string;
+  kategoriId: string;
+  ip: number;
+  bandwidthGb: number;
+  masaAktifHari: number;
+  hargaRp: number;
+  ratePerMinute: number | null;
+}
+
+/** Cari item dari SKU, statis atau rotating. Harga SELALU lewat fungsi ini. */
+export function findItem(sku: string): ItemBeli | null {
+  const statis = findPaket(sku);
+  if (statis) {
+    return {
+      produk: "statis",
+      sku: statis.sku,
+      nama: `${statis.kategoriNama} ${statis.ip} IP · ${labelBandwidth(statis.bandwidthGb)}`,
+      kategoriId: statis.kategoriId,
+      ip: statis.ip,
+      bandwidthGb: statis.bandwidthGb,
+      masaAktifHari: MASA_AKTIF_HARI,
+      hargaRp: statis.hargaRp,
+      ratePerMinute: null,
+    };
+  }
+
+  const rotating = findPaketRotating(sku);
+  if (rotating) {
+    return {
+      produk: "rotating",
+      sku: rotating.sku,
+      nama: namaPaketRotating(rotating),
+      kategoriId: rotating.kategoriId,
+      ip: 0,
+      bandwidthGb: 0,
+      masaAktifHari: rotating.hari,
+      hargaRp: rotating.hargaRp,
+      ratePerMinute: ROTATING_RATE_PER_MINUTE,
+    };
+  }
+
+  return null;
+}

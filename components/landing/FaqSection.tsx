@@ -3,7 +3,7 @@ import { checkoutEnabled } from "@/lib/env";
 import { WhatsAppIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui";
 import { waHelpLink } from "@/lib/links";
-import { MASA_AKTIF_HARI } from "@/lib/pricing";
+import { MASA_AKTIF_HARI, ROTATING_FAIR_USE_GB } from "@/lib/pricing";
 
 // Dibaca sekali saat modul dimuat; mengubah env tetap butuh deploy ulang.
 const CHECKOUT = checkoutEnabled();
@@ -36,7 +36,13 @@ export const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: "Is there a rotating plan via API?",
-    a: "Yes. You get a single API endpoint and a secret key to pull random proxies from our pool, with your choice of count and country. Pricing depends on your needs, so please reach out on WhatsApp.",
+    a: CHECKOUT
+      ? `Yes. You get a single API endpoint and a secret key to pull random proxies from our pool, with your choice of count and country. Rotating plans are sold by duration — 7, 14 or 30 days — in both datacenter and residential pools, and you can buy one straight from your dashboard. There is no GB counter; fair use is ${ROTATING_FAIR_USE_GB} GB per 30 days.`
+      : "Yes. You get a single API endpoint and a secret key to pull random proxies from our pool, with your choice of count and country. Rotating plans are sold by duration — 7, 14 or 30 days. Message us on WhatsApp to order one.",
+  },
+  {
+    q: "What does fair use mean on a rotating plan?",
+    a: `Rotating plans have no GB counter, but they draw from a pool shared with other customers, so we ask you to stay under ${ROTATING_FAIR_USE_GB} GB per 30 days. We are not counting bytes to catch you out — if your usage goes well past that, we'll message you on WhatsApp first and sort out a bigger plan together. Nothing is cut off without a conversation.`,
   },
   {
     q: "How do I order and pay?",

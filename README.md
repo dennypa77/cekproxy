@@ -78,7 +78,7 @@ Di mode test, API key tidak dikirim ke Webshare. Beberapa pola API key memicu pe
 1. Daftar/login di https://supabase.com, lalu klik **New project**. Pilih region **Southeast Asia (Singapore)** agar dekat dengan Indonesia. Simpan password database-nya.
 2. Setelah project jadi, buka menu **SQL Editor**, lalu klik **New query**.
 3. Buka file [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), salin seluruh isinya, tempel ke SQL Editor, lalu klik **Run**. Pastikan hasilnya "Success".
-   Lakukan hal yang sama untuk [`0002_plan_info.sql`](supabase/migrations/0002_plan_info.sql) (kolom jenis proxy), [`0003_rotating.sql`](supabase/migrations/0003_rotating.sql) (produk rotating), dan [`0004_customer_accounts.sql`](supabase/migrations/0004_customer_accounts.sql) (akun customer, kode klaim, log WhatsApp). Semua file aman dijalankan ulang dan tidak mengubah data lama.
+   Lakukan hal yang sama untuk [`0002_plan_info.sql`](supabase/migrations/0002_plan_info.sql) (kolom jenis proxy), [`0003_rotating.sql`](supabase/migrations/0003_rotating.sql) (produk rotating), [`0004_customer_accounts.sql`](supabase/migrations/0004_customer_accounts.sql) (akun customer, kode klaim, log WhatsApp), dan — kalau checkout mandiri dipakai — [`0005_invoices.sql`](supabase/migrations/0005_invoices.sql) serta [`0006_rotating_invoice.sql`](supabase/migrations/0006_rotating_invoice.sql) (paket rotating lewat checkout). Semua file aman dijalankan ulang dan tidak mengubah data lama.
 4. *(Opsional, hanya untuk uji coba)* Jalankan juga [`supabase/seed.sql`](supabase/seed.sql) dengan cara yang sama. Data ini hanya bekerja jika `WEBSHARE_TEST_MODE=true`. **Jangan jalankan di database produksi.**
 5. Buka **Project Settings → API** (atau **API Keys**), lalu salin dua nilai berikut:
    - **Project URL** untuk `SUPABASE_URL`
@@ -188,6 +188,33 @@ Paket rotating memakai **pool gabungan**: sisa bandwidth dari akun-akun yang sud
 4. Di halaman **Kelola pesanan** rotating ada kartu **Akses rotating**: salin kunci/endpoint, ubah batas per menit, atau **Ganti kunci API** kalau kuncinya bocor (kunci lama langsung berhenti bekerja).
 
 Batas paket rotating = **masa aktif + jumlah permintaan per menit**. Saat pesanan expired atau dinonaktifkan, kunci API langsung ditolak.
+
+#### Dijual sendiri lewat checkout
+
+Sejak migrasi [`0006_rotating_invoice.sql`](supabase/migrations/0006_rotating_invoice.sql), paket rotating bisa dibeli customer sendiri — tidak perlu dibuatkan admin. Harganya **per durasi**, bukan per bandwidth:
+
+| | 7 hari | 14 hari | 30 hari |
+| --- | --- | --- | --- |
+| Datacenter Rotating | Rp38.000 | Rp61.000 | Rp95.000 |
+| Residential Rotating | Rp76.000 | Rp118.000 | Rp171.000 |
+
+Ubah angkanya di `PAKET_ROTATING` ([`lib/pricing.ts`](lib/pricing.ts)) — halaman harga, halaman beli, dan invoice ikut menyesuaikan.
+
+Saat invoice rotating disetujui, pesanannya dibuat **tanpa mengklaim akun Webshare**: tidak ada dropdown akun di panel admin, dan `api_key` dibangkitkan database dalam transaksi yang sama.
+
+> ### ⚠️ Kenapa dijual per durasi, dan apa risikonya
+>
+> Pemakaian bandwidth tiap customer rotating **tidak bisa diukur**. Endpoint `/api/rotating` hanya menyerahkan daftar `ip:port:user:pass`; setelah itu customer menyambung **langsung** ke Webshare, jadi trafiknya tidak pernah lewat server ini.
+>
+> Artinya `rate_per_minute` **bukan pengaman bandwidth** — itu hanya membatasi seberapa sering daftar proxy diambil. Satu customer bisa mengambil satu proxy sekali, lalu mendorong ratusan GB lewat proxy itu tanpa memanggil API lagi.
+>
+> Tiga hal yang menahan kerusakan, dan semuanya perlu Anda urus sendiri:
+>
+> 1. **Isi `rotating_reserve_gb` di setiap akun yang diikutkan ke pool.** Jangan ada yang kosong — ini satu-satunya rem otomatis, dan yang melindungi kuota customer statis.
+> 2. **Batasi jumlah pesanan rotating aktif** sesuai sisa pool. Patokan: anggap satu customer memakai 50 GB per 30 hari, jadi sisa pool 1.000 GB ≈ maksimal 20 pesanan aktif.
+> 3. **Batas wajar `ROTATING_FAIR_USE_GB`** (bawaan 100 GB/30 hari) ditampilkan di daftar harga dan FAQ. Angkanya tidak ditegakkan kode mana pun — gunanya memberi dasar untuk menghubungi customer sebelum menonaktifkan pesanannya dari panel admin.
+>
+> Harga 7 hari sengaja 40% dari harga 30 hari (bukan 23%) supaya durasi pendek tidak jadi celah murah untuk menguras pool lalu pergi.
 
 **Cara pakai untuk customer:**
 

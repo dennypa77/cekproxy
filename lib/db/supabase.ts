@@ -222,6 +222,7 @@ export function createSupabaseRepo(url: string, serviceRoleKey: string): Repo {
         .rpc("create_invoice", {
           p_customer_id: input.customer_id,
           p_jenis: input.jenis,
+          p_produk: input.produk,
           p_sku: input.paket_sku,
           p_paket_nama: input.paket_nama,
           p_kategori: input.kategori,
@@ -234,6 +235,7 @@ export function createSupabaseRepo(url: string, serviceRoleKey: string): Repo {
           p_catatan: input.catatan,
           p_ttl_jam: input.ttlJam,
           p_maks_aktif: input.maksAktif,
+          p_rate_per_minute: input.rate_per_minute,
         })
         .single();
       return check(res) as Invoice;

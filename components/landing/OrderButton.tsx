@@ -2,8 +2,8 @@ import Link from "next/link";
 import { WhatsAppIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui";
 import { checkoutEnabled } from "@/lib/env";
-import { waOrderLink } from "@/lib/links";
-import { usd, type Paket } from "@/lib/pricing";
+import { waOrderGeneralLink, waOrderLink } from "@/lib/links";
+import { labelDurasi, usd, type Paket, type PaketRotating } from "@/lib/pricing";
 
 /**
  * Tombol "Order" di daftar harga.
@@ -25,6 +25,37 @@ export function OrderButton({ paket, kategori }: { paket: Paket; kategori: strin
           bandwidthGb: paket.bandwidthGb,
           harga: usd(paket.hargaRp),
         })}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={buttonClass("primary", "sm")}
+        title={judul}
+      >
+        <WhatsAppIcon className="size-4" /> Order
+      </a>
+    );
+  }
+
+  return (
+    <Link href={`/account/buy?sku=${encodeURIComponent(paket.sku)}`} className={buttonClass("primary", "sm")} title={judul}>
+      Order
+    </Link>
+  );
+}
+
+/**
+ * Tombol "Order" untuk paket rotating.
+ *
+ * Dipisah dari OrderButton karena isinya memang beda: rotating tidak punya
+ * jumlah IP maupun kuota GB untuk ditulis di pesan WhatsApp — yang menentukan
+ * cuma kategori pool dan durasinya.
+ */
+export function RotatingOrderButton({ paket }: { paket: PaketRotating }) {
+  const judul = `Order ${paket.kategoriNama} Rotating ${labelDurasi(paket.hari)}`;
+
+  if (!checkoutEnabled()) {
+    return (
+      <a
+        href={waOrderGeneralLink()}
         target="_blank"
         rel="noopener noreferrer"
         className={buttonClass("primary", "sm")}

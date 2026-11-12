@@ -12,12 +12,22 @@ export interface PaketRow {
   kategoriId: string;
   kategoriNama: string;
   grupLabel: string;
+  /** Paket rotating memakai pool gabungan: tidak ada jumlah IP maupun kuota GB. */
+  rotating: boolean;
   ip: number;
   bandwidthLabel: string;
   hargaLabel: string;
   usdLabel: string;
+  /** "$0.65 / IP" untuk statis, "$3.17 / day" untuk rotating. */
   perIpLabel: string;
+  /** Masa aktif, mis. "30 days". */
+  durasiLabel: string;
   populer: boolean;
+}
+
+/** Paket statis dan rotating tidak bisa saling menggantikan saat perpanjang. */
+function sejenis(a: PaketRow, b: PaketRow): boolean {
+  return a.rotating === b.rotating;
 }
 
 export interface MetodeRow {
@@ -58,7 +68,9 @@ export function BuyCatalog({
     skuAwal && paket.some((p) => p.sku === skuAwal) ? { sku: skuAwal, extendOrderId: null } : null,
   );
 
-  const kategori = [...new Set(paket.map((p) => p.kategoriId))];
+  const statis = paket.filter((p) => !p.rotating);
+  const rotating = paket.filter((p) => p.rotating);
+  const kategori = [...new Set(statis.map((p) => p.kategoriId))];
   const terpilih = pilihan ? paket.find((p) => p.sku === pilihan.sku) : undefined;
 
   return (
@@ -69,7 +81,7 @@ export function BuyCatalog({
             Renew an <span className="text-brand">existing order</span>
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Renewing adds {masaAktifHari} more days to the same order — you keep the same IPs and dashboard.
+            Renewing extends the same order — you keep the same IPs, API key, and dashboard.
           </p>
 
           <ul className="mt-4 divide-y divide-line">
@@ -83,15 +95,15 @@ export function BuyCatalog({
                   <a href={`/account/invoice/${encodeURIComponent(item.invoiceBerjalan)}`} className={buttonClass("secondary", "sm")}>
                     Open invoice {item.invoiceBerjalan}
                   </a>
-                ) : item.rotating ? (
-                  <span className="text-xs font-semibold text-muted">Renew rotating plans over WhatsApp</span>
                 ) : (
                   <Button
                     size="sm"
                     variant="secondary"
                     onClick={() =>
                       setPilihan({
-                        sku: item.skuTebakan ?? paket[0]?.sku ?? "",
+                        // Paketnya harus sejenis: pesanan rotating tidak bisa
+                        // diperpanjang dengan paket statis, dan sebaliknya.
+                        sku: item.skuTebakan ?? (item.rotating ? rotating[0]?.sku : statis[0]?.sku) ?? "",
                         extendOrderId: item.orderId,
                         orderNo: item.orderNo,
                       })
@@ -107,7 +119,7 @@ export function BuyCatalog({
       )}
 
       {kategori.map((id) => {
-        const rows = paket.filter((p) => p.kategoriId === id);
+        const rows = statis.filter((p) => p.kategoriId === id);
         const grup = [...new Set(rows.map((p) => p.grupLabel))];
         return (
           <section key={id} className="rounded-3xl border-2 border-ink bg-surface p-5 sm:p-6">
@@ -166,6 +178,67 @@ export function BuyCatalog({
         );
       })}
 
+      {rotating.length > 0 && (
+        <section id="rotating" className="scroll-mt-6 rounded-3xl border-2 border-ink bg-surface p-5 sm:p-6">
+          <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
+            Rotating <span className="text-brand">API</span>
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            One API key that hands you a fresh proxy from our shared pool on every call. Sold by duration, so there is
+            no GB counter to watch. Fair use applies — see the FAQ.
+          </p>
+
+          {[...new Set(rotating.map((p) => p.kategoriId))].map((id) => {
+            const rows = rotating.filter((p) => p.kategoriId === id);
+            return (
+              <div key={id} className="mt-5">
+                <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">
+                  {rows[0]?.kategoriNama} pool
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[420px] text-left text-sm">
+                    <thead className="border-b border-line text-xs tracking-wider text-muted uppercase">
+                      <tr>
+                        <th className="py-2 pr-3 font-medium">Duration</th>
+                        <th className="py-2 pr-3 font-medium">Price</th>
+                        <th className="hidden py-2 pr-3 font-medium sm:table-cell">Per day</th>
+                        <th className="py-2 text-right font-medium">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-line">
+                      {rows.map((p) => (
+                        <tr key={p.sku} className="transition-colors hover:bg-brand-softer">
+                          <td className="py-3 pr-3">
+                            <span className="font-display text-base font-extrabold text-ink">{p.durasiLabel}</span>
+                            {p.populer && (
+                              <span className="ml-2 align-middle">
+                                <Badge tone="blue">Best value</Badge>
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 pr-3">
+                            <span className="font-display text-base font-extrabold text-ink">{p.usdLabel}</span>
+                            <span className="block text-xs text-muted">{p.hargaLabel}</span>
+                          </td>
+                          <td className="hidden py-3 pr-3 whitespace-nowrap text-muted sm:table-cell">
+                            {p.perIpLabel}
+                          </td>
+                          <td className="py-3 text-right">
+                            <Button size="sm" onClick={() => setPilihan({ sku: p.sku, extendOrderId: null })}>
+                              Buy
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
       <Modal
         open={Boolean(pilihan && terpilih)}
         title={pilihan?.extendOrderId ? "Renew" : "Checkout"}
@@ -216,7 +289,7 @@ function FormInvoice({
       {pilihan.extendOrderId && (
         <p className="rounded-2xl border-2 border-line bg-surface-2 p-3 text-sm text-muted">
           Renewing order <span className="font-mono font-bold text-ink">{pilihan.orderNo}</span> — we add{" "}
-          {masaAktifHari} days to its current expiry date.
+          {terpilih.durasiLabel} to its current expiry date.
         </p>
       )}
 
@@ -231,11 +304,16 @@ function FormInvoice({
             value={pilihan.sku}
             onChange={(event) => onGantiSku(event.target.value)}
           >
-            {paket.map((p) => (
-              <option key={p.sku} value={p.sku}>
-                {p.kategoriNama} · {p.ip} IP · {p.bandwidthLabel} — {p.usdLabel}
-              </option>
-            ))}
+            {paket
+              .filter((p) => sejenis(p, terpilih))
+              .map((p) => (
+                <option key={p.sku} value={p.sku}>
+                  {p.rotating
+                    ? p.kategoriNama + " Rotating · " + p.durasiLabel
+                    : p.kategoriNama + " · " + p.ip + " IP · " + p.bandwidthLabel}{" "}
+                  — {p.usdLabel}
+                </option>
+              ))}
           </select>
           <p className="mt-1.5 text-xs text-muted">
             Pre-selected from your current order. Change it if you want a different size.
@@ -244,9 +322,14 @@ function FormInvoice({
       ) : (
         <div className="rounded-2xl border-2 border-line bg-surface-2 p-4">
           <p className="font-display text-base font-extrabold text-ink">
-            {terpilih.kategoriNama} · {terpilih.ip} IP · {terpilih.bandwidthLabel}
+            {terpilih.rotating
+              ? terpilih.kategoriNama + " Rotating API"
+              : terpilih.kategoriNama + " · " + terpilih.ip + " IP · " + terpilih.bandwidthLabel}
           </p>
-          <p className="mt-1 text-sm text-muted">{masaAktifHari}-day plan</p>
+          <p className="mt-1 text-sm text-muted">
+            {terpilih.durasiLabel}
+            {terpilih.rotating ? " · shared pool, one API key" : " plan"}
+          </p>
         </div>
       )}
 

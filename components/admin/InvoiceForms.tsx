@@ -11,13 +11,15 @@ import type { AccountOption } from "./OrderForms";
 /**
  * Setujui pembayaran.
  *
- * Untuk perpanjangan, pilihan akun & tanggal disembunyikan: database yang
- * menambahkan masa aktif ke pesanan lama, pool akun tidak ikut tersentuh.
+ * Dua hal yang tidak memakai pool akun, jadi pilihan akunnya disembunyikan:
+ * - perpanjangan: database menambah masa aktif ke pesanan lama;
+ * - rotating: pesanannya memakai pool gabungan, tidak menempel ke satu akun.
  */
 export function ApproveInvoiceForm({
   invoiceId,
   accounts,
   perpanjangan,
+  rotating,
   defaultDate,
   masaAktifHari,
   orderNo,
@@ -25,24 +27,38 @@ export function ApproveInvoiceForm({
   invoiceId: string;
   accounts: AccountOption[];
   perpanjangan: boolean;
+  rotating: boolean;
   defaultDate: string;
   masaAktifHari: number;
   orderNo: string | null;
 }) {
   const [date, setDate] = useState(defaultDate);
+  // Satu-satunya hal yang dibutuhkan formulir: perlu memilih akun atau tidak.
+  const tanpaAkun = perpanjangan || rotating;
   const { pending, state, onSubmit, formRef } = useServerForm(
     approveInvoiceAction.bind(null, invoiceId),
   );
 
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-4">
-      {perpanjangan ? (
+      {tanpaAkun ? (
         <p className="rounded-lg bg-paper p-3 text-sm text-muted">
-          Renewal: {masaAktifHari} days are added to{" "}
-          <span className="font-mono font-bold text-ink">{orderNo ?? "the existing order"}</span>. No account is taken
-          from the pool.
+          {perpanjangan ? (
+            <>
+              Renewal: {masaAktifHari} days are added to{" "}
+              <span className="font-mono font-bold text-ink">{orderNo ?? "the existing order"}</span>.
+            </>
+          ) : (
+            <>
+              Rotating plan: the order is created with its own API key and draws from the shared pool for{" "}
+              {masaAktifHari} days.
+            </>
+          )}{" "}
+          No account is taken from the pool.
         </p>
-      ) : (
+      ) : null}
+
+      {!tanpaAkun && (
         <>
           <div>
             <label className={labelClass} htmlFor="account_id">
@@ -60,11 +76,15 @@ export function ApproveInvoiceForm({
               ))}
             </select>
           </div>
+        </>
+      )}
 
-          <div>
-            <label className={labelClass} htmlFor="expires_date">
-              Expires on
-            </label>
+      {/* Pesanan rotating tidak memakai akun, tapi tetap punya masa aktif. */}
+      {!perpanjangan && (
+        <div>
+          <label className={labelClass} htmlFor="expires_date">
+            Expires on
+          </label>
             <div className="flex flex-wrap gap-2">
               <input
                 id="expires_date"
@@ -81,25 +101,34 @@ export function ApproveInvoiceForm({
                 </Button>
               ))}
             </div>
-          </div>
-        </>
+        </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className={labelClass} htmlFor="replace_quota">
-            Replace quota
-          </label>
-          <input
-            id="replace_quota"
-            name="replace_quota"
-            type="number"
-            min={0}
-            defaultValue={10}
-            className={inputClass}
-            disabled={perpanjangan}
-          />
-        </div>
+        {/*
+          Kuota replace hanya relevan untuk pesanan statis baru.
+          Field yang disabled TIDAK ikut terkirim, jadi untuk perpanjangan dan
+          rotating dipasang input tersembunyi bernilai 0 — tanpa ini validasi
+          menolak dengan "Quota must be a number" dan invoice tidak bisa
+          disetujui sama sekali.
+        */}
+        {tanpaAkun ? (
+          <input type="hidden" name="replace_quota" value={0} />
+        ) : (
+          <div>
+            <label className={labelClass} htmlFor="replace_quota">
+              Replace quota
+            </label>
+            <input
+              id="replace_quota"
+              name="replace_quota"
+              type="number"
+              min={0}
+              defaultValue={10}
+              className={inputClass}
+            />
+          </div>
+        )}
         <div>
           <label className={labelClass} htmlFor="catatan">
             Internal note
@@ -110,7 +139,7 @@ export function ApproveInvoiceForm({
 
       <p className="text-xs text-muted">The internal note is never shown to the customer.</p>
 
-      <Button type="submit" loading={pending} disabled={!perpanjangan && accounts.length === 0}>
+      <Button type="submit" loading={pending} disabled={!tanpaAkun && accounts.length === 0}>
         Payment received — activate
       </Button>
       <ResultDetails state={state} />

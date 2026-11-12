@@ -44,7 +44,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const rows: [string, ReactNode][] = [
     ["Status", <Badge key="s" tone={badge.tone}>{badge.label}</Badge>],
     ["Type", perpanjangan ? "Renewal" : "New order"],
-    ["Plan", `${invoice.paket_nama} · ${invoice.masa_aktif_hari} days`],
+    // paket_nama rotating sudah memuat durasinya; jangan ditulis dua kali.
+    [
+      "Plan",
+      invoice.produk === "rotating"
+        ? invoice.paket_nama
+        : `${invoice.paket_nama} · ${invoice.masa_aktif_hari} days`,
+    ],
     ["Plan price", rupiah(invoice.harga_rp)],
     ["Unique code", `+${invoice.kode_unik}`],
     [
@@ -167,12 +173,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             <h2 className="mb-1 font-semibold text-ink">Approve</h2>
             <p className="mb-4 text-sm text-muted">
               Check your bank statement for <b className="font-mono">{rupiah(invoice.total_rp)}</b> first. Approving
-              takes the account out of the pool and hands the order to the customer in one step.
+              hands the order to the customer in one step.
             </p>
             <ApproveInvoiceForm
               invoiceId={invoice.id}
               accounts={available}
               perpanjangan={perpanjangan}
+              rotating={invoice.produk === "rotating"}
               defaultDate={jakartaDateInput(invoice.masa_aktif_hari)}
               masaAktifHari={invoice.masa_aktif_hari}
               orderNo={extendOrder?.shopee_order_no ?? null}

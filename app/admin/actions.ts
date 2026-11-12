@@ -979,10 +979,13 @@ export async function approveInvoiceAction(invoiceId: string, formData: FormData
   if (invoice.status === "disetujui") return fail("This invoice has already been approved.");
 
   const perpanjangan = invoice.jenis === "perpanjangan";
+  // Pesanan rotating memakai pool gabungan: tidak ada akun yang diklaim,
+  // tapi masa aktifnya tetap ditentukan admin seperti pesanan statis.
+  const rotating = invoice.produk === "rotating";
   let expiresAt = new Date().toISOString();
 
   if (!perpanjangan) {
-    if (!parsed.data.account_id) return fail("Pick an account to hand over.");
+    if (!rotating && !parsed.data.account_id) return fail("Pick an account to hand over.");
     const tanggal = dateInputSchema.safeParse(parsed.data.expires_date);
     if (!tanggal.success) return fail(firstIssue(tanggal.error));
     expiresAt = endOfJakartaDay(tanggal.data);
@@ -992,7 +995,7 @@ export async function approveInvoiceAction(invoiceId: string, formData: FormData
   try {
     order = await repo.approveInvoice(
       invoiceId,
-      perpanjangan ? null : parsed.data.account_id,
+      perpanjangan || rotating ? null : parsed.data.account_id,
       expiresAt,
       parsed.data.replace_quota,
       parsed.data.catatan,

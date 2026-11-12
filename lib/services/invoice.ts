@@ -1,10 +1,10 @@
 import "server-only";
-import { db, type Customer, type Invoice, type WebshareAccount } from "../db";
+import { db, type Customer, type Invoice, type InvoiceProduk, type WebshareAccount } from "../db";
 import { notifyInvoice, notifyKedaluwarsa, type InvoiceRingkas, type PeristiwaDiscord } from "../discord";
 import { METODE_LABEL, type MetodeBayar } from "../payment";
 import { INVOICE_AKTIF } from "../invoice-status";
 import { proxyKind } from "../plan-type";
-import { findPaket, MASA_AKTIF_HARI, SEMUA_PAKET } from "../pricing";
+import { findItem, findPaket, MASA_AKTIF_HARI, PAKET_ROTATING, SEMUA_PAKET } from "../pricing";
 
 /** Invoice yang belum dibayar hangus setelah ini. */
 export const INVOICE_TTL_JAM = 24;
@@ -68,6 +68,7 @@ export async function kabariDiscord(
 }
 
 export interface PaketUntukInvoice {
+  produk: InvoiceProduk;
   paket_sku: string;
   paket_nama: string;
   kategori: string;
@@ -75,6 +76,7 @@ export interface PaketUntukInvoice {
   bandwidth_gb: number;
   masa_aktif_hari: number;
   harga_rp: number;
+  rate_per_minute: number | null;
 }
 
 /**
@@ -84,16 +86,18 @@ export interface PaketUntukInvoice {
  * dibaca ulang di sini supaya nominal tidak bisa dikarang dari browser.
  */
 export function paketUntukInvoice(sku: string): PaketUntukInvoice | null {
-  const paket = findPaket(sku);
-  if (!paket) return null;
+  const item = findItem(sku);
+  if (!item) return null;
   return {
-    paket_sku: paket.sku,
-    paket_nama: `${paket.kategoriNama} ${paket.ip} IP · ${paket.bandwidthGb} GB`,
-    kategori: paket.kategoriId,
-    ip: paket.ip,
-    bandwidth_gb: paket.bandwidthGb,
-    masa_aktif_hari: MASA_AKTIF_HARI,
-    harga_rp: paket.hargaRp,
+    produk: item.produk,
+    paket_sku: item.sku,
+    paket_nama: item.nama,
+    kategori: item.kategoriId,
+    ip: item.ip,
+    bandwidth_gb: item.bandwidthGb,
+    masa_aktif_hari: item.masaAktifHari,
+    harga_rp: item.hargaRp,
+    rate_per_minute: item.ratePerMinute,
   };
 }
 
@@ -135,7 +139,7 @@ export interface PerpanjangRow {
   orderId: string;
   orderNo: string;
   expiresAt: string;
-  /** Pesanan rotating tidak dijual lewat checkout mandiri. */
+  /** Pesanan rotating: perpanjangannya memakai paket rotating, bukan paket statis. */
   rotating: boolean;
   skuTebakan: string | null;
   /** Invoice perpanjangan yang masih berjalan untuk pesanan ini. */
@@ -159,6 +163,16 @@ export async function listPerpanjang(customerId: string): Promise<PerpanjangRow[
       .map((inv) => [inv.extend_order_id as string, inv.invoice_no]),
   );
 
+  // Kalau pesanan ini dulu lahir dari sebuah invoice, SKU-nya sudah pasti —
+  // tidak perlu ditebak-tebak dari spesifikasi akun. Ini satu-satunya cara
+  // tahu paket rotating mana yang dipakai, karena tabel orders tidak
+  // menyimpan kategori pool-nya.
+  const skuAsli = new Map(
+    invoices
+      .filter((inv) => inv.order_id && inv.status === "disetujui")
+      .map((inv) => [inv.order_id as string, inv.paket_sku]),
+  );
+
   return orders
     .filter((order) => order.is_active)
     .sort((a, b) => a.expires_at.localeCompare(b.expires_at))
@@ -167,7 +181,13 @@ export async function listPerpanjang(customerId: string): Promise<PerpanjangRow[
       orderNo: order.shopee_order_no,
       expiresAt: order.expires_at,
       rotating: order.order_type === "rotating",
-      skuTebakan: tebakSku(order.account_id ? accountById.get(order.account_id) : null),
+      skuTebakan:
+        skuAsli.get(order.id) ??
+        (order.order_type === "rotating"
+          ? // Pesanan rotating lama (dibuat admin, bukan dari invoice): tidak ada
+            // jejak kategorinya, jadi biarkan customer yang memilih sendiri.
+            null
+          : tebakSku(order.account_id ? accountById.get(order.account_id) : null)),
       invoiceBerjalan: berjalan.get(order.id) ?? null,
     }));
 }

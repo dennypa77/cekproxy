@@ -1,13 +1,17 @@
 import { CheckIcon, WhatsAppIcon } from "@/components/icons";
-import { OrderButton } from "@/components/landing/OrderButton";
+import { OrderButton, RotatingOrderButton } from "@/components/landing/OrderButton";
 import { Badge, buttonClass } from "@/components/ui";
 import { waOrderGeneralLink } from "@/lib/links";
 import {
   KATEGORI_HARGA,
   labelBandwidth,
+  labelDurasi,
   MASA_AKTIF_HARI,
+  PAKET_ROTATING,
+  ROTATING_FAIR_USE_GB,
   rupiah,
   usd,
+  usdPerHari,
   usdPerIp,
   type Paket,
 } from "@/lib/pricing";
@@ -42,6 +46,85 @@ function BarisPaket({ paket, kategori }: { paket: Paket; kategori: string }) {
         <OrderButton paket={paket} kategori={kategori} />
       </td>
     </tr>
+  );
+}
+
+/**
+ * Paket rotating dijual per durasi, bukan per bandwidth: pemakaian tiap
+ * customer tidak bisa diukur karena proxy-nya dipakai langsung ke penyedia.
+ * Karena itu tabelnya pun tidak punya kolom IP maupun bandwidth.
+ */
+function TabelRotating() {
+  const kategori = [...new Set(PAKET_ROTATING.map((p) => p.kategoriId))];
+
+  return (
+    <div id="rotating" className="mt-12 scroll-mt-20">
+      <div className="flex flex-col gap-3 border-b-2 border-line pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h3 className="font-display text-2xl font-extrabold tracking-tight text-ink uppercase">Rotating API</h3>
+          <p className="mt-1 max-w-xl text-sm text-muted">
+            One API key, a fresh proxy from our shared pool on every call. Priced by duration, so there is no GB
+            counter to watch — fair use {ROTATING_FAIR_USE_GB} GB per 30 days.
+          </p>
+        </div>
+        <ul className="flex flex-wrap gap-2">
+          <li>
+            <Badge>No GB counter</Badge>
+          </li>
+          <li>
+            <Badge>Pick a country</Badge>
+          </li>
+          <li>
+            <Badge>Instant API key</Badge>
+          </li>
+        </ul>
+      </div>
+
+      {kategori.map((id) => {
+        const rows = PAKET_ROTATING.filter((p) => p.kategoriId === id);
+        return (
+          <div key={id} className="mt-6">
+            <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">{rows[0]?.kategoriNama} pool</p>
+            <div className="overflow-x-auto rounded-3xl border-2 border-line bg-surface px-4 sm:px-5">
+              <table className="w-full min-w-[460px] text-left text-sm">
+                <thead className="border-b border-line text-xs tracking-wider text-muted uppercase">
+                  <tr>
+                    <th className="py-3 pr-3 font-medium">Duration</th>
+                    <th className="py-3 pr-3 font-medium">Price</th>
+                    <th className="hidden py-3 pr-3 font-medium sm:table-cell">Per day</th>
+                    <th className="py-3 text-right font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {rows.map((paket) => (
+                    <tr key={paket.sku} className="transition-colors hover:bg-brand-softer">
+                      <td className="py-3 pr-3">
+                        <span className="font-display text-lg font-extrabold text-ink">{labelDurasi(paket.hari)}</span>
+                        {paket.populer && (
+                          <span className="ml-2 align-middle">
+                            <Badge tone="blue">Best value</Badge>
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-3">
+                        <span className="font-display text-lg font-extrabold text-ink">{usd(paket.hargaRp)}</span>
+                        <span className="block text-xs text-muted">{rupiah(paket.hargaRp)}</span>
+                      </td>
+                      <td className="hidden py-3 pr-3 whitespace-nowrap text-muted sm:table-cell">
+                        {usdPerHari(paket)} / day
+                      </td>
+                      <td className="py-3 text-right">
+                        <RotatingOrderButton paket={paket} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

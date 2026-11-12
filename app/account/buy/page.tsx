@@ -10,24 +10,53 @@ import { formatDate } from "@/lib/format";
 import { INVOICE_AKTIF, INVOICE_BADGE } from "@/lib/invoice-status";
 import { db } from "@/lib/db";
 import { metodeBayar } from "@/lib/payment";
-import { labelBandwidth, MASA_AKTIF_HARI, rupiah, SEMUA_PAKET, usd, usdPerIp } from "@/lib/pricing";
+import {
+  labelBandwidth,
+  labelDurasi,
+  MASA_AKTIF_HARI,
+  PAKET_ROTATING,
+  rupiah,
+  SEMUA_PAKET,
+  usd,
+  usdPerHari,
+  usdPerIp,
+} from "@/lib/pricing";
 import { listPerpanjang, sapuInvoiceKedaluwarsa } from "@/lib/services/invoice";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Buy a plan" };
 
-const ROWS: PaketRow[] = SEMUA_PAKET.map((paket) => ({
-  sku: paket.sku,
-  kategoriId: paket.kategoriId,
-  kategoriNama: paket.kategoriNama,
-  grupLabel: paket.grupLabel,
-  ip: paket.ip,
-  bandwidthLabel: labelBandwidth(paket.bandwidthGb),
-  hargaLabel: rupiah(paket.hargaRp),
-  usdLabel: usd(paket.hargaRp),
-  perIpLabel: usdPerIp(paket),
-  populer: Boolean(paket.populer),
-}));
+const ROWS: PaketRow[] = [
+  ...SEMUA_PAKET.map((paket) => ({
+    sku: paket.sku,
+    kategoriId: paket.kategoriId,
+    kategoriNama: paket.kategoriNama,
+    grupLabel: paket.grupLabel,
+    rotating: false,
+    ip: paket.ip,
+    bandwidthLabel: labelBandwidth(paket.bandwidthGb),
+    hargaLabel: rupiah(paket.hargaRp),
+    usdLabel: usd(paket.hargaRp),
+    perIpLabel: `${usdPerIp(paket)} / IP`,
+    durasiLabel: labelDurasi(MASA_AKTIF_HARI),
+    populer: Boolean(paket.populer),
+  })),
+  ...PAKET_ROTATING.map((paket) => ({
+    sku: paket.sku,
+    kategoriId: paket.kategoriId,
+    kategoriNama: paket.kategoriNama,
+    grupLabel: "Rotating",
+    rotating: true,
+    // Pool gabungan: tidak ada jumlah IP maupun kuota GB untuk ditampilkan.
+    ip: 0,
+    bandwidthLabel: "Shared pool",
+    hargaLabel: rupiah(paket.hargaRp),
+    usdLabel: usd(paket.hargaRp),
+    perIpLabel: `${usdPerHari(paket)} / day`,
+    durasiLabel: labelDurasi(paket.hari),
+    populer: Boolean(paket.populer),
+  })),
+];
 
 export default async function BeliPage({ searchParams }: { searchParams: Promise<{ sku?: string }> }) {
   // Checkout masih dimatikan → halaman ini memang tidak ada.

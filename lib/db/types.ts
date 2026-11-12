@@ -221,11 +221,19 @@ export type InvoiceStatus =
 
 export type InvoiceJenis = "baru" | "perpanjangan";
 
+export type InvoiceProduk = "statis" | "rotating";
+
 export interface Invoice {
   id: string;
   invoice_no: string;
   customer_id: string;
   jenis: InvoiceJenis;
+  /**
+   * 'statis'   = 1 pesanan 1 akun; ip & bandwidth_gb terisi, rate_per_minute null.
+   * 'rotating' = pool gabungan; ip & bandwidth_gb 0, rate_per_minute terisi.
+   * Aturan ini ditegakkan constraint di migrasi 0006, bukan hanya di sini.
+   */
+  produk: InvoiceProduk;
   /** Snapshot katalog saat invoice dibuat (harga bisa berubah kemudian). */
   paket_sku: string;
   paket_nama: string;
@@ -234,6 +242,8 @@ export interface Invoice {
   bandwidth_gb: number;
   masa_aktif_hari: number;
   harga_rp: number;
+  /** Batas permintaan API per menit; hanya untuk produk rotating. */
+  rate_per_minute: number | null;
   kode_unik: number;
   /** harga_rp + kode_unik — nominal yang harus ditransfer. */
   total_rp: number;
@@ -259,6 +269,7 @@ export interface Invoice {
 export interface NewInvoiceInput {
   customer_id: string;
   jenis: InvoiceJenis;
+  produk: InvoiceProduk;
   paket_sku: string;
   paket_nama: string;
   kategori: string;
@@ -266,6 +277,7 @@ export interface NewInvoiceInput {
   bandwidth_gb: number;
   masa_aktif_hari: number;
   harga_rp: number;
+  rate_per_minute: number | null;
   metode: string;
   extend_order_id: string | null;
   catatan: string | null;
