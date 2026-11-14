@@ -190,6 +190,8 @@ export function PricingSection() {
           </div>
         ))}
 
+        <TabelRotating />
+
         <div className="mt-10 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
           <div className="rounded-3xl border-2 border-line bg-surface p-5 sm:p-6">
             <p className="mb-3 text-xs font-bold tracking-wider text-muted uppercase">Every plan includes</p>
