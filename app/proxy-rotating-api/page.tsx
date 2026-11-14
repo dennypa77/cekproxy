@@ -5,6 +5,10 @@ import { SiteHeader } from "@/components/landing/SiteHeader";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { WhatsAppIcon } from "@/components/icons";
 import { Badge, buttonClass } from "@/components/ui";
+import { ROTATING_RATE_PER_MINUTE } from "@/lib/pricing";
+
+/** Batas count per panggilan di app/api/rotating/route.ts. */
+const MAX_COUNT_API = 50;
 import { waHelpLink } from "@/lib/links";
 import { siteUrl } from "@/lib/site";
 
@@ -51,15 +55,21 @@ export default function RotatingApiPage() {
             </h1>
             <p className="mt-5 max-w-2xl text-sm text-muted sm:text-base">
               One API endpoint and a secret key to pull random proxies from our pool — choose the count and country
-              straight from your script. Pricing depends on your needs, so reach out for a quote.
+              straight from your script. Sold by duration: 7, 14 or 30 days, with no GB metering.
+            </p>
+            <p className="mt-3 max-w-2xl text-sm text-muted">
+              <b className="text-ink">You decide when the IP changes.</b> Every call to the endpoint hands you a fresh
+              random proxy — up to {MAX_COUNT_API} at a time, up to {ROTATING_RATE_PER_MINUTE} calls per minute. The
+              proxy you receive keeps its IP for as long as you use it; call again whenever you want a different one.
+              This is a proxy-list API, not a backconnect gateway that changes IP on every request.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <a href={waHelpLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "lg")}>
-                <WhatsAppIcon className="size-4" /> Ask for pricing
-              </a>
-              <Link href="/proxy-datacenter" className={buttonClass("secondary", "lg")}>
-                See standard plans
+              <Link href="/#rotating" className={buttonClass("primary", "lg")}>
+                See rotating prices
               </Link>
+              <a href={waHelpLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "lg")}>
+                <WhatsAppIcon className="size-4" /> Ask us
+              </a>
             </div>
           </div>
         </section>
@@ -80,7 +90,7 @@ export default function RotatingApiPage() {
               <ol className="mt-4 space-y-3 text-sm text-muted">
                 <li>1. We set up your pool and issue an API endpoint plus a secret key.</li>
                 <li>2. Your script calls the endpoint with the count and country you want.</li>
-                <li>3. You receive ready-to-use proxies — repeat as often as your per-minute limit allows.</li>
+                <li>3. You receive ready-to-use proxies — call again whenever you want different IPs, up to your per-minute limit.</li>
               </ol>
             </div>
           </div>
