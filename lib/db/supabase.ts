@@ -24,7 +24,15 @@ function toDbError(error: PostgrestError): DbError {
     return new DbError("ACCOUNT_NOT_AVAILABLE", error.message);
   }
   if (error.message.includes("ORDER_NOT_FOUND")) return new DbError("ORDER_NOT_FOUND", error.message);
-  return new DbError("UNKNOWN", `${error.code}: ${error.message}`);
+
+  // Error yang tidak dikenali berakhir sebagai pesan umum ke customer, jadi
+  // log-nya harus memuat SEMUA yang dikirim PostgREST. "details" dan "hint"
+  // justru bagian yang menjelaskan — mis. PGRST202 menyebutkan tanda tangan
+  // fungsi yang dicarinya, satu-satunya petunjuk kalau migrasi belum jalan
+  // atau schema cache-nya basi.
+  const tambahan = [error.details, error.hint].filter((bagian) => Boolean(bagian && String(bagian).trim()));
+  const pesan = [`${error.code}: ${error.message}`, ...tambahan].join(" | ");
+  return new DbError("UNKNOWN", pesan);
 }
 
 function check<T>(result: { data: T; error: PostgrestError | null }): T {
