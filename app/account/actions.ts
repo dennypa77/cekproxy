@@ -10,6 +10,7 @@ import { createCustomerSession, destroyCustomerSession, getCustomer } from "@/li
 import { db, DbError } from "@/lib/db";
 import { checkoutEnabled } from "@/lib/env";
 import { getClientIp } from "@/lib/ip";
+import { parseLokasi } from "@/lib/locations";
 import {
   hashPassword,
   PASSWORD_MAX_LENGTH,
@@ -296,6 +297,7 @@ const createInvoiceSchema = z.object({
     .trim()
     .optional()
     .transform((value) => (value ? value : null)),
+  lokasi: z.string().trim().max(200).optional(),
   catatan: catatanSchema,
 });
 
@@ -329,12 +331,22 @@ export async function createInvoiceAction(formData: FormData): Promise<AdminActi
   // Metode yang tidak terkonfigurasi tidak bisa dipakai sama sekali.
   if (!findMetode(parsed.data.metode)) return fail("That payment method is not available.");
 
+  // Lokasi wajib untuk pembelian baru. Perpanjangan tidak: pesanannya sudah
+  // ada beserta negaranya, jadi tidak ada yang perlu dipilih ulang.
+  let lokasi: string | null = null;
+  if (!parsed.data.extend_order_id) {
+    const hasil = parseLokasi(parsed.data.lokasi, paket.produk === "rotating" ? 0 : paket.ip);
+    if (!hasil.ok) return fail(hasil.error);
+    lokasi = hasil.teks;
+  }
+
   let invoice;
   try {
     invoice = await db().createInvoice({
       customer_id: customer.id,
       jenis: parsed.data.extend_order_id ? "perpanjangan" : "baru",
       ...paket,
+      lokasi,
       metode: parsed.data.metode,
       extend_order_id: parsed.data.extend_order_id,
       catatan: parsed.data.catatan,

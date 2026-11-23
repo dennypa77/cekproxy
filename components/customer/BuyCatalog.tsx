@@ -6,6 +6,8 @@ import { Modal } from "@/components/Modal";
 import { CheckIcon } from "@/components/icons";
 import { Badge, Button, buttonClass, cn, inputClass, labelClass } from "@/components/ui";
 import { useServerForm } from "@/components/useServerForm";
+import { countryName } from "@/lib/format";
+import { LOKASI_ACAK, NEGARA_TERSEDIA } from "@/lib/locations";
 
 export interface PaketRow {
   sku: string;
@@ -261,6 +263,166 @@ export function BuyCatalog({
   );
 }
 
+/**
+ * Pemilih lokasi di checkout.
+ *
+ * Wajib diisi sebelum invoice bisa dibuat. Sebelumnya negara hanya bisa
+ * dititipkan di kolom catatan bebas dan sering kosong, jadi admin harus
+ * bertanya lewat chat sebelum bisa menyiapkan pesanan.
+ *
+ * Paket statis: jumlah per negara harus pas dengan jumlah IP paket.
+ * Paket rotating: cukup centang negara yang disukai — negara sebenarnya
+ * dipilih per panggilan API, jadi tidak ada jumlah yang perlu dibagi.
+ */
+function PilihLokasi({
+  totalIp,
+  rotating,
+  nilai,
+  onChange,
+}: {
+  totalIp: number;
+  rotating: boolean;
+  nilai: string;
+  onChange: (nilai: string) => void;
+}) {
+  const acak = nilai === LOKASI_ACAK;
+
+  const rincian = new Map<string, number>();
+  if (!acak && nilai) {
+    for (const bagian of nilai.split(",")) {
+      const [kode, jumlah] = bagian.split(":");
+      if (kode) rincian.set(kode, Number.parseInt(jumlah ?? "0", 10) || 0);
+    }
+  }
+
+  const terpakai = [...rincian.values()].reduce((total, n) => total + n, 0);
+  const sisa = totalIp - terpakai;
+
+  const tulis = (peta: Map<string, number>) => {
+    const bagian = [...peta.entries()]
+      .filter(([, jumlah]) => (rotating ? true : jumlah > 0))
+      .map(([kode, jumlah]) => (rotating ? kode : `${kode}:${jumlah}`));
+    onChange(bagian.join(","));
+  };
+
+  const ubahJumlah = (kode: string, delta: number) => {
+    const peta = new Map(rincian);
+    const sekarang = peta.get(kode) ?? 0;
+    const berikutnya = Math.max(0, Math.min(sekarang + delta, sekarang + Math.max(0, sisa)));
+    if (berikutnya === 0) peta.delete(kode);
+    else peta.set(kode, berikutnya);
+    tulis(peta);
+  };
+
+  const togglePilihan = (kode: string) => {
+    const peta = new Map(rincian);
+    if (peta.has(kode)) peta.delete(kode);
+    else peta.set(kode, 0);
+    tulis(peta);
+  };
+
+  return (
+    <fieldset>
+      <legend className={labelClass}>
+        Location {rotating ? "(preferred)" : `(${totalIp} IP to allocate)`}
+      </legend>
+
+      <label
+        className={cn(
+          "flex cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 py-3 text-sm font-semibold transition-colors",
+          acak ? "border-brand bg-brand-softer text-ink" : "border-line bg-surface-2 text-muted hover:border-ink/40",
+        )}
+      >
+        <input
+          type="checkbox"
+          checked={acak}
+          onChange={() => onChange(acak ? "" : LOKASI_ACAK)}
+          className="sr-only"
+        />
+        <span
+          className={cn(
+            "flex size-5 shrink-0 items-center justify-center rounded-full border-2",
+            acak ? "border-brand bg-brand text-[#06101c]" : "border-line",
+          )}
+          aria-hidden="true"
+        >
+          {acak && <CheckIcon className="size-3" strokeWidth={4} />}
+        </span>
+        Random — let us pick the best available
+      </label>
+
+      {!acak && (
+        <>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {NEGARA_TERSEDIA.map((kode) => {
+              const jumlah = rincian.get(kode) ?? 0;
+              const dipilih = rincian.has(kode);
+              return (
+                <div
+                  key={kode}
+                  className={cn(
+                    "flex items-center justify-between gap-2 rounded-2xl border-2 px-3 py-2 text-sm transition-colors",
+                    dipilih ? "border-brand bg-brand-softer" : "border-line bg-surface-2",
+                  )}
+                >
+                  <span className={cn("font-semibold", dipilih ? "text-ink" : "text-muted")}>
+                    {countryName(kode)}
+                  </span>
+
+                  {rotating ? (
+                    <button
+                      type="button"
+                      onClick={() => togglePilihan(kode)}
+                      className="rounded-full border-2 border-line px-3 py-1 text-xs font-bold text-ink"
+                    >
+                      {dipilih ? "Remove" : "Add"}
+                    </button>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        aria-label={`Fewer IPs in ${countryName(kode)}`}
+                        onClick={() => ubahJumlah(kode, -1)}
+                        disabled={jumlah === 0}
+                        className="size-7 rounded-full border-2 border-line font-bold text-ink disabled:opacity-40"
+                      >
+                        −
+                      </button>
+                      <span className="w-7 text-center font-mono font-bold text-ink">{jumlah}</span>
+                      <button
+                        type="button"
+                        aria-label={`More IPs in ${countryName(kode)}`}
+                        onClick={() => ubahJumlah(kode, 1)}
+                        disabled={sisa <= 0}
+                        className="size-7 rounded-full border-2 border-line font-bold text-ink disabled:opacity-40"
+                      >
+                        +
+                      </button>
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {!rotating && (
+            <p className={cn("mt-2 text-xs font-semibold", sisa === 0 ? "text-ok" : "text-muted")}>
+              {sisa === 0
+                ? `All ${totalIp} IPs allocated.`
+                : `${sisa} of ${totalIp} IPs left to allocate.`}
+            </p>
+          )}
+          {rotating && (
+            <p className="mt-2 text-xs text-muted">
+              You can still request any country per API call — this just tells us which ones to keep stocked for you.
+            </p>
+          )}
+        </>
+      )}
+    </fieldset>
+  );
+}
+
 function FormInvoice({
   pilihan,
   paket,
@@ -280,6 +442,20 @@ function FormInvoice({
 }) {
   const { pending, onSubmit, formRef } = useServerForm(createInvoiceAction);
   const [metodePilihan, setMetodePilihan] = useState(metode[0]?.kode ?? "");
+  const [lokasi, setLokasi] = useState("");
+
+  // Perpanjangan tidak perlu lokasi: pesanannya sudah ada beserta negaranya.
+  const perluLokasi = !pilihan.extendOrderId;
+  const totalIp = terpilih.rotating ? 0 : terpilih.ip;
+  const lokasiSah =
+    !perluLokasi ||
+    lokasi === LOKASI_ACAK ||
+    (terpilih.rotating
+      ? lokasi.length > 0
+      : lokasi
+          .split(",")
+          .filter(Boolean)
+          .reduce((total, bagian) => total + (Number.parseInt(bagian.split(":")[1] ?? "0", 10) || 0), 0) === totalIp);
 
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-4">
@@ -375,11 +551,18 @@ function FormInvoice({
         </div>
       </fieldset>
 
+      {perluLokasi && (
+        <>
+          <input type="hidden" name="lokasi" value={lokasi} />
+          <PilihLokasi totalIp={totalIp} rotating={terpilih.rotating} nilai={lokasi} onChange={setLokasi} />
+        </>
+      )}
+
       <div>
         <label className={labelClass} htmlFor="catatan">
           Note for us (optional)
         </label>
-        <input id="catatan" name="catatan" maxLength={300} className={inputClass} placeholder="e.g. preferred country" />
+        <input id="catatan" name="catatan" maxLength={300} className={inputClass} placeholder="e.g. a city, or anything else we should know" />
       </div>
 
       <p className="text-xs text-muted">
@@ -387,7 +570,7 @@ function FormInvoice({
       </p>
 
       <div className="flex gap-2">
-        <Button type="submit" loading={pending} className="flex-1">
+        <Button type="submit" loading={pending} disabled={!lokasiSah} className="flex-1">
           Create invoice
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={pending}>

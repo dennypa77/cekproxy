@@ -244,6 +244,12 @@ export interface Invoice {
   harga_rp: number;
   /** Batas permintaan API per menit; hanya untuk produk rotating. */
   rate_per_minute: number | null;
+  /**
+   * Negara yang diminta customer saat checkout.
+   * 'RANDOM' = admin yang pilih · 'US:2,KR:3' = rincian per negara ·
+   * null = invoice lama, dibuat sebelum lokasi wajib diisi.
+   */
+  lokasi: string | null;
   kode_unik: number;
   /** harga_rp + kode_unik — nominal yang harus ditransfer. */
   total_rp: number;
@@ -278,6 +284,7 @@ export interface NewInvoiceInput {
   masa_aktif_hari: number;
   harga_rp: number;
   rate_per_minute: number | null;
+  lokasi: string | null;
   metode: string;
   extend_order_id: string | null;
   catatan: string | null;

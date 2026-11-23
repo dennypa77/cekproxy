@@ -244,6 +244,7 @@ export function createSupabaseRepo(url: string, serviceRoleKey: string): Repo {
           p_ttl_jam: input.ttlJam,
           p_maks_aktif: input.maksAktif,
           p_rate_per_minute: input.rate_per_minute,
+          p_lokasi: input.lokasi,
         })
         .single();
       return check(res) as Invoice;

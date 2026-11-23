@@ -7,7 +7,8 @@ import { Badge, Card } from "@/components/ui";
 import { expireInvoiceAction } from "@/app/admin/actions";
 import { db } from "@/lib/db";
 import { checkoutEnabled } from "@/lib/env";
-import { formatDateTime, jakartaDateInput } from "@/lib/format";
+import { countryName, formatDateTime, jakartaDateInput } from "@/lib/format";
+import { lokasiTerbaca } from "@/lib/locations";
 import { INVOICE_AKTIF, INVOICE_BADGE } from "@/lib/invoice-status";
 import { customerPath, waTo } from "@/lib/links";
 import { METODE_LABEL, type MetodeBayar } from "@/lib/payment";
@@ -51,6 +52,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         ? invoice.paket_nama
         : `${invoice.paket_nama} · ${invoice.masa_aktif_hari} days`,
     ],
+    ["Location requested", lokasiTerbaca(invoice.lokasi, countryName)],
     ["Plan price", rupiah(invoice.harga_rp)],
     ["Unique code", `+${invoice.kode_unik}`],
     [

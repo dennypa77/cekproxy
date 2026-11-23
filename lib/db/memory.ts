@@ -208,6 +208,12 @@ function findOrder(id: string): Order {
   return order;
 }
 
+/** Catatan pesanan hasil invoice; lokasi yang diminta ikut dicatat (sama seperti SQL). */
+function catatanPesanan(invoice: Invoice): string {
+  const dasar = `[${jakartaDate()}] Dari invoice ${invoice.invoice_no} (${invoice.paket_nama})`;
+  return invoice.lokasi?.trim() ? `${dasar}\nLokasi diminta: ${invoice.lokasi.trim()}` : dasar;
+}
+
 /** 4 karakter hex acak untuk nomor invoice/orders. */
 function kodeAcak(): string {
   return Math.floor(Math.random() * 0xffff)
@@ -533,6 +539,7 @@ export function createMemoryRepo(): Repo {
         masa_aktif_hari: input.masa_aktif_hari,
         harga_rp: input.harga_rp,
         rate_per_minute: input.rate_per_minute,
+        lokasi: input.lokasi,
         kode_unik: kodeUnik,
         total_rp: input.harga_rp + kodeUnik,
         metode: input.metode,
@@ -592,7 +599,7 @@ export function createMemoryRepo(): Repo {
         order = target;
       } else if (invoice.produk === "rotating") {
         // Pool gabungan: tanpa akun, tanpa kuota replace, wajib punya api_key.
-        const note = `[${jakartaDate()}] Dari invoice ${invoice.invoice_no} (${invoice.paket_nama})`;
+        const note = catatanPesanan(invoice);
         order = {
           id: randomUUID(),
           shopee_order_no: `DMP-${jakartaDate().replace(/-/g, "")}-${kodeAcak()}`,
@@ -622,7 +629,7 @@ ${catatanBersih}` : note,
           throw new DbError("ACCOUNT_NOT_AVAILABLE", "ACCOUNT_NOT_AVAILABLE");
         }
         account.status = "assigned";
-        const note = `[${jakartaDate()}] Dari invoice ${invoice.invoice_no} (${invoice.paket_nama})`;
+        const note = catatanPesanan(invoice);
         order = {
           id: randomUUID(),
           shopee_order_no: `DMP-${jakartaDate().replace(/-/g, "")}-${kodeAcak()}`,

@@ -78,7 +78,7 @@ Di mode test, API key tidak dikirim ke Webshare. Beberapa pola API key memicu pe
 1. Daftar/login di https://supabase.com, lalu klik **New project**. Pilih region **Southeast Asia (Singapore)** agar dekat dengan Indonesia. Simpan password database-nya.
 2. Setelah project jadi, buka menu **SQL Editor**, lalu klik **New query**.
 3. Buka file [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), salin seluruh isinya, tempel ke SQL Editor, lalu klik **Run**. Pastikan hasilnya "Success".
-   Lakukan hal yang sama untuk [`0002_plan_info.sql`](supabase/migrations/0002_plan_info.sql) (kolom jenis proxy), [`0003_rotating.sql`](supabase/migrations/0003_rotating.sql) (produk rotating), [`0004_customer_accounts.sql`](supabase/migrations/0004_customer_accounts.sql) (akun customer, kode klaim, log WhatsApp), dan — kalau checkout mandiri dipakai — [`0005_invoices.sql`](supabase/migrations/0005_invoices.sql) serta [`0006_rotating_invoice.sql`](supabase/migrations/0006_rotating_invoice.sql) (paket rotating lewat checkout). Semua file aman dijalankan ulang dan tidak mengubah data lama.
+   Lakukan hal yang sama untuk [`0002_plan_info.sql`](supabase/migrations/0002_plan_info.sql) (kolom jenis proxy), [`0003_rotating.sql`](supabase/migrations/0003_rotating.sql) (produk rotating), [`0004_customer_accounts.sql`](supabase/migrations/0004_customer_accounts.sql) (akun customer, kode klaim, log WhatsApp), dan — kalau checkout mandiri dipakai — [`0005_invoices.sql`](supabase/migrations/0005_invoices.sql) (invoice), [`0006_rotating_invoice.sql`](supabase/migrations/0006_rotating_invoice.sql) (paket rotating lewat checkout), [`0007_tanpa_pgcrypto.sql`](supabase/migrations/0007_tanpa_pgcrypto.sql) (wajib — tanpa ini pembuatan invoice gagal), dan [`0008_lokasi_invoice.sql`](supabase/migrations/0008_lokasi_invoice.sql) (lokasi yang diminta customer). Semua file aman dijalankan ulang dan tidak mengubah data lama.
 4. *(Opsional, hanya untuk uji coba)* Jalankan juga [`supabase/seed.sql`](supabase/seed.sql) dengan cara yang sama. Data ini hanya bekerja jika `WEBSHARE_TEST_MODE=true`. **Jangan jalankan di database produksi.**
 5. Buka **Project Settings → API** (atau **API Keys**), lalu salin dua nilai berikut:
    - **Project URL** untuk `SUPABASE_URL`
@@ -288,6 +288,17 @@ Nomor tujuan diambil dari akun customer (kalau pesanan sudah diklaim) atau dari 
 > Menyalakannya: jalankan migrasi 0005 di Supabase → isi `CHECKOUT_ENABLED=true` (plus env Discord) → **deploy ulang**, karena halaman harga dirender saat build.
 
 Kalau sudah aktif, customer yang sudah masuk bisa membeli sendiri lewat **/account/buy** tanpa menunggu balasan chat.
+
+### Lokasi wajib dipilih
+
+Sejak migrasi [`0008_lokasi_invoice.sql`](supabase/migrations/0008_lokasi_invoice.sql), customer **wajib memilih negara** sebelum invoice bisa dibuat — tombolnya terkunci sampai pilihannya sah. Sebelumnya negara hanya bisa dititipkan di kolom catatan bebas dan sering kosong, jadi admin harus bertanya lewat chat dulu.
+
+- **Paket statis:** jumlah IP per negara harus pas dengan jumlah IP paket (mis. 10 IP → `US:6,KR:4`).
+- **Paket rotating:** cukup centang negara yang disukai; negara sebenarnya tetap dipilih per panggilan API.
+- **Random** selalu tersedia kalau customer tidak punya preferensi.
+- **Perpanjangan** tidak ditanya lokasi — pesanannya sudah ada beserta negaranya.
+
+Daftar negaranya ada di `NEGARA_TERSEDIA` ([`lib/locations.ts`](lib/locations.ts)) — tambah atau kurangi sesuai stok yang benar-benar bisa Anda sediakan. Pilihannya tampil di halaman invoice admin pada baris **Location requested**, dan ikut tersalin ke catatan pesanan saat invoice disetujui.
 
 **Alurnya:**
 
