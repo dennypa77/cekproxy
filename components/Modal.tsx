@@ -3,12 +3,22 @@
 import { useEffect, type ReactNode } from "react";
 import { XIcon } from "./icons";
 
+/**
+ * Lebar dialog di layar lebar. "md" cukup untuk konfirmasi biasa; "lg" untuk
+ * isi dua kolom seperti checkout, yang jadi sempit kalau dipaksa satu kolom.
+ */
+const LEBAR = {
+  md: "sm:max-w-md",
+  lg: "sm:max-w-4xl",
+} as const;
+
 export function Modal({
   open,
   title,
   accent,
   onClose,
   dismissible = true,
+  lebar = "md",
   children,
 }: {
   open: boolean;
@@ -16,6 +26,7 @@ export function Modal({
   accent?: string;
   onClose: () => void;
   dismissible?: boolean;
+  lebar?: keyof typeof LEBAR;
   children: ReactNode;
 }) {
   useEffect(() => {
@@ -37,7 +48,9 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-ink/50 backdrop-blur-[2px]" onClick={() => dismissible && onClose()} />
-      <div className="animate-pop-in relative max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl border-2 border-b-0 border-ink bg-surface p-5 sm:max-w-md sm:rounded-3xl sm:border-b-2 sm:p-6">
+      <div
+        className={`animate-pop-in relative max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl border-2 border-b-0 border-ink bg-surface p-5 sm:rounded-3xl sm:border-b-2 sm:p-6 ${LEBAR[lebar]}`}
+      >
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="font-display text-xl font-extrabold tracking-tight uppercase">
             {title} {accent && <span className="text-brand">{accent}</span>}

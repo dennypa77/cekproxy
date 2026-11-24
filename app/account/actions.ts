@@ -335,7 +335,7 @@ export async function createInvoiceAction(formData: FormData): Promise<AdminActi
   // ada beserta negaranya, jadi tidak ada yang perlu dipilih ulang.
   let lokasi: string | null = null;
   if (!parsed.data.extend_order_id) {
-    const hasil = parseLokasi(parsed.data.lokasi, paket.produk === "rotating" ? 0 : paket.ip);
+    const hasil = parseLokasi(parsed.data.lokasi, paket.produk === "rotating" ? 0 : paket.ip, paket.kategori);
     if (!hasil.ok) return fail(hasil.error);
     lokasi = hasil.teks;
   }

@@ -5,30 +5,75 @@
  * bebas, dan sering kali tidak menulis apa-apa — jadi admin harus menebak atau
  * bertanya lewat chat. Sekarang lokasi WAJIB dipilih sebelum invoice dibuat.
  *
- * Daftar negaranya dikelola di sini. Tambah atau kurangi sesuai stok yang
- * benar-benar bisa Anda sediakan — halaman checkout ikut menyesuaikan sendiri.
+ * Daftarnya DIPISAH PER KATEGORI karena stok datacenter dan residential
+ * memang berbeda: menawarkan Rusia di paket residential hanya akan membuat
+ * pesanan yang tidak bisa Anda penuhi.
+ *
+ * Ubah daftar di bawah sesuai stok yang benar-benar bisa disediakan —
+ * halaman checkout ikut menyesuaikan sendiri, tidak ada yang perlu disentuh
+ * di komponen UI.
  */
 
-/** Kode negara yang ditawarkan di checkout. Nama negaranya dari Intl, tidak perlu ditulis. */
-export const NEGARA_TERSEDIA = [
+/** Negara untuk paket datacenter (statis maupun rotating). */
+export const NEGARA_DATACENTER = [
+  "ID", // Indonesia
+  "MY", // Malaysia
+  "SG", // Singapore
+  "HK", // Hong Kong
+  "JP", // Japan
+  "IN", // India
+  "CN", // China
+  "IL", // Israel
+  "AU", // Australia
   "US", // United States
+  "CA", // Canada
+  "MX", // Mexico
   "GB", // United Kingdom
   "DE", // Germany
-  "NL", // Netherlands
   "FR", // France
+  "NL", // Netherlands
+  "BE", // Belgium
+  "AT", // Austria
+  "CZ", // Czechia
+  "HU", // Hungary
+  "IT", // Italy
+  "PL", // Poland
+  "RO", // Romania
+  "FI", // Finland
+  "NO", // Norway
+  "RU", // Russian Federation
+] as const;
+
+/** Negara untuk paket residential (statis maupun rotating). */
+export const NEGARA_RESIDENTIAL = [
+  "US", // United States
   "CA", // Canada
+  "GB", // United Kingdom
+  "DE", // Germany
+  "FR", // France
+  "IT", // Italy
+  "BE", // Belgium
+  "PL", // Poland
+  "RO", // Romania
+  "SE", // Sweden
   "JP", // Japan
   "KR", // South Korea
-  "SG", // Singapore
+  "HK", // Hong Kong
   "AU", // Australia
-  "BR", // Brazil
-  "IN", // India
 ] as const;
+
+const PER_KATEGORI: Record<string, readonly string[]> = {
+  datacenter: NEGARA_DATACENTER,
+  residential: NEGARA_RESIDENTIAL,
+};
+
+/** Negara yang boleh dipilih untuk sebuah kategori paket. */
+export function negaraTersedia(kategoriId: string): readonly string[] {
+  return PER_KATEGORI[kategoriId] ?? [];
+}
 
 /** Nilai khusus: biarkan admin yang memilih negara terbaik yang tersedia. */
 export const LOKASI_ACAK = "RANDOM";
-
-const TERSEDIA = new Set<string>(NEGARA_TERSEDIA);
 
 export interface RincianLokasi {
   kode: string;
@@ -51,13 +96,16 @@ export type HasilLokasi = { ok: true; pilihan: PilihanLokasi; teks: string } | {
  * `totalIp` = 0 berarti paket rotating: tidak ada jumlah yang perlu dicocokkan,
  * karena negaranya dipilih per panggilan API, bukan saat pembelian.
  */
-export function parseLokasi(raw: string | undefined, totalIp: number): HasilLokasi {
+export function parseLokasi(raw: string | undefined, totalIp: number, kategoriId: string): HasilLokasi {
   const value = (raw ?? "").trim();
   if (!value) return { ok: false, error: "Please choose at least one location." };
 
   if (value.toUpperCase() === LOKASI_ACAK) {
     return { ok: true, pilihan: { acak: true, rincian: [] }, teks: LOKASI_ACAK };
   }
+
+  const tersedia = new Set(negaraTersedia(kategoriId));
+  if (tersedia.size === 0) return { ok: false, error: "No locations are configured for this plan." };
 
   const rincian: RincianLokasi[] = [];
   const sudahAda = new Set<string>();
@@ -69,7 +117,7 @@ export function parseLokasi(raw: string | undefined, totalIp: number): HasilLoka
     const [kodeMentah, jumlahMentah] = potongan.split(":");
     const kode = (kodeMentah ?? "").trim().toUpperCase();
 
-    if (!TERSEDIA.has(kode)) return { ok: false, error: "That location is not available." };
+    if (!tersedia.has(kode)) return { ok: false, error: "That location is not available for this plan." };
     if (sudahAda.has(kode)) return { ok: false, error: "The same location was selected twice." };
     sudahAda.add(kode);
 

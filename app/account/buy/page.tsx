@@ -138,7 +138,6 @@ export default async function BeliPage({ searchParams }: { searchParams: Promise
           skuTebakan: item.skuTebakan,
           invoiceBerjalan: item.invoiceBerjalan,
         }))}
-        masaAktifHari={MASA_AKTIF_HARI}
         skuAwal={sku ?? null}
       />
     </AccountShell>

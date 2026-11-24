@@ -7,7 +7,7 @@ import { CheckIcon } from "@/components/icons";
 import { Badge, Button, buttonClass, cn, inputClass, labelClass } from "@/components/ui";
 import { useServerForm } from "@/components/useServerForm";
 import { countryName } from "@/lib/format";
-import { LOKASI_ACAK, NEGARA_TERSEDIA } from "@/lib/locations";
+import { LOKASI_ACAK, negaraTersedia } from "@/lib/locations";
 
 export interface PaketRow {
   sku: string;
@@ -56,13 +56,11 @@ export function BuyCatalog({
   paket,
   metode,
   perpanjang,
-  masaAktifHari,
   skuAwal,
 }: {
   paket: PaketRow[];
   metode: MetodeRow[];
   perpanjang: PerpanjangItem[];
-  masaAktifHari: number;
   skuAwal: string | null;
 }) {
   // Tautan "Order" dari halaman harga membawa ?sku=… → langsung buka dialognya.
@@ -245,6 +243,7 @@ export function BuyCatalog({
         open={Boolean(pilihan && terpilih)}
         title={pilihan?.extendOrderId ? "Renew" : "Checkout"}
         accent={pilihan?.extendOrderId ? "order" : ""}
+        lebar="lg"
         onClose={() => setPilihan(null)}
       >
         {pilihan && terpilih && (
@@ -253,7 +252,6 @@ export function BuyCatalog({
             paket={paket}
             terpilih={terpilih}
             metode={metode}
-            masaAktifHari={masaAktifHari}
             onCancel={() => setPilihan(null)}
             onGantiSku={(sku) => setPilihan({ ...pilihan, sku })}
           />
@@ -274,18 +272,34 @@ export function BuyCatalog({
  * Paket rotating: cukup centang negara yang disukai — negara sebenarnya
  * dipilih per panggilan API, jadi tidak ada jumlah yang perlu dibagi.
  */
+/**
+ * Pemilih lokasi di checkout.
+ *
+ * Wajib diisi sebelum invoice bisa dibuat. Sebelumnya negara hanya bisa
+ * dititipkan di kolom catatan bebas dan sering kosong, jadi admin harus
+ * bertanya lewat chat sebelum bisa menyiapkan pesanan.
+ *
+ * Jumlahnya DIKETIK, bukan hanya tombol +/-. Paket terbesar berisi 1.000 IP,
+ * dan menaikkannya satu per satu jelas tidak masuk akal.
+ *
+ * Daftar negaranya mengikuti kategori paket: stok datacenter dan residential
+ * memang berbeda.
+ */
 function PilihLokasi({
   totalIp,
   rotating,
+  kategoriId,
   nilai,
   onChange,
 }: {
   totalIp: number;
   rotating: boolean;
+  kategoriId: string;
   nilai: string;
   onChange: (nilai: string) => void;
 }) {
   const acak = nilai === LOKASI_ACAK;
+  const negara = negaraTersedia(kategoriId);
 
   const rincian = new Map<string, number>();
   if (!acak && nilai) {
@@ -301,16 +315,15 @@ function PilihLokasi({
   const tulis = (peta: Map<string, number>) => {
     const bagian = [...peta.entries()]
       .filter(([, jumlah]) => (rotating ? true : jumlah > 0))
-      .map(([kode, jumlah]) => (rotating ? kode : `${kode}:${jumlah}`));
+      .map(([kode, jumlah]) => (rotating ? kode : kode + ":" + jumlah));
     onChange(bagian.join(","));
   };
 
-  const ubahJumlah = (kode: string, delta: number) => {
+  const setJumlah = (kode: string, jumlah: number) => {
     const peta = new Map(rincian);
-    const sekarang = peta.get(kode) ?? 0;
-    const berikutnya = Math.max(0, Math.min(sekarang + delta, sekarang + Math.max(0, sisa)));
-    if (berikutnya === 0) peta.delete(kode);
-    else peta.set(kode, berikutnya);
+    const aman = Math.max(0, Math.min(Number.isFinite(jumlah) ? jumlah : 0, totalIp));
+    if (aman === 0) peta.delete(kode);
+    else peta.set(kode, aman);
     tulis(peta);
   };
 
@@ -321,11 +334,29 @@ function PilihLokasi({
     tulis(peta);
   };
 
+  const pesanSisa =
+    sisa === 0
+      ? "All " + totalIp + " IPs allocated."
+      : sisa > 0
+        ? sisa + " of " + totalIp + " IPs left to allocate."
+        : -sisa + " IPs too many — reduce somewhere.";
+
   return (
     <fieldset>
-      <legend className={labelClass}>
-        Location {rotating ? "(preferred)" : `(${totalIp} IP to allocate)`}
-      </legend>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <legend className={labelClass}>
+          Location {rotating ? "(preferred)" : "(" + totalIp + " IP to allocate)"}
+        </legend>
+        {!acak && rincian.size > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="text-xs font-bold text-muted underline hover:text-ink"
+          >
+            Clear
+          </button>
+        )}
+      </div>
 
       <label
         className={cn(
@@ -353,65 +384,62 @@ function PilihLokasi({
 
       {!acak && (
         <>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {NEGARA_TERSEDIA.map((kode) => {
-              const jumlah = rincian.get(kode) ?? 0;
-              const dipilih = rincian.has(kode);
-              return (
-                <div
-                  key={kode}
-                  className={cn(
-                    "flex items-center justify-between gap-2 rounded-2xl border-2 px-3 py-2 text-sm transition-colors",
-                    dipilih ? "border-brand bg-brand-softer" : "border-line bg-surface-2",
-                  )}
-                >
-                  <span className={cn("font-semibold", dipilih ? "text-ink" : "text-muted")}>
-                    {countryName(kode)}
-                  </span>
-
-                  {rotating ? (
-                    <button
-                      type="button"
-                      onClick={() => togglePilihan(kode)}
-                      className="rounded-full border-2 border-line px-3 py-1 text-xs font-bold text-ink"
-                    >
-                      {dipilih ? "Remove" : "Add"}
-                    </button>
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        aria-label={`Fewer IPs in ${countryName(kode)}`}
-                        onClick={() => ubahJumlah(kode, -1)}
-                        disabled={jumlah === 0}
-                        className="size-7 rounded-full border-2 border-line font-bold text-ink disabled:opacity-40"
-                      >
-                        −
-                      </button>
-                      <span className="w-7 text-center font-mono font-bold text-ink">{jumlah}</span>
-                      <button
-                        type="button"
-                        aria-label={`More IPs in ${countryName(kode)}`}
-                        onClick={() => ubahJumlah(kode, 1)}
-                        disabled={sisa <= 0}
-                        className="size-7 rounded-full border-2 border-line font-bold text-ink disabled:opacity-40"
-                      >
-                        +
-                      </button>
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
           {!rotating && (
-            <p className={cn("mt-2 text-xs font-semibold", sisa === 0 ? "text-ok" : "text-muted")}>
-              {sisa === 0
-                ? `All ${totalIp} IPs allocated.`
-                : `${sisa} of ${totalIp} IPs left to allocate.`}
+            <p
+              className={cn(
+                "mt-3 text-xs font-bold",
+                sisa === 0 ? "text-ok" : sisa < 0 ? "text-danger" : "text-muted",
+              )}
+              aria-live="polite"
+            >
+              {pesanSisa}
             </p>
           )}
+
+          <div className="mt-2 max-h-72 overflow-y-auto rounded-2xl border-2 border-line bg-surface-2 p-2">
+            <div className="grid gap-1.5 sm:grid-cols-2">
+              {negara.map((kode) => {
+                const jumlah = rincian.get(kode) ?? 0;
+                const dipilih = rincian.has(kode);
+                return (
+                  <div
+                    key={kode}
+                    className={cn(
+                      "flex items-center justify-between gap-2 rounded-xl border-2 px-3 py-1.5 text-sm transition-colors",
+                      dipilih ? "border-brand bg-brand-softer" : "border-transparent",
+                    )}
+                  >
+                    <span className={cn("truncate font-semibold", dipilih ? "text-ink" : "text-muted")}>
+                      {countryName(kode)}
+                    </span>
+
+                    {rotating ? (
+                      <button
+                        type="button"
+                        onClick={() => togglePilihan(kode)}
+                        className="shrink-0 rounded-full border-2 border-line px-3 py-0.5 text-xs font-bold text-ink hover:border-ink/50"
+                      >
+                        {dipilih ? "Remove" : "Add"}
+                      </button>
+                    ) : (
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={totalIp}
+                        value={jumlah === 0 ? "" : jumlah}
+                        placeholder="0"
+                        aria-label={"IPs in " + countryName(kode)}
+                        onChange={(event) => setJumlah(kode, Number.parseInt(event.target.value, 10))}
+                        className="w-16 shrink-0 rounded-lg border-2 border-line bg-paper px-2 py-1 text-right font-mono text-sm font-bold text-ink focus:border-brand focus:outline-none"
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {rotating && (
             <p className="mt-2 text-xs text-muted">
               You can still request any country per API call — this just tells us which ones to keep stocked for you.
@@ -428,7 +456,6 @@ function FormInvoice({
   paket,
   terpilih,
   metode,
-  masaAktifHari,
   onCancel,
   onGantiSku,
 }: {
@@ -436,7 +463,6 @@ function FormInvoice({
   paket: PaketRow[];
   terpilih: PaketRow;
   metode: MetodeRow[];
-  masaAktifHari: number;
   onCancel: () => void;
   onGantiSku: (sku: string) => void;
 }) {
@@ -457,59 +483,49 @@ function FormInvoice({
           .filter(Boolean)
           .reduce((total, bagian) => total + (Number.parseInt(bagian.split(":")[1] ?? "0", 10) || 0), 0) === totalIp);
 
-  return (
-    <form ref={formRef} onSubmit={onSubmit} className="space-y-4">
-      <input type="hidden" name="sku" value={pilihan.sku} />
-      {pilihan.extendOrderId && <input type="hidden" name="extend_order_id" value={pilihan.extendOrderId} />}
+  const blokPaket = pilihan.extendOrderId ? (
+    <div>
+      <label className={labelClass} htmlFor="sku-pilih">
+        Plan
+      </label>
+      <select
+        id="sku-pilih"
+        className={inputClass}
+        value={pilihan.sku}
+        onChange={(event) => onGantiSku(event.target.value)}
+      >
+        {paket
+          .filter((p) => sejenis(p, terpilih))
+          .map((p) => (
+            <option key={p.sku} value={p.sku}>
+              {p.rotating
+                ? p.kategoriNama + " Rotating · " + p.durasiLabel
+                : p.kategoriNama + " · " + p.ip + " IP · " + p.bandwidthLabel}{" "}
+              — {p.usdLabel}
+            </option>
+          ))}
+      </select>
+      <p className="mt-1.5 text-xs text-muted">
+        Pre-selected from your current order. Change it if you want a different size.
+      </p>
+    </div>
+  ) : (
+    <div className="rounded-2xl border-2 border-line bg-surface-2 p-4">
+      <p className="font-display text-base font-extrabold text-ink">
+        {terpilih.rotating
+          ? terpilih.kategoriNama + " Rotating API"
+          : terpilih.kategoriNama + " · " + terpilih.ip + " IP · " + terpilih.bandwidthLabel}
+      </p>
+      <p className="mt-1 text-sm text-muted">
+        {terpilih.durasiLabel}
+        {terpilih.rotating ? " · shared pool, one API key" : " plan"}
+      </p>
+    </div>
+  );
 
-      {pilihan.extendOrderId && (
-        <p className="rounded-2xl border-2 border-line bg-surface-2 p-3 text-sm text-muted">
-          Renewing order <span className="font-mono font-bold text-ink">{pilihan.orderNo}</span> — we add{" "}
-          {terpilih.durasiLabel} to its current expiry date.
-        </p>
-      )}
-
-      {pilihan.extendOrderId ? (
-        <div>
-          <label className={labelClass} htmlFor="sku-pilih">
-            Plan
-          </label>
-          <select
-            id="sku-pilih"
-            className={inputClass}
-            value={pilihan.sku}
-            onChange={(event) => onGantiSku(event.target.value)}
-          >
-            {paket
-              .filter((p) => sejenis(p, terpilih))
-              .map((p) => (
-                <option key={p.sku} value={p.sku}>
-                  {p.rotating
-                    ? p.kategoriNama + " Rotating · " + p.durasiLabel
-                    : p.kategoriNama + " · " + p.ip + " IP · " + p.bandwidthLabel}{" "}
-                  — {p.usdLabel}
-                </option>
-              ))}
-          </select>
-          <p className="mt-1.5 text-xs text-muted">
-            Pre-selected from your current order. Change it if you want a different size.
-          </p>
-        </div>
-      ) : (
-        <div className="rounded-2xl border-2 border-line bg-surface-2 p-4">
-          <p className="font-display text-base font-extrabold text-ink">
-            {terpilih.rotating
-              ? terpilih.kategoriNama + " Rotating API"
-              : terpilih.kategoriNama + " · " + terpilih.ip + " IP · " + terpilih.bandwidthLabel}
-          </p>
-          <p className="mt-1 text-sm text-muted">
-            {terpilih.durasiLabel}
-            {terpilih.rotating ? " · shared pool, one API key" : " plan"}
-          </p>
-        </div>
-      )}
-
-      <div className="flex items-baseline justify-between border-t border-line pt-3">
+  const blokBayar = (
+    <>
+      <div className="flex items-baseline justify-between rounded-2xl border-2 border-line bg-surface-2 px-4 py-3">
         <span className="text-xs font-bold tracking-wider text-muted uppercase">Price</span>
         <span className="text-right">
           <span className="font-display text-2xl font-extrabold text-ink">{terpilih.usdLabel}</span>
@@ -525,7 +541,9 @@ function FormInvoice({
               key={m.kode}
               className={cn(
                 "flex cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 py-3 text-sm font-semibold transition-colors",
-                metodePilihan === m.kode ? "border-brand bg-brand-softer text-ink" : "border-line bg-surface-2 text-muted hover:border-ink/40",
+                metodePilihan === m.kode
+                  ? "border-brand bg-brand-softer text-ink"
+                  : "border-line bg-surface-2 text-muted hover:border-ink/40",
               )}
             >
               <input
@@ -551,18 +569,17 @@ function FormInvoice({
         </div>
       </fieldset>
 
-      {perluLokasi && (
-        <>
-          <input type="hidden" name="lokasi" value={lokasi} />
-          <PilihLokasi totalIp={totalIp} rotating={terpilih.rotating} nilai={lokasi} onChange={setLokasi} />
-        </>
-      )}
-
       <div>
         <label className={labelClass} htmlFor="catatan">
           Note for us (optional)
         </label>
-        <input id="catatan" name="catatan" maxLength={300} className={inputClass} placeholder="e.g. a city, or anything else we should know" />
+        <input
+          id="catatan"
+          name="catatan"
+          maxLength={300}
+          className={inputClass}
+          placeholder="e.g. a city, or anything else we should know"
+        />
       </div>
 
       <p className="text-xs text-muted">
@@ -577,6 +594,44 @@ function FormInvoice({
           Cancel
         </Button>
       </div>
+    </>
+  );
+
+  return (
+    <form ref={formRef} onSubmit={onSubmit} className="space-y-4">
+      <input type="hidden" name="sku" value={pilihan.sku} />
+      {pilihan.extendOrderId && <input type="hidden" name="extend_order_id" value={pilihan.extendOrderId} />}
+      {perluLokasi && <input type="hidden" name="lokasi" value={lokasi} />}
+
+      {pilihan.extendOrderId && (
+        <p className="rounded-2xl border-2 border-line bg-surface-2 p-3 text-sm text-muted">
+          Renewing order <span className="font-mono font-bold text-ink">{pilihan.orderNo}</span> — we add{" "}
+          {terpilih.durasiLabel} to its current expiry date.
+        </p>
+      )}
+
+      {/* Dua kolom hanya saat ada pemilihan lokasi; perpanjangan tidak punya
+          isi sebanyak itu dan akan terlihat kosong sebelah. */}
+      {perluLokasi ? (
+        <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+          <div className="space-y-4">
+            {blokPaket}
+            <PilihLokasi
+              totalIp={totalIp}
+              rotating={terpilih.rotating}
+              kategoriId={terpilih.kategoriId}
+              nilai={lokasi}
+              onChange={setLokasi}
+            />
+          </div>
+          <div className="space-y-4">{blokBayar}</div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {blokPaket}
+          {blokBayar}
+        </div>
+      )}
     </form>
   );
 }
