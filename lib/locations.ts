@@ -41,6 +41,7 @@ export const NEGARA_DATACENTER = [
   "RO", // Romania
   "FI", // Finland
   "NO", // Norway
+  "TR", // Türkiye
   "RU", // Russian Federation
 ] as const;
 
