@@ -12,6 +12,8 @@ import { SiteFooter } from "@/components/landing/SiteFooter";
 import { SiteHeader } from "@/components/landing/SiteHeader";
 import { buttonClass } from "@/components/ui";
 import { checkoutEnabled } from "@/lib/env";
+import { isiVar, jalur } from "@/lib/i18n";
+import { bahasaSekarang, kamus } from "@/lib/kamus";
 import { waHelpLink, waOrderGeneralLink } from "@/lib/links";
 import { MASA_AKTIF_HARI } from "@/lib/pricing";
 
@@ -19,71 +21,32 @@ import { MASA_AKTIF_HARI } from "@/lib/pricing";
 // langsung berlaku tanpa perlu deploy ulang.
 export const dynamic = "force-dynamic";
 
-const METADATA_DASAR: Metadata = {
-  title: "dmproxy — Datacenter & Residential Proxies",
-  description:
-    "Buy fast datacenter and residential proxies. From $3, same-day activation, with a self-service dashboard to check bandwidth, replace IPs, and manage your IP whitelist. Rotating proxy API available.",
+const META: Record<string, { title: string; description: string }> = {
+  id: {
+    title: "dmproxy — Proxy Datacenter & Residential",
+    description:
+      "Beli proxy datacenter dan residential yang cepat. Mulai $3, aktif di hari yang sama, dengan dashboard sendiri untuk cek bandwidth, ganti IP, dan atur whitelist. Tersedia juga API proxy rotating.",
+  },
+  en: {
+    title: "dmproxy — Datacenter & Residential Proxies",
+    description:
+      "Buy fast datacenter and residential proxies. From $3, same-day activation, with a self-service dashboard to check bandwidth, replace IPs, and manage your IP whitelist. Rotating proxy API available.",
+  },
 };
 
-const KEUNGGULAN = [
-  {
-    icon: <GaugeIcon className="size-5" />,
-    judul: "Your own dashboard",
-    isi: "Check remaining bandwidth, validity, and your IP list anytime — all with your order number.",
-  },
-  {
-    icon: <SwapIcon className="size-5" />,
-    judul: "Self-service IP replace",
-    isi: "Swap dead or blocked IPs yourself within your quota, with country selection.",
-  },
-  {
-    icon: <ShieldCheckIcon className="size-5" />,
-    judul: "IP whitelist",
-    isi: "Decide which IPs may use your proxies yourself, no waiting on support.",
-  },
-  {
-    icon: <ServerIcon className="size-5" />,
-    judul: "Datacenter & residential",
-    isi: "Pick fast and cheap, or home-user IPs that pass on strict sites.",
-  },
-];
-
-const LANGKAH_CHECKOUT = [
-  {
-    judul: "Create an account",
-    isi: "Sign up with your WhatsApp number and a password. That account is where every order of yours lives.",
-  },
-  { judul: "Pick a plan", isi: "Choose the IP count and bandwidth you need, then press Buy to get an invoice." },
-  {
-    judul: "Pay the exact amount",
-    isi: "QRIS, BCA or BRI. The last 3 digits are unique to your invoice — that is how we recognise your transfer.",
-  },
-  {
-    judul: "We activate it",
-    isi: "We check every payment by hand, usually within 2 hours. Your proxies then appear in your dashboard.",
-  },
-];
-
-const LANGKAH_WA = [
-  { judul: "Pick a plan", isi: "Choose the IP count and bandwidth you need from the pricing above." },
-  {
-    judul: "Message us",
-    isi: "Press Order — your chosen plan is pre-filled in the chat. We'll reply with how to pay.",
-  },
-  {
-    judul: "Pay and get your code",
-    isi: "Once the payment arrives we activate your proxies and send you a claim code over chat.",
-  },
-  {
-    judul: "Open your dashboard",
-    isi: "Create an account with your WhatsApp number, enter the code, and manage every order in one place.",
-  },
-];
-
-export default function HomePage() {
+export default async function HomePage() {
+  const k = await kamus();
+  const bahasa = await bahasaSekarang();
   // Checkout mandiri bisa dimatikan; teks & tombol ikut menyesuaikan.
   const checkout = checkoutEnabled();
-  const LANGKAH = checkout ? LANGKAH_CHECKOUT : LANGKAH_WA;
+  const LANGKAH = checkout ? k.caraPesan.checkout : k.caraPesan.wa;
+
+  const KEUNGGULAN = [
+    { icon: <GaugeIcon className="size-5" />, ...k.keunggulan.dashboard },
+    { icon: <SwapIcon className="size-5" />, ...k.keunggulan.ganti },
+    { icon: <ShieldCheckIcon className="size-5" />, ...k.keunggulan.whitelist },
+    { icon: <ServerIcon className="size-5" />, ...k.keunggulan.jenis },
+  ];
 
   return (
     <>
@@ -99,19 +62,17 @@ export default function HomePage() {
             <div className="text-center lg:text-left">
               <ServicePill />
               <h1 className="mt-6 font-display leading-[0.95] font-extrabold tracking-tight uppercase">
-                <span className="block text-3xl text-ink sm:text-5xl">Fast proxies for</span>
-                <span className="block text-5xl text-brand sm:text-7xl">any online job</span>
+                <span className="block text-3xl text-ink sm:text-5xl">{k.hero.judulAtas}</span>
+                <span className="block text-5xl text-brand sm:text-7xl">{k.hero.judulBawah}</span>
               </h1>
               <p className="mx-auto mt-5 max-w-xl text-sm text-muted sm:text-base lg:mx-0">
-                Datacenter and residential, ready the same day.{" "}
-                {checkout ? "Order online and manage" : "Order over chat and manage"} all your orders from a single
-                dashboard.
+                {checkout ? k.hero.ringkasCheckout : k.hero.ringkasWa}
               </p>
 
               <div className="mt-7 flex flex-wrap justify-center gap-3 lg:justify-start">
                 {checkout ? (
-                  <Link href="/account/buy" className={buttonClass("primary", "lg")}>
-                    Order now
+                  <Link href={jalur(bahasa, "/account/buy")} className={buttonClass("primary", "lg")}>
+                    {k.umum.pesanSekarang}
                   </Link>
                 ) : (
                   <a
@@ -120,27 +81,27 @@ export default function HomePage() {
                     rel="noopener noreferrer"
                     className={buttonClass("primary", "lg")}
                   >
-                    <WhatsAppIcon className="size-5" /> Order on WhatsApp
+                    <WhatsAppIcon className="size-5" /> {k.umum.pesanLewatWa}
                   </a>
                 )}
                 <a href="#pricing" className={buttonClass("secondary", "lg")}>
-                  See pricing
+                  {k.umum.lihatHarga}
                 </a>
               </div>
               <p className="mt-3 text-sm font-bold text-ink">
-                Pay only for your plan — <span className="text-brand">no service fee</span>.
+                {k.hero.tanpaBiaya} <span className="text-brand">{k.hero.tanpaBiayaAksen}</span>.
               </p>
               <p className="mt-1 text-xs text-muted">
-                Already have an account?{" "}
-                <Link href="/account/login" className="font-semibold text-brand hover:underline">
-                  Log in here
+                {k.hero.sudahPunyaAkun}{" "}
+                <Link href={jalur(bahasa, "/account/login")} className="font-semibold text-brand hover:underline">
+                  {k.hero.masukDiSini}
                 </Link>
-                {checkout ? " · new orders are paid online." : " · new buyers get a claim code from us."}
+                {checkout ? k.hero.lanjutanCheckout : k.hero.lanjutanWa}
               </p>
 
               <FeatureBadges className="mt-8 lg:justify-start" />
               <p className="mt-4 text-xs font-bold tracking-wide text-muted uppercase">
-                From $3 · {MASA_AKTIF_HARI}-day plans · same-day activation
+                {isiVar(k.hero.ringkasBawah, { hari: MASA_AKTIF_HARI })}
               </p>
             </div>
 
@@ -174,22 +135,16 @@ export default function HomePage() {
           <div className="mx-auto max-w-6xl px-4">
             <div className="grid-lines relative flex flex-col gap-5 overflow-hidden rounded-3xl border-2 border-brand/50 bg-surface-2 p-6 text-ink sm:flex-row sm:items-center sm:p-8">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold tracking-wider text-brand uppercase">For automation</p>
+                <p className="text-xs font-bold tracking-wider text-brand uppercase">{k.rotating.eyebrow}</p>
                 <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight uppercase sm:text-3xl">
-                  Rotating plans via API
+                  {k.rotating.judul}
                 </h2>
-                <p className="mt-2 max-w-xl text-sm text-muted">
-                  One API endpoint and a secret key to pull random proxies from our pool — choose the count and country
-                  straight from your script. Limited by validity and requests per minute, with no GB metering.
-                </p>
+                <p className="mt-2 max-w-xl text-sm text-muted">{k.rotating.isi}</p>
               </div>
-              <a
-                href={waHelpLink()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonClass("secondary", "md", "shrink-0")}
-              >
-                <WhatsAppIcon className="size-4" /> Ask for pricing
+              {/* Dulu "Ask for pricing" ke WhatsApp; harga rotating kini tetap
+                  dan tercantum di daftar harga, jadi diarahkan ke sana. */}
+              <a href="#rotating" className={buttonClass("secondary", "md", "shrink-0")}>
+                {k.rotating.tombolHarga}
               </a>
             </div>
           </div>
@@ -200,11 +155,9 @@ export default function HomePage() {
           <div className="mx-auto max-w-6xl px-4">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="font-display text-3xl leading-tight font-extrabold tracking-tight text-ink uppercase sm:text-4xl">
-                How to <span className="text-brand">order</span>
+                {k.caraPesan.judul} <span className="text-brand">{k.caraPesan.judulAksen}</span>
               </h2>
-              <p className="mt-3 text-sm text-muted sm:text-base">
-                Just four steps. Prices shown are final — no marketplace service fee.
-              </p>
+              <p className="mt-3 text-sm text-muted sm:text-base">{k.caraPesan.ringkas}</p>
             </div>
 
             <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -229,12 +182,9 @@ export default function HomePage() {
             <div className="mx-auto max-w-2xl text-center">
               <Crosses className="justify-center" />
               <h2 className="mt-4 font-display text-3xl leading-tight font-extrabold tracking-tight text-ink uppercase sm:text-4xl">
-                Check your <span className="text-brand">order</span>
+                {k.cekPesanan.judul} <span className="text-brand">{k.cekPesanan.judulAksen}</span>
               </h2>
-              <p className="mt-3 text-sm text-muted sm:text-base">
-                Already bought? Enter your order number to see your proxy list, remaining bandwidth, and validity. Have
-                more than one order? Create an account to keep them all in one place.
-              </p>
+              <p className="mt-3 text-sm text-muted sm:text-base">{k.cekPesanan.ringkas}</p>
             </div>
 
             <div className="mt-8 grid gap-5 lg:grid-cols-[1fr_320px]">
@@ -242,27 +192,22 @@ export default function HomePage() {
 
               <div className="rounded-3xl border-2 border-ink bg-paper p-5">
                 <h3 className="font-display text-base font-extrabold tracking-tight text-ink uppercase">
-                  Have several orders?
+                  {k.cekPesanan.punyaBanyakJudul}
                 </h3>
-                <p className="mt-2 text-sm text-muted">
-                  Create an account with your WhatsApp number, then claim each order with the code we send — all on one
-                  page.
-                </p>
+                <p className="mt-2 text-sm text-muted">{k.cekPesanan.punyaBanyakIsi}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Link href="/account/register" className={buttonClass("primary", "sm")}>
-                    Create account
+                  <Link href={jalur(bahasa, "/account/register")} className={buttonClass("primary", "sm")}>
+                    {k.umum.buatAkun}
                   </Link>
-                  <Link href="/account/login" className={buttonClass("secondary", "sm")}>
-                    Log in
+                  <Link href={jalur(bahasa, "/account/login")} className={buttonClass("secondary", "sm")}>
+                    {k.umum.masuk}
                   </Link>
                 </div>
 
                 <h3 className="mt-6 font-display text-base font-extrabold tracking-tight text-ink uppercase">
-                  Where's my order number?
+                  {k.cekPesanan.nomorDiManaJudul}
                 </h3>
-                <p className="mt-2 text-sm text-muted">
-                  We send your order number over WhatsApp right after your proxies are activated — keep that chat handy.
-                </p>
+                <p className="mt-2 text-sm text-muted">{k.cekPesanan.nomorDiManaIsi}</p>
               </div>
             </div>
           </div>
@@ -286,5 +231,5 @@ export async function generateMetadata({
   params: Promise<{ lang: string }>;
 }): Promise<Metadata> {
   const bahasa = bahasaDari((await params).lang);
-  return { ...METADATA_DASAR, alternates: alternatesDuaBahasa(bahasa, "/") };
+  return { ...META[bahasa], alternates: alternatesDuaBahasa(bahasa, "/") };
 }

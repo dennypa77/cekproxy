@@ -1,87 +1,63 @@
 import { JsonLd } from "@/components/seo/JsonLd";
-import { checkoutEnabled } from "@/lib/env";
 import { WhatsAppIcon } from "@/components/icons";
 import { buttonClass } from "@/components/ui";
+import { checkoutEnabled } from "@/lib/env";
+import { isiVar } from "@/lib/i18n";
+import { kamus, type Kamus } from "@/lib/kamus";
 import { waHelpLink } from "@/lib/links";
 import { MASA_AKTIF_HARI, ROTATING_FAIR_USE_GB } from "@/lib/pricing";
 
-// Dibaca sekali saat modul dimuat; mengubah env tetap butuh deploy ulang.
-const CHECKOUT = checkoutEnabled();
+/**
+ * Daftar FAQ sebagai teks biasa, supaya isi yang sama dipakai tampilan DAN
+ * JSON-LD FAQPage. Dibuat sebagai fungsi (bukan konstanta modul) karena
+ * isinya kini bergantung pada bahasa yang sedang dibuka.
+ */
+export function faqItems(k: Kamus, checkout: boolean): { q: string; a: string }[] {
+  const f = k.faq.item;
+  return [
+    { q: f.bedaJenis.t, a: f.bedaJenis.j },
+    { q: f.masaAktif.t, a: isiVar(f.masaAktif.j, { hari: MASA_AKTIF_HARI }) },
+    { q: f.caraPakai.t, a: f.caraPakai.j },
+    { q: f.gantiIp.t, a: f.gantiIp.j },
+    { q: f.pilihNegara.t, a: f.pilihNegara.j },
+    { q: f.bandwidthHabis.t, a: f.bandwidthHabis.j },
+    {
+      q: f.adaRotating.t,
+      a: checkout ? isiVar(f.adaRotating.jCheckout, { gb: ROTATING_FAIR_USE_GB }) : f.adaRotating.jWa,
+    },
+    { q: f.batasWajar.t, a: isiVar(f.batasWajar.j, { gb: ROTATING_FAIR_USE_GB }) },
+    { q: f.caraBayar.t, a: checkout ? f.caraBayar.jCheckout : f.caraBayar.jWa },
+    { q: f.kenapaLebihMurah.t, a: f.kenapaLebihMurah.j },
+  ];
+}
 
-/** Plain-text FAQ so the same content powers both the UI and FAQPage JSON-LD. */
-export const FAQ_ITEMS: { q: string; a: string }[] = [
-  {
-    q: "What's the difference between datacenter and residential proxies?",
-    a: "Datacenter proxies use IPs from data centers: faster and cheaper per IP, ideal when you need many IPs at once. Residential proxies use IPs from real home networks, so you look like an ordinary user — a better fit for strict sites. They come in smaller counts and cost more per IP.",
-  },
-  {
-    q: "How long is each plan active?",
-    a: `${MASA_AKTIF_HARI} days from the moment your proxies are activated. You can check the remaining days anytime from your dashboard, and we'll remind you over WhatsApp as it nears expiry so you can renew in one tap.`,
-  },
-  {
-    q: "How do I use the proxies?",
-    a: "Once your order is active, open it with your order number. You'll get the full IP list with host, port, username and password — copy them one by one or download a .txt file in three formats. Just drop them into your antidetect browser, app, or any tool you use.",
-  },
-  {
-    q: "Can I replace an IP that dies or gets blocked?",
-    a: "Yes. Every order comes with a replace quota you can use yourself from the dashboard, no waiting on support. When replacing, you can also choose the destination country while stock lasts. If your quota runs out, message us on WhatsApp.",
-  },
-  {
-    q: "Can I choose a specific country?",
-    a: "Yes, from the replace menu in your dashboard. Available countries follow current stock, so the list can change. If the country you need is out of stock, let us know.",
-  },
-  {
-    q: "What if my bandwidth runs out before the plan expires?",
-    a: "Your bandwidth usage and remaining quota are shown in the dashboard. If it runs out early, you can order a new plan or message us to top up.",
-  },
-  {
-    q: "Is there a rotating plan via API?",
-    a: CHECKOUT
-      ? `Yes. You get a single API endpoint and a secret key to pull random proxies from our pool, with your choice of count and country. Rotating plans are sold by duration — 7, 14 or 30 days — in both datacenter and residential pools, and you can buy one straight from your dashboard. There is no GB counter; fair use is ${ROTATING_FAIR_USE_GB} GB per 30 days.`
-      : "Yes. You get a single API endpoint and a secret key to pull random proxies from our pool, with your choice of count and country. Rotating plans are sold by duration — 7, 14 or 30 days. Message us on WhatsApp to order one.",
-  },
-  {
-    q: "What does fair use mean on a rotating plan?",
-    a: `Rotating plans have no GB counter, but they draw from a pool shared with other customers, so we ask you to stay under ${ROTATING_FAIR_USE_GB} GB per 30 days. We are not counting bytes to catch you out — if your usage goes well past that, we'll message you on WhatsApp first and sort out a bigger plan together. Nothing is cut off without a conversation.`,
-  },
-  {
-    q: "How do I order and pay?",
-    a: CHECKOUT
-      ? "Create an account, press Order on the plan you want, and you'll get an invoice with an exact amount to transfer by QRIS, BCA or BRI. There's no payment gateway, so we check each transfer by hand — proxies are usually live within 2 hours. Prices shown are final, with no marketplace service fee added."
-      : "Press Order on the plan you want and WhatsApp opens with your choice pre-filled. We'll reply with payment details, then activate your proxies and send a claim code. Prices shown are final, with no marketplace service fee added.",
-  },
-  {
-    q: "Why is ordering directly cheaper?",
-    a: "The package price is the same. The difference is that marketplaces usually add admin and service fees on the buyer's side — those disappear when you order directly from us.",
-  },
-];
+export async function FaqSection() {
+  const k = await kamus();
+  const items = faqItems(k, checkoutEnabled());
 
-const FAQ_JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: FAQ_ITEMS.map((item) => ({
-    "@type": "Question",
-    name: item.q,
-    acceptedAnswer: { "@type": "Answer", text: item.a },
-  })),
-};
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  };
 
-export function FaqSection() {
   return (
     <section id="faq" className="scroll-mt-20 py-14 sm:py-20">
-      <JsonLd data={FAQ_JSON_LD} />
+      <JsonLd data={jsonLd} />
       <div className="mx-auto max-w-3xl px-4">
         <div className="text-center">
           <h2 className="font-display text-3xl leading-tight font-extrabold tracking-tight text-ink uppercase sm:text-4xl">
-            Frequently asked <span className="text-brand">questions</span>
+            {k.faq.judul} <span className="text-brand">{k.faq.judulAksen}</span>
           </h2>
-          <p className="mt-3 text-sm text-muted sm:text-base">
-            Still unsure? Message us — we usually reply during working hours.
-          </p>
+          <p className="mt-3 text-sm text-muted sm:text-base">{k.faq.masihBingung}</p>
         </div>
 
         <div className="mt-8 space-y-3">
-          {FAQ_ITEMS.map((item) => (
+          {items.map((item) => (
             <details
               key={item.q}
               className="group rounded-3xl border-2 border-ink bg-surface p-4 open:bg-brand-softer sm:p-5"
@@ -102,7 +78,7 @@ export function FaqSection() {
 
         <div className="mt-8 text-center">
           <a href={waHelpLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "md")}>
-            <WhatsAppIcon className="size-4" /> Ask on WhatsApp
+            <WhatsAppIcon className="size-4" /> {k.umum.tanyaKami}
           </a>
         </div>
       </div>

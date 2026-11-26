@@ -2,8 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { Geist, Poppins } from "next/font/google";
 import { Toaster } from "sonner";
+import { KamusProvider } from "@/components/KamusProvider";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { BAHASA, isBahasa, jalur, KODE_HREFLANG, type Bahasa } from "@/lib/i18n";
+import { kamusUntuk } from "@/lib/kamus";
 import { siteUrl } from "@/lib/site";
 import "../globals.css";
 
@@ -95,7 +97,9 @@ export default async function RootLayout(props: LayoutProps<"/[lang]">) {
     <html lang={KODE_HREFLANG[lang]} className={`${geist.variable} ${poppins.variable}`}>
       <body className="min-h-dvh">
         <JsonLd data={[ORG_JSON_LD, WEBSITE_JSON_LD]} />
-        {children}
+        <KamusProvider kamus={kamusUntuk(lang)} bahasa={lang}>
+          {children}
+        </KamusProvider>
         <Toaster
           position="top-center"
           richColors

@@ -61,3 +61,17 @@ export function tanpaAwalan(pathname: string): string {
   }
   return pathname;
 }
+
+/**
+ * Isi placeholder `{nama}` di teks kamus.
+ *
+ * Kamus sengaja HANYA berisi string, tidak ada fungsi: isinya dioper ke
+ * komponen client lewat provider, dan fungsi tidak bisa menyeberangi batas
+ * server→client. Angka yang berubah-ubah (masa aktif, batas wajar GB)
+ * karena itu ditulis sebagai placeholder dan diisi di sini.
+ */
+export function isiVar(teks: string, nilai: Record<string, string | number>): string {
+  return teks.replace(/\{(\w+)\}/g, (cocok, kunci) =>
+    kunci in nilai ? String(nilai[kunci]) : cocok,
+  );
+}
