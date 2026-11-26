@@ -1,5 +1,7 @@
 import { OrderButton } from "@/components/landing/OrderButton";
 import { Badge } from "@/components/ui";
+import { isiVar } from "@/lib/i18n";
+import { kamus } from "@/lib/kamus";
 import {
   labelBandwidth,
   MASA_AKTIF_HARI,
@@ -10,7 +12,8 @@ import {
 } from "@/lib/pricing";
 
 /** Pricing table for a single category, used on product landing pages. */
-export function CategoryPricingTable({ kategori }: { kategori: KategoriHarga }) {
+export async function CategoryPricingTable({ kategori }: { kategori: KategoriHarga }) {
+  const k = await kamus();
   return (
     <div>
       {kategori.grup.map((grup) => (
@@ -20,11 +23,11 @@ export function CategoryPricingTable({ kategori }: { kategori: KategoriHarga }) 
             <table className="w-full min-w-[460px] text-left text-sm">
               <thead className="border-b border-line text-xs tracking-wider text-muted uppercase">
                 <tr>
-                  <th className="py-3 pr-3 font-medium">IP count</th>
-                  <th className="py-3 pr-3 font-medium">Bandwidth</th>
-                  <th className="py-3 pr-3 font-medium">Price</th>
-                  <th className="hidden py-3 pr-3 font-medium sm:table-cell">Per IP</th>
-                  <th className="py-3 text-right font-medium">Action</th>
+                  <th className="py-3 pr-3 font-medium">{k.harga.kolom.jumlahIp}</th>
+                  <th className="py-3 pr-3 font-medium">{k.harga.kolom.bandwidth}</th>
+                  <th className="py-3 pr-3 font-medium">{k.harga.kolom.harga}</th>
+                  <th className="hidden py-3 pr-3 font-medium sm:table-cell">{k.harga.kolom.perIp}</th>
+                  <th className="py-3 text-right font-medium">{k.harga.kolom.aksi}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -34,7 +37,7 @@ export function CategoryPricingTable({ kategori }: { kategori: KategoriHarga }) 
                       <span className="font-display text-lg font-extrabold text-ink">{paket.ip} IP</span>
                       {paket.populer && (
                         <span className="ml-2 align-middle">
-                          <Badge tone="blue">Best seller</Badge>
+                          <Badge tone="blue">{k.harga.palingLaris}</Badge>
                         </span>
                       )}
                     </td>
@@ -42,7 +45,7 @@ export function CategoryPricingTable({ kategori }: { kategori: KategoriHarga }) 
                     <td className="py-3 pr-3">
                       <span className="font-display text-lg font-extrabold text-ink">{usd(paket.hargaRp)}</span>
                       <span className="block text-xs text-muted">
-                        {rupiah(paket.hargaRp)} · {MASA_AKTIF_HARI}-day plan
+                        {rupiah(paket.hargaRp)} · {isiVar(k.harga.labelMasaAktif, { hari: MASA_AKTIF_HARI })}
                       </span>
                     </td>
                     <td className="hidden py-3 pr-3 whitespace-nowrap text-muted sm:table-cell">

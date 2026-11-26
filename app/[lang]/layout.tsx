@@ -59,15 +59,18 @@ export async function generateMetadata(props: LayoutProps<"/[lang]">): Promise<M
 }
 
 // Structured data for the site/brand, shown on every page.
-const ORG_JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "dmproxy",
-  url: siteUrl(),
-  logo: `${siteUrl()}/icon.svg`,
-  description: DESCRIPTION,
-  sameAs: [] as string[],
-};
+function orgJsonLd(bahasa: Bahasa) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "dmproxy",
+    url: siteUrl(),
+    // icon.svg sudah tidak ada sejak logo diganti PNG; tautannya 404.
+    logo: `${siteUrl()}/icon.png`,
+    description: KETERANGAN[bahasa],
+    sameAs: [] as string[],
+  };
+}
 
 const WEBSITE_JSON_LD = {
   "@context": "https://schema.org",
@@ -96,7 +99,7 @@ export default async function RootLayout(props: LayoutProps<"/[lang]">) {
   return (
     <html lang={KODE_HREFLANG[lang]} className={`${geist.variable} ${poppins.variable}`}>
       <body className="min-h-dvh">
-        <JsonLd data={[ORG_JSON_LD, WEBSITE_JSON_LD]} />
+        <JsonLd data={[orgJsonLd(lang), WEBSITE_JSON_LD]} />
         <KamusProvider kamus={kamusUntuk(lang)} bahasa={lang}>
           {children}
         </KamusProvider>

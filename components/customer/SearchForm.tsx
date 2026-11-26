@@ -3,9 +3,11 @@
 import { useState, useTransition, type FormEvent } from "react";
 import { searchOrder, type SearchResult } from "@/app/actions";
 import { SearchIcon, StatusIcon } from "@/components/icons";
+import { useKamus } from "@/components/KamusProvider";
 import { Button, inputClass, labelClass } from "@/components/ui";
 
 export function SearchForm() {
+  const { k } = useKamus();
   const [value, setValue] = useState("");
   const [error, setError] = useState<SearchResult["error"] | null>(null);
   const [pending, startTransition] = useTransition();
@@ -14,15 +16,15 @@ export function SearchForm() {
     event.preventDefault();
     const orderNo = value.replace(/\s+/g, "");
     if (!orderNo) {
-      setError({ title: "Order number is required", body: "Enter your order number.", icon: "edit" });
+      setError({ title: k.cariPesanan.wajibIsi, body: k.cariPesanan.kosong, icon: "edit" });
       return;
     }
     setError(null);
     startTransition(async () => {
       const result = await searchOrder(orderNo).catch(() => ({
         error: {
-          title: "Can't connect",
-          body: "Check your internet connection and try again.",
+          title: k.cariPesanan.gagalKoneksi,
+          body: k.cariPesanan.gagalKoneksiIsi,
           icon: "offline" as const,
         },
       }));
@@ -33,14 +35,14 @@ export function SearchForm() {
   return (
     <form onSubmit={onSubmit} className="rounded-3xl border-2 border-ink bg-surface p-5 sm:p-7" noValidate>
       <label htmlFor="order-no" className={labelClass}>
-        Order number
+        {k.cariPesanan.label}
       </label>
       <input
         id="order-no"
         name="order_no"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="e.g. 240913ABCD1234"
+        placeholder={k.cariPesanan.placeholder}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="characters"
@@ -51,7 +53,7 @@ export function SearchForm() {
       />
       <Button type="submit" size="lg" loading={pending} className="mt-4 w-full">
         {!pending && <SearchIcon className="size-5" />}
-        {pending ? "Checking…" : "Check order"}
+        {pending ? k.cariPesanan.sedangCek : k.cariPesanan.tombol}
       </Button>
 
       {error && (

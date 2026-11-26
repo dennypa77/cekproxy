@@ -177,6 +177,69 @@ export const id = {
       },
     },
   },
+
+  harga: {
+    judul: "Pilih",
+    judulAksen: "paket",
+    ringkasCheckout:
+      "Pesan online: buat akun, pilih paket, lalu bayar. Semua harga sudah termasuk dashboard pengelolaan. Harga ditampilkan dalam USD (rupiah ikut tercantum).",
+    ringkasWa:
+      "Pilih paket, lalu tekan Pesan — WhatsApp terbuka dengan pilihan Anda. Semua harga sudah termasuk dashboard pengelolaan. Harga ditampilkan dalam USD (rupiah ikut tercantum).",
+    tanpaBiaya: "Tanpa biaya layanan",
+    aktifHariSama: "Aktif di hari yang sama",
+    kolom: {
+      jumlahIp: "Jumlah IP",
+      bandwidth: "Bandwidth",
+      harga: "Harga",
+      perIp: "Per IP",
+      aksi: "Aksi",
+      durasi: "Durasi",
+      perHari: "Per hari",
+    },
+    labelMasaAktif: "paket {hari} hari",
+    palingLaris: "Paling laris",
+    palingHemat: "Paling hemat",
+    termasukJudul: "Setiap paket sudah termasuk",
+    termasuk: [
+      "Dashboard untuk memantau bandwidth & daftar IP",
+      "Ganti IP sendiri sesuai kuota",
+      "Atur whitelist IP sendiri",
+      "Pilih negara saat mengganti IP",
+    ],
+    kategori: {
+      datacenter: {
+        ringkasan: "Kecepatan tinggi dengan harga per IP paling murah. Pilihan utama kalau Anda butuh banyak IP sekaligus.",
+        cocokUntuk: ["Banyak akun sekaligus", "Kecepatan tinggi", "Biaya per IP termurah"],
+      },
+      residential: {
+        ringkasan: "IP dari jaringan rumah sungguhan, jadi Anda terlihat seperti pengguna biasa. Cocok untuk situs yang ketat.",
+        cocokUntuk: ["Situs ketat", "Terlihat seperti pengguna rumahan", "Sampai 100 IP"],
+      },
+    },
+    rotatingJudul: "API",
+    rotatingJudulAwal: "Rotating",
+    rotatingIsi:
+      "Satu kunci API yang memberi Anda proxy acak dari pool bersama setiap kali dipanggil. Dijual per durasi, jadi tidak ada hitungan GB yang perlu diawasi. Berlaku batas wajar — lihat FAQ.",
+    rotatingBadge: ["Tanpa hitungan GB", "Bisa pilih negara", "Kunci API langsung jadi"],
+    poolSuffix: "pool",
+  },
+
+  cariPesanan: {
+    label: "Nomor pesanan",
+    placeholder: "mis. 240913ABCD1234",
+    tombol: "Cek pesanan",
+    sedangCek: "Mengecek…",
+    wajibIsi: "Nomor pesanan wajib diisi",
+    kosong: "Masukkan nomor pesanan Anda.",
+    gagalKoneksi: "Tidak bisa terhubung",
+    gagalKoneksiIsi: "Periksa koneksi internet Anda lalu coba lagi.",
+  },
+
+  merek: {
+    cepat: "Cepat",
+    aman: "Aman",
+    terpercaya: "Terpercaya",
+  },
 };
 
 export type Kamus = typeof id;

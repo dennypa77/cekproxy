@@ -1,5 +1,5 @@
 import { cn, IconCircle } from "./ui";
-import { ShieldCheckIcon, StopwatchIcon, ThumbUpIcon, XIcon } from "./icons";
+import { XIcon } from "./icons";
 
 /**
  * Logo dmproxy dari `public/logo.png` (putih, latar tembus pandang).
@@ -67,28 +67,6 @@ export function ServicePill({ className }: { className?: string }) {
       <span className="bg-surface px-4 py-2 text-ink">Provide EZ Service</span>
       <span className="bg-ink px-6 py-2 text-paper">dmproxy</span>
     </div>
-  );
-}
-
-const FEATURES = [
-  { label: "Secure", icon: <ShieldCheckIcon className="size-4" /> },
-  { label: "Trusted", icon: <ThumbUpIcon className="size-4" /> },
-  { label: "Fast", icon: <StopwatchIcon className="size-4" /> },
-];
-
-export function FeatureBadges({ className }: { className?: string }) {
-  return (
-    <ul className={cn("flex flex-wrap justify-center gap-2", className)}>
-      {FEATURES.map((feature) => (
-        <li
-          key={feature.label}
-          className="inline-flex items-center gap-2 rounded-full bg-ink py-1 pr-4 pl-1 text-xs font-extrabold tracking-wide text-paper uppercase"
-        >
-          <IconCircle>{feature.icon}</IconCircle>
-          {feature.label}
-        </li>
-      ))}
-    </ul>
   );
 }
 

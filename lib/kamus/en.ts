@@ -176,4 +176,67 @@ export const en: Kamus = {
       },
     },
   },
+
+  harga: {
+    judul: "Choose your",
+    judulAksen: "plan",
+    ringkasCheckout:
+      "Order online: create an account, pick a plan, and check out. Every price already includes the management dashboard. Prices shown in USD (IDR also listed).",
+    ringkasWa:
+      "Pick a plan and press Order — WhatsApp opens with your choice. Every price already includes the management dashboard. Prices shown in USD (IDR also listed).",
+    tanpaBiaya: "No service fee",
+    aktifHariSama: "Same-day activation",
+    kolom: {
+      jumlahIp: "IP count",
+      bandwidth: "Bandwidth",
+      harga: "Price",
+      perIp: "Per IP",
+      aksi: "Action",
+      durasi: "Duration",
+      perHari: "Per day",
+    },
+    labelMasaAktif: "{hari}-day plan",
+    palingLaris: "Best seller",
+    palingHemat: "Best value",
+    termasukJudul: "Every plan includes",
+    termasuk: [
+      "Dashboard to track bandwidth & IP list",
+      "Replace IPs within your quota",
+      "Manage your own IP whitelist",
+      "Pick a country when replacing IPs",
+    ],
+    kategori: {
+      datacenter: {
+        ringkasan: "High speed at the lowest price per IP. The go-to choice when you need many IPs at once.",
+        cocokUntuk: ["Many accounts at once", "High speed", "Lowest cost per IP"],
+      },
+      residential: {
+        ringkasan: "IPs from real home networks, so you look like an ordinary user. Ideal for strict sites.",
+        cocokUntuk: ["Strict sites", "Looks like a home user", "Up to 100 IPs"],
+      },
+    },
+    rotatingJudul: "API",
+    rotatingJudulAwal: "Rotating",
+    rotatingIsi:
+      "One API key that hands you a fresh proxy from our shared pool on every call. Sold by duration, so there is no GB counter to watch. Fair use applies — see the FAQ.",
+    rotatingBadge: ["No GB counter", "Pick a country", "Instant API key"],
+    poolSuffix: "pool",
+  },
+
+  cariPesanan: {
+    label: "Order number",
+    placeholder: "e.g. 240913ABCD1234",
+    tombol: "Check order",
+    sedangCek: "Checking…",
+    wajibIsi: "Order number is required",
+    kosong: "Enter your order number.",
+    gagalKoneksi: "Can't connect",
+    gagalKoneksiIsi: "Check your internet connection and try again.",
+  },
+
+  merek: {
+    cepat: "Fast",
+    aman: "Secure",
+    terpercaya: "Trusted",
+  },
 };

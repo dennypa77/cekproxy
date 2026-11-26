@@ -53,9 +53,15 @@ export function jalur(bahasa: Bahasa, path: string): string {
 /**
  * Buang awalan bahasa dari sebuah alamat.
  * "/en/account/buy" → "/account/buy" · "/account/buy" → "/account/buy"
+ *
+ * SEMUA bahasa dibuang, termasuk bahasa bawaan yang di alamat publik tidak
+ * berawalan. Alasannya: `usePathname()` di komponen client mengembalikan
+ * jalur INTERNAL hasil rewrite proxy — "/id/proxy-datacenter", bukan
+ * "/proxy-datacenter". Kalau "id" tidak ikut dibuang, tombol ganti bahasa
+ * menghasilkan "/en/id/proxy-datacenter".
  */
 export function tanpaAwalan(pathname: string): string {
-  for (const bahasa of BAHASA_BERAWALAN) {
+  for (const bahasa of BAHASA) {
     if (pathname === `/${bahasa}`) return "/";
     if (pathname.startsWith(`/${bahasa}/`)) return pathname.slice(bahasa.length + 1);
   }

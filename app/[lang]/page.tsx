@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { alternatesDuaBahasa, bahasaDari } from "@/lib/seo";
 import Link from "next/link";
-import { Crosses, FeatureBadges, ServicePill } from "@/components/Brand";
+import { Crosses, ServicePill } from "@/components/Brand";
+import { FeatureBadges } from "@/components/landing/FeatureBadges";
 import { AnnouncementBar } from "@/components/customer/AnnouncementBar";
 import { SearchForm } from "@/components/customer/SearchForm";
 import { GaugeIcon, ServerIcon, ShieldCheckIcon, SwapIcon, WhatsAppIcon } from "@/components/icons";
