@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { logoutCustomerAction } from "@/app/account/actions";
+import { logoutCustomerAction } from "@/app/_actions/account";
 import { LogoTab } from "@/components/Brand";
 import { Decor } from "@/components/Decor";
 import { UserIcon } from "@/components/icons";

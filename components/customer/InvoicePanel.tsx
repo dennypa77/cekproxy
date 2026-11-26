@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { cancelInvoiceAction, markInvoicePaidAction } from "@/app/account/actions";
+import { cancelInvoiceAction, markInvoicePaidAction } from "@/app/_actions/account";
 import { AlertIcon, CheckIcon, ClockIcon, CopyIcon } from "@/components/icons";
 import { Button, cn } from "@/components/ui";
 import { useServerForm } from "@/components/useServerForm";

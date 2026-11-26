@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { alternatesDuaBahasa, bahasaDari } from "@/lib/seo";
 import Link from "next/link";
 import { SiteFooter } from "@/components/landing/SiteFooter";
 import { SiteHeader } from "@/components/landing/SiteHeader";
@@ -16,10 +17,9 @@ const TITLE = "Rotating Proxy API — Random IPs from a Pool | dmproxy";
 const DESCRIPTION =
   "A rotating proxy API: one endpoint and a secret key to pull random proxies from our pool, with your choice of count and country, straight from your script. Billed by validity and requests per minute, with no GB metering.";
 
-export const metadata: Metadata = {
+const METADATA_DASAR: Metadata = {
   title: "Rotating Proxy API",
   description: DESCRIPTION,
-  alternates: { canonical: "/proxy-rotating-api" },
   openGraph: { title: TITLE, description: DESCRIPTION, url: "/proxy-rotating-api" },
 };
 
@@ -100,4 +100,17 @@ export default function RotatingApiPage() {
       <SiteFooter />
     </>
   );
+}
+
+/**
+ * Canonical & hreflang dibuat per bahasa. Metadata halaman menimpa milik
+ * layout, jadi hreflang HARUS ikut disebut di sini — kalau tidak, ia hilang.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const bahasa = bahasaDari((await params).lang);
+  return { ...METADATA_DASAR, alternates: alternatesDuaBahasa(bahasa, "/proxy-rotating-api") };
 }

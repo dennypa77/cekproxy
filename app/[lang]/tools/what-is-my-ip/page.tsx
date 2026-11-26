@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { alternatesDuaBahasa, bahasaDari } from "@/lib/seo";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { SiteFooter } from "@/components/landing/SiteFooter";
@@ -15,10 +16,9 @@ const TITLE = "What Is My IP Address? | dmproxy";
 const DESCRIPTION =
   "Free tool: instantly see your public IP address and whether it's IPv4 or IPv6. Check what IP websites see when you connect, with or without a proxy.";
 
-export const metadata: Metadata = {
+const METADATA_DASAR: Metadata = {
   title: "What Is My IP Address?",
   description: DESCRIPTION,
-  alternates: { canonical: "/tools/what-is-my-ip" },
   openGraph: { title: TITLE, description: DESCRIPTION, url: "/tools/what-is-my-ip" },
 };
 
@@ -93,4 +93,17 @@ export default async function WhatIsMyIpPage() {
       <SiteFooter />
     </>
   );
+}
+
+/**
+ * Canonical & hreflang dibuat per bahasa. Metadata halaman menimpa milik
+ * layout, jadi hreflang HARUS ikut disebut di sini — kalau tidak, ia hilang.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const bahasa = bahasaDari((await params).lang);
+  return { ...METADATA_DASAR, alternates: alternatesDuaBahasa(bahasa, "/tools/what-is-my-ip") };
 }

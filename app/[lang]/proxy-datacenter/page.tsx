@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { alternatesDuaBahasa, bahasaDari } from "@/lib/seo";
 import Link from "next/link";
 import { CategoryPricingTable } from "@/components/landing/CategoryPricingTable";
 import { SiteFooter } from "@/components/landing/SiteFooter";
@@ -16,10 +17,9 @@ const TITLE = "Datacenter Proxies — Fast & Affordable | dmproxy";
 const DESCRIPTION =
   "Buy fast datacenter proxies from $4. 50–1,000 IPs, same-day activation, self-service dashboard to replace IPs and manage your whitelist. Ideal for multi-accounting and high-volume automation.";
 
-export const metadata: Metadata = {
+const METADATA_DASAR: Metadata = {
   title: "Datacenter Proxies — Fast & Affordable",
   description: DESCRIPTION,
-  alternates: { canonical: "/proxy-datacenter" },
   openGraph: { title: TITLE, description: DESCRIPTION, url: "/proxy-datacenter" },
 };
 
@@ -113,4 +113,17 @@ export default function DatacenterProxyPage() {
       <SiteFooter />
     </>
   );
+}
+
+/**
+ * Canonical & hreflang dibuat per bahasa. Metadata halaman menimpa milik
+ * layout, jadi hreflang HARUS ikut disebut di sini — kalau tidak, ia hilang.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const bahasa = bahasaDari((await params).lang);
+  return { ...METADATA_DASAR, alternates: alternatesDuaBahasa(bahasa, "/proxy-datacenter") };
 }

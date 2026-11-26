@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createInvoiceAction } from "@/app/account/actions";
+import { createInvoiceAction } from "@/app/_actions/account";
 import { Modal } from "@/components/Modal";
 import { CheckIcon } from "@/components/icons";
 import { Badge, Button, buttonClass, cn, inputClass, labelClass } from "@/components/ui";

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { allPosts } from "@/lib/blog";
+import { BAHASA, jalur } from "@/lib/i18n";
 import { siteUrl } from "@/lib/site";
 
 /**
@@ -20,19 +21,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/blog", changeFrequency: "weekly", priority: 0.7 },
   ];
 
-  const staticEntries: MetadataRoute.Sitemap = routes.map((r) => ({
-    url: `${base}${r.path}`,
-    lastModified: now,
-    changeFrequency: r.changeFrequency,
-    priority: r.priority,
-  }));
+  // Kedua bahasa didaftarkan. Tanpa ini Google hanya menemukan versi
+  // Indonesia, dan halaman /en tidak akan pernah terindeks.
+  const staticEntries: MetadataRoute.Sitemap = routes.flatMap((r) =>
+    BAHASA.map((bahasa) => ({
+      url: `${base}${jalur(bahasa, r.path)}`,
+      lastModified: now,
+      changeFrequency: r.changeFrequency,
+      priority: bahasa === "id" ? r.priority : Math.max(0.1, r.priority - 0.1),
+    })),
+  );
 
-  const postEntries: MetadataRoute.Sitemap = allPosts().map((post) => ({
-    url: `${base}/blog/${post.slug}`,
-    lastModified: new Date(`${post.updated ?? post.date}T00:00:00Z`),
-    changeFrequency: "monthly",
-    priority: 0.6,
-  }));
+  const postEntries: MetadataRoute.Sitemap = allPosts().flatMap((post) =>
+    BAHASA.map((bahasa) => ({
+      url: `${base}${jalur(bahasa, `/blog/${post.slug}`)}`,
+      lastModified: new Date(`${post.updated ?? post.date}T00:00:00Z`),
+      changeFrequency: "monthly" as const,
+      priority: bahasa === "id" ? 0.6 : 0.5,
+    })),
+  );
 
   return [...staticEntries, ...postEntries];
 }

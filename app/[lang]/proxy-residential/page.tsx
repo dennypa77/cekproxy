@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { alternatesDuaBahasa, bahasaDari } from "@/lib/seo";
 import Link from "next/link";
 import { CategoryPricingTable } from "@/components/landing/CategoryPricingTable";
 import { SiteFooter } from "@/components/landing/SiteFooter";
@@ -16,10 +17,9 @@ const TITLE = "Residential Proxies — Real Home IPs | dmproxy";
 const DESCRIPTION =
   "Buy residential proxies from $3. Real home-network IPs that look like ordinary users, with country selection and same-day activation. Ideal for strict sites and sensitive accounts.";
 
-export const metadata: Metadata = {
+const METADATA_DASAR: Metadata = {
   title: "Residential Proxies — Real Home IPs",
   description: DESCRIPTION,
-  alternates: { canonical: "/proxy-residential" },
   openGraph: { title: TITLE, description: DESCRIPTION, url: "/proxy-residential" },
 };
 
@@ -113,4 +113,17 @@ export default function ResidentialProxyPage() {
       <SiteFooter />
     </>
   );
+}
+
+/**
+ * Canonical & hreflang dibuat per bahasa. Metadata halaman menimpa milik
+ * layout, jadi hreflang HARUS ikut disebut di sini — kalau tidak, ia hilang.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const bahasa = bahasaDari((await params).lang);
+  return { ...METADATA_DASAR, alternates: alternatesDuaBahasa(bahasa, "/proxy-residential") };
 }

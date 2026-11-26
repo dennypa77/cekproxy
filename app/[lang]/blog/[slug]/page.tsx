@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { alternatesDuaBahasa, bahasaDari } from "@/lib/seo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteFooter } from "@/components/landing/SiteFooter";
@@ -20,16 +21,16 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; lang: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug, lang } = await params;
   const post = getPost(slug);
   if (!post) return {};
   const url = `/blog/${post.slug}`;
   return {
     title: post.title,
     description: post.description,
-    alternates: { canonical: url },
+    alternates: alternatesDuaBahasa(bahasaDari(lang), `/blog/${post.slug}`),
     openGraph: {
       type: "article",
       title: post.title,

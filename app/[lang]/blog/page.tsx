@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { alternatesDuaBahasa, bahasaDari } from "@/lib/seo";
 import Link from "next/link";
 import { SiteFooter } from "@/components/landing/SiteFooter";
 import { SiteHeader } from "@/components/landing/SiteHeader";
@@ -11,10 +12,9 @@ const TITLE = "Proxy Guides & Tutorials | dmproxy Blog";
 const DESCRIPTION =
   "Guides and tutorials on datacenter, residential, and rotating proxies — how to choose them, set them up, and use them for multi-accounting, scraping, and automation.";
 
-export const metadata: Metadata = {
+const METADATA_DASAR: Metadata = {
   title: "Blog",
   description: DESCRIPTION,
-  alternates: { canonical: "/blog" },
   openGraph: { title: TITLE, description: DESCRIPTION, url: "/blog" },
 };
 
@@ -87,4 +87,17 @@ export default function BlogIndexPage() {
       <SiteFooter />
     </>
   );
+}
+
+/**
+ * Canonical & hreflang dibuat per bahasa. Metadata halaman menimpa milik
+ * layout, jadi hreflang HARUS ikut disebut di sini — kalau tidak, ia hilang.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const bahasa = bahasaDari((await params).lang);
+  return { ...METADATA_DASAR, alternates: alternatesDuaBahasa(bahasa, "/blog") };
 }

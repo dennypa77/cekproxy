@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { claimOrderAction, loginCustomerAction, registerCustomerAction } from "@/app/account/actions";
+import { claimOrderAction, loginCustomerAction, registerCustomerAction } from "@/app/_actions/account";
 import { ResultDetails } from "@/components/ResultDetails";
 import { Button, inputClass, labelClass } from "@/components/ui";
 import { useServerForm } from "@/components/useServerForm";
