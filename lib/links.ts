@@ -73,3 +73,53 @@ export function waExpiryMessage(orderNo: string, expiresLabel: string, daysLeft:
     "Reply STOP if you no longer want these reminders.",
   ].join("\n");
 }
+
+/**
+ * Pesan serah terima untuk ditempel ke chat Shopee.
+ *
+ * Ditulis dalam bahasa Indonesia karena pembelinya di Shopee Indonesia.
+ *
+ * Dua hal yang disengaja:
+ *
+ * 1. TANPA "https://". Shopee memblokir pesan yang memuat tautan penuh,
+ *    jadi alamatnya ditulis polos — pembeli menyalinnya sendiri ke browser.
+ * 2. Memberi TAUTAN LANGSUNG ke halaman pesanan, bukan menyuruh pembeli
+ *    menggulir halaman depan dan mencari kotak pencarian. Lebih pendek,
+ *    lebih kecil peluang salah ketik nomor, dan tidak ikut berubah kalau
+ *    judul bagian di halaman depan nanti diganti.
+ */
+export function pesanSerahTerima(input: {
+  host: string;
+  orderNo: string;
+  expiresLabel: string;
+  rotating: boolean;
+  claimCode: string | null;
+  claimExpiresLabel: string | null;
+}): string {
+  const { host, orderNo, expiresLabel, rotating, claimCode, claimExpiresLabel } = input;
+
+  const baris: string[] = [
+    "Pesanan sudah aktif kak 🙌",
+    "",
+    rotating ? "Kunci API dan cara pakainya ada di sini:" : "Daftar proxy-nya ada di sini:",
+    `${host}/orders/${orderNo}`,
+    "",
+    `Kalau tautannya tidak bisa dibuka, ketik ${host} di browser, lalu masukkan nomor pesanan: ${orderNo}`,
+    "",
+    `Masa aktif sampai ${expiresLabel}.`,
+  ];
+
+  if (claimCode) {
+    baris.push(
+      "",
+      "Biar semua pesanan kakak jadi satu halaman dan bisa diperpanjang sendiri, daftar akun di:",
+      `${host}/account/register`,
+      `lalu masukkan kode klaim: ${claimCode}`,
+      ...(claimExpiresLabel ? [`(kode berlaku sampai ${claimExpiresLabel})`] : []),
+    );
+  }
+
+  baris.push("", "Kalau ada kendala tinggal chat ya kak 🙏");
+
+  return baris.join("\n");
+}

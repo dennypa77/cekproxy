@@ -17,6 +17,7 @@ import {
 import { AccountBandwidth } from "@/components/admin/AccountBandwidth";
 import { ActionButton } from "@/components/admin/ActionButton";
 import { ClaimCodeCard } from "@/components/admin/ClaimCodeCard";
+import { HandoverMessage } from "@/components/admin/HandoverMessage";
 import { CredentialsForm, EditOrderForm, ExtendOrderForm, LinkAccountForm } from "@/components/admin/OrderForms";
 import { RotatingOrderCard } from "@/components/admin/RotatingOrderCard";
 import { ChevronLeftIcon } from "@/components/icons";
@@ -24,6 +25,7 @@ import { Badge, buttonClass, Card } from "@/components/ui";
 import { db } from "@/lib/db";
 import { countryFlag, daysLeft, formatDateTime, jakartaDateInput } from "@/lib/format";
 import { customerPath } from "@/lib/links";
+import { siteHost } from "@/lib/site";
 import { orderState } from "@/lib/order-status";
 import { KIND_TONE, planLabel, proxyKind } from "@/lib/plan-type";
 import { requireAdmin } from "@/lib/session";
@@ -165,6 +167,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               detachAction={detachOrderCustomerAction.bind(null, order.id)}
             />
           </Card>
+
+          <HandoverMessage
+            host={siteHost()}
+            orderNo={order.shopee_order_no}
+            expiresLabel={formatDateTime(order.expires_at)}
+            rotating={order.order_type === "rotating"}
+            claimCode={order.claim_code}
+            claimExpiresLabel={order.claim_code_expires_at ? formatDateTime(order.claim_code_expires_at) : null}
+          />
 
           <Card>
             <h2 className="mb-3 font-semibold text-ink">Extend</h2>
