@@ -430,6 +430,77 @@ export const id = {
     lokasiCatatanRotating:
       "Anda tetap bisa meminta negara mana pun di tiap panggilan API — ini hanya memberi tahu kami negara mana yang perlu kami siapkan.",
   },
+
+  seo: {
+    lihatHarga: "Lihat harga",
+
+    datacenter: {
+      metaTitle: "Proxy Datacenter — Cepat & Terjangkau",
+      metaDesc:
+        "Beli proxy datacenter yang cepat mulai $4. 50–1.000 IP, aktif di hari yang sama, dengan dashboard sendiri untuk ganti IP dan atur whitelist. Cocok untuk multi-akun dan otomasi bervolume tinggi.",
+      badge: "Datacenter",
+      judul: "Proxy",
+      aksen: "datacenter",
+      ringkasTambahan:
+        " Kecepatan tinggi, harga per IP paling murah, dan aktif di hari yang sama — pilihan utama kalau Anda butuh banyak IP sekaligus untuk multi-akun atau otomasi.",
+      gunaUntuk: [
+        { judul: "Banyak akun sekaligus", isi: "Harga per IP yang murah memudahkan menjalankan banyak akun secara paralel." },
+        { judul: "Otomasi bervolume tinggi", isi: "Latensi rendah dan throughput besar untuk scraping, checker, dan bot yang butuh kecepatan." },
+        { judul: "Kebutuhan IP banyak", isi: "Pesan 50 sampai 1.000 IP dalam satu paket dan kelola semuanya dari satu dashboard." },
+      ],
+      hargaJudul: "Harga proxy datacenter",
+      hargaRingkas:
+        "Harga dalam USD (rupiah ikut tercantum). Setiap paket sudah termasuk dashboard penuh, kuota ganti IP, dan pengaturan whitelist.",
+      lintasAwal: "Butuh IP residential?",
+      lintasTautan: "Lihat proxy residential",
+    },
+
+    residential: {
+      metaTitle: "Proxy Residential — IP Rumahan Asli",
+      metaDesc:
+        "Beli proxy residential dengan IP dari jaringan rumah sungguhan. Aktif di hari yang sama, bisa pilih negara saat mengganti IP, dengan dashboard sendiri. Cocok untuk situs yang ketat.",
+      badge: "Residential",
+      judul: "Proxy",
+      aksen: "residential",
+      ringkasTambahan:
+        " IP dari jaringan rumah sungguhan membuat Anda terlihat seperti pengguna biasa — pilihan yang tepat untuk situs yang menolak IP pusat data.",
+      gunaUntuk: [
+        { judul: "Situs ketat", isi: "IP jaringan rumahan lolos di situs yang memblokir rentang IP pusat data." },
+        { judul: "Terlihat seperti pengguna asli", isi: "Trafiknya tampak datang dari koneksi rumahan biasa." },
+        { judul: "Pilih negara", isi: "Tentukan negara tujuan saat mengganti IP, selama stoknya ada." },
+      ],
+      hargaJudul: "Harga proxy residential",
+      hargaRingkas:
+        "Harga dalam USD (rupiah ikut tercantum). Setiap paket sudah termasuk dashboard penuh, kuota ganti IP, dan pengaturan whitelist.",
+      lintasAwal: "Butuh IP datacenter yang lebih murah?",
+      lintasTautan: "Lihat proxy datacenter",
+    },
+
+    rotating: {
+      metaTitle: "API Proxy Rotating — IP Acak dari Pool",
+      metaDesc:
+        "Satu alamat API dan kunci rahasia untuk menarik proxy acak dari pool kami. Dijual per durasi 7, 14, atau 30 hari, tanpa hitungan GB. Pilih jumlah dan negaranya langsung dari skrip Anda.",
+      badge: "Untuk otomasi",
+      judul: "API proxy",
+      aksen: "rotating",
+      ringkas:
+        "Satu alamat API dan kunci rahasia untuk menarik proxy acak dari pool kami — tentukan jumlah dan negaranya langsung dari skrip Anda. Dijual per durasi: 7, 14, atau 30 hari, tanpa hitungan GB.",
+      kapanBergantiTebal: "Anda yang menentukan kapan IP berganti.",
+      kapanBerganti:
+        " Setiap panggilan ke alamat API memberi Anda proxy acak yang baru — sampai {maks} sekaligus, maksimal {rate} panggilan per menit. Proxy yang Anda terima IP-nya tetap selama dipakai; panggil lagi kapan pun Anda mau IP yang berbeda. Ini API daftar proxy, bukan gateway backconnect yang mengganti IP di setiap permintaan.",
+      fitur: [
+        { judul: "Satu alamat, satu kunci", isi: "Tarik proxy sesuai kebutuhan dari satu alamat API yang diamankan kunci rahasia Anda." },
+        { judul: "Pilih jumlah & negara", isi: "Tentukan berapa proxy yang Anda butuhkan dan dari negara mana, langsung di panggilan Anda." },
+        { judul: "Tanpa hitungan GB", isi: "Dibatasi masa aktif dan permintaan per menit — bukan oleh gigabyte yang terpakai." },
+      ],
+      caraKerjaJudul: "Cara kerjanya",
+      caraKerja: [
+        "1. Kami siapkan pool Anda dan menerbitkan alamat API beserta kunci rahasianya.",
+        "2. Skrip Anda memanggil alamat itu dengan jumlah dan negara yang diinginkan.",
+        "3. Anda menerima proxy siap pakai — panggil lagi kapan pun Anda mau IP berbeda, sebatas limit per menit Anda.",
+      ],
+    },
+  },
 };
 
 export type Kamus = typeof id;

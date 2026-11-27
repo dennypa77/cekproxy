@@ -428,4 +428,75 @@ export const en: Kamus = {
     lokasiCatatanRotating:
       "You can still request any country per API call — this just tells us which ones to keep stocked for you.",
   },
+
+  seo: {
+    lihatHarga: "See pricing",
+
+    datacenter: {
+      metaTitle: "Datacenter Proxies — Fast & Affordable",
+      metaDesc:
+        "Buy fast datacenter proxies from $4. 50–1,000 IPs, same-day activation, self-service dashboard to replace IPs and manage your whitelist. Ideal for multi-accounting and high-volume automation.",
+      badge: "Datacenter",
+      judul: "Datacenter",
+      aksen: "proxies",
+      ringkasTambahan:
+        " High speed, the lowest price per IP, and same-day activation — the go-to choice when you need many IPs at once for multi-accounting or automation.",
+      gunaUntuk: [
+        { judul: "Many accounts at once", isi: "A cheap per-IP price point makes it easy to run a large pool of accounts in parallel." },
+        { judul: "High-volume automation", isi: "Low latency and high throughput for scraping, checkers, and bots that need speed." },
+        { judul: "Bulk IP needs", isi: "Order 50 to 1,000 IPs in a single plan and manage them all from one dashboard." },
+      ],
+      hargaJudul: "Datacenter proxy pricing",
+      hargaRingkas:
+        "Prices in USD (IDR also listed). Every plan includes the full dashboard, IP replace quota, and whitelist management.",
+      lintasAwal: "Need residential IPs instead?",
+      lintasTautan: "See residential proxies",
+    },
+
+    residential: {
+      metaTitle: "Residential Proxies — Real Home IPs",
+      metaDesc:
+        "Buy residential proxies with IPs from real home networks. Same-day activation, country selection when replacing IPs, and a self-service dashboard. Ideal for strict sites.",
+      badge: "Residential",
+      judul: "Residential",
+      aksen: "proxies",
+      ringkasTambahan:
+        " IPs from real home networks make you look like an ordinary user — the right pick for sites that reject datacenter ranges.",
+      gunaUntuk: [
+        { judul: "Strict sites", isi: "Home-network IPs pass on sites that block datacenter ranges." },
+        { judul: "Looks like a real user", isi: "Traffic appears to come from an ordinary residential connection." },
+        { judul: "Country targeting", isi: "Pick a destination country when you replace IPs, while stock lasts." },
+      ],
+      hargaJudul: "Residential proxy pricing",
+      hargaRingkas:
+        "Prices in USD (IDR also listed). Every plan includes the full dashboard, IP replace quota, and whitelist management.",
+      lintasAwal: "Need cheaper datacenter IPs?",
+      lintasTautan: "See datacenter proxies",
+    },
+
+    rotating: {
+      metaTitle: "Rotating Proxy API — Random IPs from a Pool",
+      metaDesc:
+        "One API endpoint and a secret key to pull random proxies from our pool. Sold by duration: 7, 14 or 30 days, with no GB metering. Choose the count and country straight from your script.",
+      badge: "For automation",
+      judul: "Rotating proxy",
+      aksen: "API",
+      ringkas:
+        "One API endpoint and a secret key to pull random proxies from our pool — choose the count and country straight from your script. Sold by duration: 7, 14 or 30 days, with no GB metering.",
+      kapanBergantiTebal: "You decide when the IP changes.",
+      kapanBerganti:
+        " Every call to the endpoint hands you a fresh random proxy — up to {maks} at a time, up to {rate} calls per minute. The proxy you receive keeps its IP for as long as you use it; call again whenever you want a different one. This is a proxy-list API, not a backconnect gateway that changes IP on every request.",
+      fitur: [
+        { judul: "One endpoint, one key", isi: "Pull proxies on demand from a single API endpoint secured by your secret key." },
+        { judul: "Choose count & country", isi: "Request how many proxies you need and from which country, right in your call." },
+        { judul: "No GB metering", isi: "Limited by plan validity and requests per minute — not by gigabytes used." },
+      ],
+      caraKerjaJudul: "How it works",
+      caraKerja: [
+        "1. We set up your pool and issue an API endpoint plus a secret key.",
+        "2. Your script calls the endpoint with the count and country you want.",
+        "3. You receive ready-to-use proxies — call again whenever you want different IPs, up to your per-minute limit.",
+      ],
+    },
+  },
 };

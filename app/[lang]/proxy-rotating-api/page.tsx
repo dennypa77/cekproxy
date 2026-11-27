@@ -1,74 +1,64 @@
 import type { Metadata } from "next";
-import { alternatesDuaBahasa, bahasaDari } from "@/lib/seo";
 import Link from "next/link";
 import { SiteFooter } from "@/components/landing/SiteFooter";
 import { SiteHeader } from "@/components/landing/SiteHeader";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { WhatsAppIcon } from "@/components/icons";
 import { Badge, buttonClass } from "@/components/ui";
+import { isiVar, jalur } from "@/lib/i18n";
+import { bahasaSekarang, kamus } from "@/lib/kamus";
+import { waHelpLink } from "@/lib/links";
 import { ROTATING_RATE_PER_MINUTE } from "@/lib/pricing";
+import { alternatesDuaBahasa, bahasaDari } from "@/lib/seo";
+import { siteUrl } from "@/lib/site";
 
 /** Batas count per panggilan di app/api/rotating/route.ts. */
 const MAX_COUNT_API = 50;
-import { waHelpLink } from "@/lib/links";
-import { siteUrl } from "@/lib/site";
 
-const TITLE = "Rotating Proxy API — Random IPs from a Pool | dmproxy";
-const DESCRIPTION =
-  "A rotating proxy API: one endpoint and a secret key to pull random proxies from our pool, with your choice of count and country, straight from your script. Billed by validity and requests per minute, with no GB metering.";
+export default async function RotatingApiPage() {
+  const k = await kamus();
+  const bahasa = await bahasaSekarang();
+  const s = k.seo.rotating;
 
-const METADATA_DASAR: Metadata = {
-  title: "Rotating Proxy API",
-  description: DESCRIPTION,
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/proxy-rotating-api" },
-};
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: s.metaTitle,
+    serviceType: "Rotating proxy service",
+    description: s.metaDesc,
+    provider: { "@type": "Organization", name: "dmproxy", url: siteUrl() },
+    url: `${siteUrl()}${jalur(bahasa, "/proxy-rotating-api")}`,
+    areaServed: "Worldwide",
+  };
 
-const FEATURES = [
-  { title: "One endpoint, one key", body: "Pull proxies on demand from a single API endpoint secured by your secret key." },
-  { title: "Choose count & country", body: "Request how many proxies you need and from which country, right in your call." },
-  { title: "No GB metering", body: "Limited by plan validity and requests per minute — not by gigabytes used." },
-];
-
-const SERVICE_JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "Service",
-  name: "Rotating Proxy API",
-  serviceType: "Rotating proxy service",
-  description: DESCRIPTION,
-  provider: { "@type": "Organization", name: "dmproxy", url: siteUrl() },
-  url: `${siteUrl()}/proxy-rotating-api`,
-  areaServed: "Worldwide",
-};
-
-export default function RotatingApiPage() {
   return (
     <>
-      <JsonLd data={SERVICE_JSON_LD} />
+      <JsonLd data={jsonLd} />
       <SiteHeader />
 
       <main>
         <section className="border-b-2 border-line bg-surface">
           <div className="mx-auto max-w-5xl px-4 py-14 sm:py-20">
-            <Badge tone="blue">For automation</Badge>
+            <Badge tone="blue">{s.badge}</Badge>
             <h1 className="mt-4 font-display text-4xl leading-[0.95] font-extrabold tracking-tight text-ink uppercase sm:text-6xl">
-              Rotating proxy <span className="text-brand">API</span>
+              {s.judul} <span className="text-brand">{s.aksen}</span>
             </h1>
-            <p className="mt-5 max-w-2xl text-sm text-muted sm:text-base">
-              One API endpoint and a secret key to pull random proxies from our pool — choose the count and country
-              straight from your script. Sold by duration: 7, 14 or 30 days, with no GB metering.
-            </p>
+            <p className="mt-5 max-w-2xl text-sm text-muted sm:text-base">{s.ringkas}</p>
             <p className="mt-3 max-w-2xl text-sm text-muted">
-              <b className="text-ink">You decide when the IP changes.</b> Every call to the endpoint hands you a fresh
-              random proxy — up to {MAX_COUNT_API} at a time, up to {ROTATING_RATE_PER_MINUTE} calls per minute. The
-              proxy you receive keeps its IP for as long as you use it; call again whenever you want a different one.
-              This is a proxy-list API, not a backconnect gateway that changes IP on every request.
+              <b className="text-ink">{s.kapanBergantiTebal}</b>
+              {isiVar(s.kapanBerganti, { maks: MAX_COUNT_API, rate: ROTATING_RATE_PER_MINUTE })}
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/#rotating" className={buttonClass("primary", "lg")}>
-                See rotating prices
+              <Link href={jalur(bahasa, "/#rotating")} className={buttonClass("primary", "lg")}>
+                {k.rotating.tombolHarga}
               </Link>
-              <a href={waHelpLink()} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "lg")}>
-                <WhatsAppIcon className="size-4" /> Ask us
+              <a
+                href={waHelpLink()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClass("secondary", "lg")}
+              >
+                <WhatsAppIcon className="size-4" /> {k.umum.tanyaKami}
               </a>
             </div>
           </div>
@@ -77,20 +67,22 @@ export default function RotatingApiPage() {
         <section className="py-14 sm:py-16">
           <div className="mx-auto max-w-5xl px-4">
             <div className="grid gap-4 sm:grid-cols-3">
-              {FEATURES.map((f) => (
-                <div key={f.title} className="rounded-3xl border-2 border-ink bg-surface p-5">
-                  <h2 className="font-display text-base font-extrabold tracking-tight text-ink uppercase">{f.title}</h2>
-                  <p className="mt-1.5 text-sm text-muted">{f.body}</p>
+              {s.fitur.map((f) => (
+                <div key={f.judul} className="rounded-3xl border-2 border-ink bg-surface p-5">
+                  <h2 className="font-display text-base font-extrabold tracking-tight text-ink uppercase">{f.judul}</h2>
+                  <p className="mt-1.5 text-sm text-muted">{f.isi}</p>
                 </div>
               ))}
             </div>
 
             <div className="mt-10 rounded-3xl border-2 border-brand/50 bg-surface-2 p-6 sm:p-8">
-              <h2 className="font-display text-xl font-extrabold tracking-tight text-ink uppercase">How it works</h2>
+              <h2 className="font-display text-xl font-extrabold tracking-tight text-ink uppercase">
+                {s.caraKerjaJudul}
+              </h2>
               <ol className="mt-4 space-y-3 text-sm text-muted">
-                <li>1. We set up your pool and issue an API endpoint plus a secret key.</li>
-                <li>2. Your script calls the endpoint with the count and country you want.</li>
-                <li>3. You receive ready-to-use proxies — call again whenever you want different IPs, up to your per-minute limit.</li>
+                {s.caraKerja.map((langkah) => (
+                  <li key={langkah}>{langkah}</li>
+                ))}
               </ol>
             </div>
           </div>
@@ -112,5 +104,12 @@ export async function generateMetadata({
   params: Promise<{ lang: string }>;
 }): Promise<Metadata> {
   const bahasa = bahasaDari((await params).lang);
-  return { ...METADATA_DASAR, alternates: alternatesDuaBahasa(bahasa, "/proxy-rotating-api") };
+  const k = await kamus();
+  const s = k.seo.rotating;
+  return {
+    title: s.metaTitle,
+    description: s.metaDesc,
+    openGraph: { title: `${s.metaTitle} | dmproxy`, description: s.metaDesc, url: "/proxy-rotating-api" },
+    alternates: alternatesDuaBahasa(bahasa, "/proxy-rotating-api"),
+  };
 }
