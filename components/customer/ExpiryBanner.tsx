@@ -1,5 +1,9 @@
+"use client";
+
 import { AlertIcon, WhatsAppIcon } from "@/components/icons";
 import { buttonClass, cn } from "@/components/ui";
+import { isiVar } from "@/lib/i18n";
+import { useKamus } from "@/components/KamusProvider";
 import { waExtendLink } from "@/lib/links";
 
 export function ExpiryBanner({
@@ -19,6 +23,8 @@ export function ExpiryBanner({
 }) {
   if (!expired && daysLeft > warningDays) return null;
 
+  const { k } = useKamus();
+  const e = k.dasbor.kedaluwarsa;
   return (
     <div
       role="alert"
@@ -38,18 +44,19 @@ export function ExpiryBanner({
           <p className="font-display text-lg leading-tight font-extrabold tracking-tight uppercase sm:text-xl">
             {expired ? (
               <>
-                Your plan <span className="text-bad">has expired</span>
+                {e.judulHabis} <span className="text-bad">{e.aksenHabis}</span>
               </>
             ) : (
               <>
-                Your proxy expires <span className="text-brand-deep">in {daysLeft} days</span>
+                {e.judulSegera}{" "}
+                <span className="text-brand-deep">{isiVar(e.aksenSegera, { hari: daysLeft })}</span>
               </>
             )}
           </p>
           <p className="mt-1 text-sm text-ink/80">
             {expired
-              ? `Your proxy has been expired since ${expiresDateShort}. Renew now to use it again. This page stays available until ${graceEndsLabel}.`
-              : `Your plan ends on ${expiresDateShort}. Renew before it expires so your proxy stays connected.`}
+              ? isiVar(e.isiHabis, { tanggal: expiresDateShort, batas: graceEndsLabel })
+              : isiVar(e.isiSegera, { tanggal: expiresDateShort })}
           </p>
         </div>
       </div>
@@ -60,11 +67,11 @@ export function ExpiryBanner({
           rel="noopener noreferrer"
           className={buttonClass("primary", "md")}
         >
-          <WhatsAppIcon className="size-4" /> Renew now
+          <WhatsAppIcon className="size-4" /> {e.tombol}
         </a>
       </div>
       <p className="mt-2 text-xs font-semibold text-ink/70">
-        Renew directly with the admin: no service fee, same price.
+        {e.catatan}
       </p>
     </div>
   );

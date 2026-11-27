@@ -1,5 +1,6 @@
 "use client";
 
+import { useKamus } from "@/components/KamusProvider";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { AlertIcon, LocateIcon, LockIcon, MapPinIcon, RefreshIcon, ShieldIcon, TrashIcon } from "@/components/icons";
@@ -11,6 +12,7 @@ import type { MyIpResponse, WhitelistEntry } from "@/lib/public-types";
 const IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 
 export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: boolean }) {
+  const { k } = useKamus();
   const [entries, setEntries] = useState<WhitelistEntry[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
     const result = await apiFetch<MyIpResponse>("/api/my-ip");
     setDetecting(false);
     if (!result.ok || !result.data.ip) {
-      toast.error("Your IP could not be detected. Please enter it manually.");
+      toast.error(k.dasbor.whitelist.ipGagalDeteksi);
       return;
     }
     if (!result.data.isIPv4) {
@@ -54,14 +56,14 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
     }
     setIp(result.data.ip);
     setInputError(null);
-    toast.success("Your current IP has been filled in");
+    toast.success(k.dasbor.whitelist.ipTerisi);
   }
 
   async function add(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const value = ip.trim();
     if (!IPV4.test(value)) {
-      setInputError("Invalid IP format. A correct example: 103.10.20.30");
+      setInputError(k.dasbor.whitelist.formatSalah);
       return;
     }
     setInputError(null);
@@ -98,11 +100,11 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
     <Card>
       <CardHeader
         title="IP"
-        accent="Whitelist"
-        description="Use the proxy without a username & password from networks with these IPs."
+        accent={k.dasbor.whitelist.judul}
+        description={k.dasbor.whitelist.ringkas}
         icon={<ShieldIcon className="size-5" />}
         action={
-          <Button variant="secondary" size="sm" onClick={load} disabled={loading} aria-label="Reload whitelist">
+          <Button variant="secondary" size="sm" onClick={load} disabled={loading} aria-label={k.dasbor.whitelist.muatUlangAria}>
             <RefreshIcon className={cn("size-4", loading && "animate-spin")} />
           </Button>
         }
@@ -127,7 +129,7 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
                 setIp(event.target.value);
                 setInputError(null);
               }}
-              placeholder="Example: 103.10.20.30"
+              placeholder={k.dasbor.whitelist.contoh}
               inputMode="decimal"
               autoComplete="off"
               disabled={expired || adding}
@@ -154,7 +156,7 @@ export function WhitelistCard({ orderNo, expired }: { orderNo: string; expired: 
           {!entries && loading && <div className="h-14 animate-pulse rounded-2xl bg-paper" />}
           {entries && entries.length === 0 && (
             <p className="rounded-2xl border-2 border-dashed border-ink/40 bg-paper p-4 text-center text-sm text-muted">
-              No IPs in the whitelist yet.
+              {k.dasbor.whitelist.kosong}
             </p>
           )}
           {entries && entries.length > 0 && (

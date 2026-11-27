@@ -1,5 +1,7 @@
 "use client";
 
+import { useKamus } from "@/components/KamusProvider";
+import { isiVar } from "@/lib/i18n";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -45,6 +47,7 @@ export interface RotatingDashboardProps {
 }
 
 export function RotatingDashboard(props: RotatingDashboardProps) {
+  const { k } = useKamus();
   const {
     orderNo,
     namaCustomer,
@@ -70,7 +73,7 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
   async function copy(text: string, label: string) {
     const ok = await copyText(text);
     if (ok) toast.success(`${label} copied`);
-    else toast.error("Failed to copy. Please copy it manually.");
+    else toast.error(k.dasbor.rotating.gagalSalin);
   }
 
   async function refreshPool() {
@@ -83,7 +86,7 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
     }
     setPool({ poolSize: result.data.poolSize, countries: result.data.countries });
     setUpdatedAt(result.data.updatedAt);
-    toast.success("Pool data updated");
+    toast.success(k.dasbor.rotating.poolDiperbarui);
   }
 
   return (
@@ -95,19 +98,19 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
           href={props.backHref ?? "/"}
           className="mt-5 inline-flex items-center gap-1 rounded-full border-2 border-ink bg-surface px-3 py-1.5 text-sm font-semibold transition hover:bg-brand-softer"
         >
-          <ChevronLeftIcon className="size-4" /> {props.backLabel ?? "Check another order"}
+          <ChevronLeftIcon className="size-4" /> {props.backLabel ?? k.dasbor.cekPesananLain}
         </Link>
         <LogoTab size="sm" />
       </div>
 
       <header className="mt-4 mb-6">
-        <p className="text-xs font-bold tracking-widest text-muted uppercase">Order number</p>
+        <p className="text-xs font-bold tracking-widest text-muted uppercase">{k.dasbor.nomorPesanan}</p>
         <h1 className="font-mono text-2xl font-bold break-all text-brand-deep sm:text-3xl">{orderNo}</h1>
         <div className="mt-3 flex flex-wrap gap-2">
           <Pill
             icon={<span className={cn("size-2.5 rounded-full", expired ? "bg-bad" : expiringSoon ? "bg-warn" : "bg-ok")} />}
           >
-            {expired ? "Expired" : expiringSoon ? "Expiring soon" : "Active"}
+            {expired ? k.dasbor.status.habis : expiringSoon ? k.dasbor.status.akanHabis : k.dasbor.status.aktif}
           </Pill>
           <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-brand-soft px-3 py-1 text-xs font-bold">
             <RefreshIcon className="size-3.5" /> Rotating
@@ -132,7 +135,7 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
 
         <div className="grid gap-6 md:grid-cols-5">
           <Card className="flex flex-col md:col-span-2">
-            <CardHeader title="Validity" accent="Period" icon={<ClockIcon className="size-5" />} />
+            <CardHeader title={k.dasbor.masaBerlaku} accent={k.dasbor.periode} icon={<ClockIcon className="size-5" />} />
             <div
               className={cn(
                 "rounded-2xl border-2 border-ink p-4 text-center",
@@ -148,7 +151,7 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
                 </p>
               )}
             </div>
-            <p className="mt-4 text-sm text-muted">Valid until</p>
+            <p className="mt-4 text-sm text-muted">{k.dasbor.berlakuSampai}</p>
             <p className="font-bold text-ink">{expiresAtLabel}</p>
 
             <div className="mt-auto pt-5">
@@ -161,15 +164,15 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
               >
                 <WhatsAppIcon className="size-4" /> Renew now
               </a>
-              <p className="mt-1.5 text-center text-xs text-muted">No service fee, same price.</p>
+              <p className="mt-1.5 text-center text-xs text-muted">{k.dasbor.tanpaBiaya}</p>
             </div>
           </Card>
 
           <Card className="md:col-span-3">
             <CardHeader
-              title="Proxy"
-              accent="Pool"
-              description={`${pool.poolSize} active proxies · limit ${ratePerMinute} requests/minute`}
+              title={k.dasbor.proxy.judul}
+              accent={k.dasbor.rotating.pool}
+              description={isiVar(k.dasbor.rotating.poolRingkas, { jumlah: pool.poolSize, rate: ratePerMinute })}
               icon={<ServerIcon className="size-5" />}
               action={
                 <Button variant="secondary" size="sm" onClick={refreshPool} loading={refreshing}>
@@ -183,10 +186,10 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
               <p className="text-sm text-muted">proxies ready to use</p>
             </div>
 
-            <p className="mt-4 mb-2 text-xs font-bold tracking-wider text-muted uppercase">Available countries</p>
+            <p className="mt-4 mb-2 text-xs font-bold tracking-wider text-muted uppercase">{k.dasbor.rotating.negaraTersedia}</p>
             {pool.countries.length === 0 ? (
               <p className="rounded-2xl border-2 border-dashed border-ink/40 bg-paper p-3 text-center text-sm text-muted">
-                No country data yet.
+                {k.dasbor.rotating.belumAdaNegara}
               </p>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -203,15 +206,15 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
 
         <Card>
           <CardHeader
-            title="Endpoint &"
-            accent="API Key"
-            description="Call this address to get a random proxy from the pool."
+            title={k.dasbor.rotating.judulEndpoint}
+            accent={k.dasbor.rotating.aksenEndpoint}
+            description={k.dasbor.rotating.panggil}
             icon={<KeyIcon className="size-5" />}
           />
 
           {expired && (
             <p className="mb-4 rounded-2xl border-2 border-ink bg-bad-soft px-4 py-3 text-sm font-semibold">
-              The API key is disabled because the plan has expired. Renew to activate it again.
+              {k.dasbor.rotating.kunciMati}
             </p>
           )}
 
@@ -222,37 +225,37 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
                 <code className="flex-1 rounded-2xl border-2 border-ink bg-paper px-3.5 py-2.5 font-mono text-sm break-all">
                   {apiKey}
                 </code>
-                <Button variant="secondary" onClick={() => copy(apiKey, "API key")}>
+                <Button variant="secondary" onClick={() => copy(apiKey, k.dasbor.rotating.kunci)}>
                   <CopyIcon className="size-4" /> Copy
                 </Button>
               </div>
             </div>
 
             <div>
-              <p className="mb-1.5 text-xs font-bold tracking-wider text-muted uppercase">Endpoint address</p>
+              <p className="mb-1.5 text-xs font-bold tracking-wider text-muted uppercase">{k.dasbor.rotating.alamat}</p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <code className="flex-1 rounded-2xl border-2 border-ink bg-paper px-3.5 py-2.5 font-mono text-sm break-all">
                   {endpoint}
                 </code>
-                <Button variant="primary" onClick={() => copy(endpoint, "Endpoint address")}>
+                <Button variant="primary" onClick={() => copy(endpoint, k.dasbor.rotating.alamat)}>
                   <CopyIcon className="size-4" /> Copy
                 </Button>
               </div>
             </div>
 
             <div>
-              <p className="mb-1.5 text-xs font-bold tracking-wider text-muted uppercase">Usage example</p>
+              <p className="mb-1.5 text-xs font-bold tracking-wider text-muted uppercase">{k.dasbor.rotating.contohPakai}</p>
               <div className="space-y-2">
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <code className="flex-1 rounded-2xl border-2 border-line bg-surface-2 px-3.5 py-2.5 font-mono text-xs break-all text-ink">
                     {curlExample}
                   </code>
-                  <Button variant="secondary" onClick={() => copy(curlExample, "Example command")}>
+                  <Button variant="secondary" onClick={() => copy(curlExample, k.dasbor.rotating.contohPerintah)}>
                     <CopyIcon className="size-4" /> Copy
                   </Button>
                 </div>
                 <p className="text-xs text-muted">
-                  The response is plain text, one proxy per line. Use those proxies as usual:
+                  {k.dasbor.rotating.balasan}
                 </p>
                 <code className="block rounded-2xl border-2 border-line bg-paper px-3.5 py-2.5 font-mono text-xs break-all text-muted">
                   {proxyExample}
@@ -261,31 +264,31 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">Parameter options</p>
+              <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">{k.dasbor.rotating.opsiParameter}</p>
               <div className="overflow-x-auto rounded-2xl border-2 border-ink">
                 <table className="w-full min-w-[520px] text-left text-sm">
                   <thead className="bg-ink text-xs font-bold tracking-wider text-paper uppercase">
                     <tr>
-                      <th className="px-3 py-2.5">Parameter</th>
-                      <th className="px-3 py-2.5">Value</th>
-                      <th className="px-3 py-2.5">Description</th>
+                      <th className="px-3 py-2.5">{k.dasbor.rotating.parameter}</th>
+                      <th className="px-3 py-2.5">{k.dasbor.rotating.nilai}</th>
+                      <th className="px-3 py-2.5">{k.dasbor.rotating.keterangan}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line">
                     <tr>
                       <td className="px-3 py-2 font-mono">count</td>
                       <td className="px-3 py-2 font-mono">1–50</td>
-                      <td className="px-3 py-2">Number of proxies per request. Default 1.</td>
+                      <td className="px-3 py-2">{k.dasbor.rotating.descCount}</td>
                     </tr>
                     <tr>
                       <td className="px-3 py-2 font-mono">country</td>
                       <td className="px-3 py-2 font-mono">US, SG, ID…</td>
-                      <td className="px-3 py-2">Pick a specific country. Leave empty for random.</td>
+                      <td className="px-3 py-2">{k.dasbor.rotating.descCountry}</td>
                     </tr>
                     <tr>
                       <td className="px-3 py-2 font-mono">format</td>
                       <td className="px-3 py-2 font-mono">ip:port:user:pass, user:pass@ip:port, ip:port, json</td>
-                      <td className="px-3 py-2">Output format. Default ip:port:user:pass.</td>
+                      <td className="px-3 py-2">{k.dasbor.rotating.descFormat}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -293,7 +296,7 @@ export function RotatingDashboard(props: RotatingDashboardProps) {
             </div>
 
             <p className="rounded-2xl border-2 border-ink bg-warn-soft px-4 py-3 text-sm">
-              <b>Keep your API key secret.</b> Anyone who has it can use your quota. If it leaks, contact the admin to
+              <b>{k.dasbor.rotating.rahasia}</b> Anyone who has it can use your quota. If it leaks, contact the admin to
               request a new key.
             </p>
           </div>

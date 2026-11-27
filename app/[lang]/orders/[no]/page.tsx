@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { kamus } from "@/lib/kamus";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { NotAvailable } from "@/components/customer/NotAvailable";
@@ -18,12 +19,9 @@ import { getRotatingPool, poolCountries } from "@/lib/services/rotating";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Order Details",
-  robots: { index: false, follow: false },
-};
 
 export default async function OrderPage({ params }: { params: Promise<{ no: string }> }) {
+  const k = await kamus();
   const raw = safeDecode((await params).no);
   const orderNo = normalizeOrderNo(raw);
   if (orderNo !== raw && ORDER_NO_PATTERN.test(orderNo)) redirect(customerPath(orderNo));
@@ -31,7 +29,7 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
   const requestHeaders = await headers();
   const ip = getClientIp(requestHeaders);
   if (await isRateLimited("search", ip)) {
-    return <NotAvailable icon="slow" title="Too many attempts" body={RATE_LIMIT_MESSAGE} />;
+    return <NotAvailable icon="slow" title={k.dasbor.gagal.terlaluSering} body={RATE_LIMIT_MESSAGE} />;
   }
 
   let access;
@@ -42,8 +40,8 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
     return (
       <NotAvailable
         icon="alert"
-        title="Something went wrong"
-        body={devConfigHint(error) ?? "The server is having trouble. Please reload the page in a moment."}
+        title={k.dasbor.gagal.adaMasalah}
+        body={devConfigHint(error) ?? k.dasbor.gagal.adaMasalahIsi}
       />
     );
   }
@@ -72,8 +70,8 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
     return (
       <NotAvailable
         icon="alert"
-        title="Order belongs to another account"
-        body="This order number is already linked to another customer's account. If this is your order, contact the admin on WhatsApp."
+        title={k.dasbor.gagal.pesananLain}
+        body={k.dasbor.gagal.pesananLainIsi}
         orderNo={order.shopee_order_no}
       />
     );
@@ -143,4 +141,9 @@ export default async function OrderPage({ params }: { params: Promise<{ no: stri
     />
     </>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const k = await kamus();
+  return { title: k.dasbor.meta, robots: { index: false, follow: false } };
 }

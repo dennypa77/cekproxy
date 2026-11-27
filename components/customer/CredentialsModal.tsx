@@ -1,5 +1,6 @@
 "use client";
 
+import { useKamus } from "@/components/KamusProvider";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertIcon, CopyIcon, RefreshIcon } from "@/components/icons";
@@ -31,6 +32,7 @@ export function CredentialsModal({
   onClose: () => void;
   onChanged: (credentials: ProxyCredentials) => void;
 }) {
+  const { k } = useKamus();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -54,12 +56,12 @@ export function CredentialsModal({
     if (changedPassword) patch.password = password.trim();
 
     if (!patch.username && !patch.password) {
-      setError("Nothing has changed yet. Edit the username or password first.");
+      setError(k.dasbor.kredensial.belumBerubah);
       return;
     }
     for (const value of Object.values(patch)) {
       if (!PATTERN.test(value)) {
-        setError("Use 8-32 letters and numbers only, with no spaces or symbols.");
+        setError(k.dasbor.kredensial.aturan);
         return;
       }
     }
@@ -77,24 +79,24 @@ export function CredentialsModal({
       toast.error(result.error);
       return;
     }
-    toast.success("Proxy username & password changed successfully");
+    toast.success(k.dasbor.kredensial.berhasil);
     onChanged(result.data);
   }
 
   async function copyBoth() {
     const ok = await copyText(username + ":" + password);
-    if (ok) toast.success("Username & password copied");
-    else toast.error("Failed to copy.");
+    if (ok) toast.success(k.dasbor.kredensial.tersalin);
+    else toast.error(k.dasbor.kredensial.gagalSalin);
   }
 
   return (
-    <Modal open={open} title="Change" accent="User & Password" onClose={onClose} dismissible={!submitting}>
+    <Modal open={open} title={k.dasbor.kredensial.ubah} accent={k.dasbor.kredensial.judul} onClose={onClose} dismissible={!submitting}>
       <div className="space-y-4">
         <div className="flex gap-3 rounded-2xl border-2 border-ink bg-warn-soft p-3.5 text-sm">
           <AlertIcon className="mt-0.5 size-4 shrink-0" />
           <p>
             After changing these, <b>every app using this proxy must be updated</b> with the new username and password.
-            Connections using the old credentials will be rejected immediately.
+            {k.dasbor.kredensial.peringatan}
           </p>
         </div>
 
@@ -120,7 +122,7 @@ export function CredentialsModal({
               variant="secondary"
               onClick={() => setUsername(randomCredential())}
               disabled={submitting}
-              aria-label="Randomize username"
+              aria-label={k.dasbor.kredensial.acakUser}
             >
               <RefreshIcon className="size-4" />
             </Button>
@@ -149,7 +151,7 @@ export function CredentialsModal({
               variant="secondary"
               onClick={() => setPassword(randomCredential())}
               disabled={submitting}
-              aria-label="Randomize password"
+              aria-label={k.dasbor.kredensial.acakPassword}
             >
               <RefreshIcon className="size-4" />
             </Button>
@@ -172,7 +174,7 @@ export function CredentialsModal({
             Cancel
           </Button>
           <Button variant="brand" size="lg" onClick={submit} loading={submitting} disabled={nothingChanged}>
-            {submitting ? "Saving" : "Save"}
+            {submitting ? k.dasbor.kredensial.menyimpan : k.dasbor.kredensial.simpan}
           </Button>
         </div>
       </div>

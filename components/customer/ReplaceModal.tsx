@@ -1,5 +1,6 @@
 "use client";
 
+import { useKamus } from "@/components/KamusProvider";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertIcon, SwapIcon } from "@/components/icons";
@@ -24,6 +25,7 @@ export function ReplaceModal({
   onClose: () => void;
   onReplaced: (result: ReplaceResponse) => void;
 }) {
+  const { k } = useKamus();
   const [countries, setCountries] = useState<CountryOption[] | null>(null);
   const [countriesError, setCountriesError] = useState<string | null>(null);
   const [country, setCountry] = useState("ANY");
@@ -80,13 +82,14 @@ export function ReplaceModal({
     onReplaced(result.data);
   }
 
-  const stage = elapsed < 4 ? "Sending request…" : elapsed < 15 ? "Finding a replacement IP…" : "Almost done, please wait…";
+  const stage =
+    elapsed < 4 ? k.dasbor.ganti.mengirim : elapsed < 15 ? k.dasbor.ganti.mencari : k.dasbor.ganti.hampirSelesai;
   const sortedCountries = countries
     ? [...countries].sort((a, b) => countryName(a.code).localeCompare(countryName(b.code), "en"))
     : [];
 
   return (
-    <Modal open={open} title="Replace" accent="Proxy IP" onClose={onClose} dismissible={!submitting}>
+    <Modal open={open} title={k.dasbor.ganti.tombol} accent={k.dasbor.ganti.ipProxy} onClose={onClose} dismissible={!submitting}>
       {proxy && (
         <div className="space-y-4">
           <div className="rounded-2xl border-2 border-line bg-surface-2 p-4 text-ink">
@@ -110,14 +113,14 @@ export function ReplaceModal({
               disabled={submitting}
               className={`${inputClass} h-12`}
             >
-              <option value="ANY">Random (any country)</option>
+              <option value="ANY">{k.dasbor.ganti.negaraAcak}</option>
               {sortedCountries.map((option) => (
                 <option key={option.code} value={option.code}>
                   {countryFlag(option.code)} {countryName(option.code)}
                 </option>
               ))}
             </select>
-            {!countries && !countriesError && <p className="mt-1.5 text-xs text-muted">Loading country list…</p>}
+            {!countries && !countriesError && <p className="mt-1.5 text-xs text-muted">{k.dasbor.ganti.memuatNegara}</p>}
             {countriesError && <p className="mt-1.5 text-xs font-semibold text-ink">{countriesError}</p>}
           </div>
 
@@ -128,8 +131,8 @@ export function ReplaceModal({
                 {Math.max(remaining - 1, 0)} of {quota}
               </b>
             </li>
-            <li>The old IP can no longer be used once replaced.</li>
-            <li>This can take up to ±30 seconds. Do not close the page.</li>
+            <li>{k.dasbor.ganti.peringatan}</li>
+            <li>{k.dasbor.ganti.prosesLama}</li>
           </ul>
 
           {submitting && (
@@ -156,7 +159,7 @@ export function ReplaceModal({
             </Button>
             <Button variant="brand" size="lg" onClick={submit} loading={submitting} disabled={remaining <= 0}>
               {!submitting && <SwapIcon className="size-5" />}
-              {submitting ? "Processing" : "Replace IP"}
+              {submitting ? k.dasbor.ganti.sedangProses : k.dasbor.ganti.judul}
             </Button>
           </div>
         </div>

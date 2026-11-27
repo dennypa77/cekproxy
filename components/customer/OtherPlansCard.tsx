@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { ServerIcon, WhatsAppIcon } from "@/components/icons";
 import { buttonClass, Card } from "@/components/ui";
+import { jalur } from "@/lib/i18n";
+import { useKamus } from "@/components/KamusProvider";
 import { waOrderGeneralLink } from "@/lib/links";
 import { KATEGORI_HARGA, usd } from "@/lib/pricing";
 
@@ -12,6 +16,7 @@ const RINGKASAN = KATEGORI_HARGA.map((kategori) => ({
 
 /** Ajakan melihat paket lain (upgrade / tambah IP) di halaman utama. */
 export function OtherPlansCard() {
+  const { k, bahasa } = useKamus();
   return (
     <Card>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -21,14 +26,14 @@ export function OtherPlansCard() {
 
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-            Need <span className="text-brand">another plan?</span>
+            {k.dasbor.paketLain.judul} <span className="text-brand">{k.dasbor.paketLain.aksen}</span>
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Add IPs, increase bandwidth, or try a different proxy type.{" "}
+            {k.dasbor.paketLain.isi}{" "}
             {RINGKASAN.map((item, index) => (
               <span key={item.nama}>
                 {index > 0 && " · "}
-                {item.nama} from <b className="text-ink">{usd(item.mulai)}</b>
+                {item.nama} {k.dasbor.paketLain.mulaiDari} <b className="text-ink">{usd(item.mulai)}</b>
               </span>
             ))}
             .
@@ -36,8 +41,8 @@ export function OtherPlansCard() {
         </div>
 
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-          <Link href="/#pricing" className={buttonClass("primary", "sm")}>
-            See all plans
+          <Link href={jalur(bahasa, "/#pricing")} className={buttonClass("primary", "sm")}>
+            {k.dasbor.paketLain.lihatSemua}
           </Link>
           <a
             href={waOrderGeneralLink()}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useKamus } from "@/components/KamusProvider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -49,6 +50,7 @@ export function ProxySection({
   replaceQuota: number;
   onQuotaChange: (used: number, total: number) => void;
 }) {
+  const { k } = useKamus();
   const [data, setData] = useState<ProxiesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,15 +140,15 @@ export function ProxySection({
 
   async function copyOne(proxy: PublicProxy) {
     const ok = await copyText(formatProxy(proxy, format));
-    if (ok) toast.success("Proxy copied");
-    else toast.error("Failed to copy. Please copy it manually.");
+    if (ok) toast.success(k.dasbor.proxy.tersalin);
+    else toast.error(k.dasbor.proxy.gagalSalin);
   }
 
   async function copyAll() {
     if (!visible.length) return;
     const ok = await copyText(visible.map((p) => formatProxy(p, format)).join("\n"));
     if (ok) toast.success(visible.length + " proxies (" + countryLabel + ") copied");
-    else toast.error("Failed to copy. Use the Download .txt button.");
+    else toast.error(k.dasbor.proxy.gagalSalinTxt);
   }
 
   function download() {
@@ -176,18 +178,18 @@ export function ProxySection({
   return (
     <Card>
       <CardHeader
-        title="Proxy"
-        accent="List"
+        title={k.dasbor.proxy.judul}
+        accent={k.dasbor.proxy.aksen}
         description={
           data
             ? country === ALL_COUNTRIES
               ? proxies.length + " proxies · " + validCount + " valid"
               : visible.length + " of " + proxies.length + " proxies · " + validCount + " valid"
-            : "Loading proxy list…"
+            : k.dasbor.proxy.memuat
         }
         icon={<ServerIcon className="size-5" />}
         action={
-          <Button variant="secondary" size="sm" onClick={() => load(true)} disabled={loading} aria-label="Reload proxy list">
+          <Button variant="secondary" size="sm" onClick={() => load(true)} disabled={loading} aria-label={k.dasbor.proxy.muatUlangAria}>
             <RefreshIcon className={cn("size-4", loading && "animate-spin")} />
             <span className="hidden sm:inline">Reload</span>
           </Button>
@@ -273,7 +275,7 @@ export function ProxySection({
         </div>
         {quotaExhausted && !expired && (
           <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-            Replace quota used up, contact the admin
+            {k.dasbor.proxy.kuotaHabis}
             <a
               href={waQuotaLink(orderNo)}
               target="_blank"
@@ -289,7 +291,7 @@ export function ProxySection({
       {data?.pendingReplace && (
         <div className="mb-4 flex items-center gap-2 rounded-2xl border-2 border-ink bg-brand-soft px-4 py-3 text-sm font-semibold">
           <RefreshIcon className="size-4 animate-spin" />
-          An IP replace is still processing. The list will update automatically.
+          {k.dasbor.proxy.sedangDiganti}
         </div>
       )}
 
@@ -314,7 +316,7 @@ export function ProxySection({
 
       {data && proxies.length === 0 && (
         <p className="rounded-2xl border-2 border-dashed border-ink/40 bg-paper p-6 text-center text-sm text-muted">
-          No proxies on this order yet.
+          {k.dasbor.proxy.kosong}
         </p>
       )}
 
@@ -372,10 +374,10 @@ export function ProxySection({
                     <th className="px-3 py-2.5">IP</th>
                     <th className="px-3 py-2.5">Port</th>
                     <th className="px-3 py-2.5">Username</th>
-                    <th className="px-3 py-2.5">Password</th>
-                    <th className="px-3 py-2.5">Country</th>
+                    <th className="px-3 py-2.5">{k.dasbor.proxy.kataSandi}</th>
+                    <th className="px-3 py-2.5">{k.dasbor.proxy.negara}</th>
                     <th className="px-3 py-2.5">Status</th>
-                    <th className="px-3 py-2.5 text-right">Action</th>
+                    <th className="px-3 py-2.5 text-right">{k.dasbor.proxy.aksi}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -394,7 +396,7 @@ export function ProxySection({
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex justify-end gap-2">
-                          <Button variant="secondary" size="xs" onClick={() => copyOne(proxy)} aria-label="Copy proxy">
+                          <Button variant="secondary" size="xs" onClick={() => copyOne(proxy)} aria-label={k.dasbor.proxy.salin}>
                             <CopyIcon className="size-3.5" /> Copy
                           </Button>
                           <Button
@@ -414,9 +416,9 @@ export function ProxySection({
             </div>
 
             {totalPages > 1 && (
-              <nav className="mt-5 flex items-center justify-between gap-2" aria-label="Proxy pagination">
+              <nav className="mt-5 flex items-center justify-between gap-2" aria-label={k.dasbor.proxy.halamanAria}>
                 <Button variant="secondary" size="sm" onClick={() => setPage(currentPage - 1)} disabled={currentPage <= 1}>
-                  <ChevronLeftIcon className="size-4" /> <span className="hidden sm:inline">Previous</span>
+                  <ChevronLeftIcon className="size-4" /> <span className="hidden sm:inline">{k.dasbor.proxy.sebelumnya}</span>
                 </Button>
                 <span className="rounded-full bg-ink px-4 py-1.5 text-sm font-bold text-paper">
                   {currentPage} / {totalPages}
@@ -427,7 +429,7 @@ export function ProxySection({
                   onClick={() => setPage(currentPage + 1)}
                   disabled={currentPage >= totalPages}
                 >
-                  <span className="hidden sm:inline">Next</span> <ChevronRightIcon className="size-4" />
+                  <span className="hidden sm:inline">{k.dasbor.proxy.berikutnya}</span> <ChevronRightIcon className="size-4" />
                 </Button>
               </nav>
             )}
@@ -442,12 +444,12 @@ export function ProxySection({
                 <p className="mt-3 font-display text-lg font-extrabold uppercase">
                   Proxy <span className="text-bad">inactive</span>
                 </p>
-                <p className="mt-1 text-muted">Renew your order to use the proxy, replace IPs, and whitelist again.</p>
+                <p className="mt-1 text-muted">{k.dasbor.proxy.perpanjangUntukPakai}</p>
                 <a
                   href="#top"
                   className="pointer-events-auto mt-3 inline-flex rounded-full bg-ink px-4 py-1.5 text-xs font-bold text-paper uppercase"
                 >
-                  See renewal options
+                  {k.dasbor.proxy.lihatPerpanjangan}
                 </a>
               </div>
             </div>

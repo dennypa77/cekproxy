@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertIcon, CheckIcon, GaugeIcon, RefreshIcon, WifiOffIcon } from "@/components/icons";
+import { useKamus } from "@/components/KamusProvider";
 import { Button, Card, CardHeader, cn } from "@/components/ui";
 import { apiFetch, orderApi } from "@/lib/client/api";
 import { formatDate, formatGb, formatTime } from "@/lib/format";
@@ -17,9 +18,9 @@ type BandwidthData = Extract<BandwidthResponse, { available: true }>;
  * Warning (#fab219) < 3:1 terhadap putih → label terlihat wajib (sudah ada).
  */
 const SEVERITY = {
-  normal: { fill: "#1e8bff", track: "#dcebff", Icon: CheckIcon, label: "Healthy", chip: "bg-ok-soft" },
-  warning: { fill: "#fab219", track: "#fff1c7", Icon: AlertIcon, label: "Running low", chip: "bg-warn-soft" },
-  critical: { fill: "#d03b3b", track: "#fbdcdc", Icon: AlertIcon, label: "Critical", chip: "bg-bad-soft" },
+  normal: { fill: "#1e8bff", track: "#dcebff", Icon: CheckIcon, chip: "bg-ok-soft" },
+  warning: { fill: "#fab219", track: "#fff1c7", Icon: AlertIcon, chip: "bg-warn-soft" },
+  critical: { fill: "#d03b3b", track: "#fbdcdc", Icon: AlertIcon, chip: "bg-bad-soft" },
 } as const;
 
 function severityOf(percent: number): keyof typeof SEVERITY {
@@ -29,6 +30,7 @@ function severityOf(percent: number): keyof typeof SEVERITY {
 }
 
 export function BandwidthCard({ orderNo, className }: { orderNo: string; className?: string }) {
+  const { k } = useKamus();
   const [data, setData] = useState<BandwidthResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +41,7 @@ export function BandwidthCard({ orderNo, className }: { orderNo: string; classNa
       setLoading(false);
       if (result.ok) {
         setData(result.data);
-        if (refresh && result.data.available) toast.success("Bandwidth data updated");
+        if (refresh && result.data.available) toast.success(k.dasbor.bandwidth.segar);
       } else {
         setData({ available: false, message: result.error });
         if (refresh) toast.error(result.error);
@@ -55,13 +57,13 @@ export function BandwidthCard({ orderNo, className }: { orderNo: string; classNa
   return (
     <Card className={className}>
       <CardHeader
-        title="Remaining"
-        accent="Bandwidth"
+        title={k.dasbor.bandwidth.sisa}
+        accent={k.dasbor.bandwidth.judul}
         icon={<GaugeIcon className="size-5" />}
         action={
-          <Button variant="secondary" size="sm" onClick={() => load(true)} disabled={loading} aria-label="Refresh bandwidth">
+          <Button variant="secondary" size="sm" onClick={() => load(true)} disabled={loading} aria-label={k.dasbor.bandwidth.muatUlangAria}>
             <RefreshIcon className={cn("size-4", loading && "animate-spin")} />
-            <span className="hidden sm:inline">Refresh</span>
+            <span className="hidden sm:inline">{k.dasbor.bandwidth.muatUlang}</span>
           </Button>
         }
       />
@@ -73,8 +75,8 @@ export function BandwidthCard({ orderNo, className }: { orderNo: string; classNa
           <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-ink text-paper" aria-hidden="true">
             <WifiOffIcon className="size-5" />
           </span>
-          <p className="mt-3 font-bold text-ink">Bandwidth data is currently unavailable</p>
-          <p className="mt-0.5 text-sm text-muted">Please press Refresh again in a moment.</p>
+          <p className="mt-3 font-bold text-ink">{k.dasbor.bandwidth.takTersedia}</p>
+          <p className="mt-0.5 text-sm text-muted">{k.dasbor.bandwidth.cobaLagi}</p>
         </div>
       )}
 
@@ -94,6 +96,12 @@ const ARC = "M20 130 A110 110 0 0 1 240 130";
 const VIEWBOX = "0 0 260 156";
 
 function BandwidthMeter({ data }: { data: BandwidthData }) {
+  const { k } = useKamus();
+  const LABEL_SEVERITY = {
+    normal: k.dasbor.bandwidth.sehat,
+    warning: k.dasbor.bandwidth.menipis,
+    critical: k.dasbor.bandwidth.kritis,
+  } as const;
   const rawPercent = data.percent ?? 0;
   const percent = Math.min(Math.max(rawPercent, 0), 100);
   const remainingGb = Math.max(data.limitGb - data.usedGb, 0);
@@ -160,9 +168,9 @@ function BandwidthMeter({ data }: { data: BandwidthData }) {
 
         {/* Teks di tengah, bertumpu pada garis dasar busur (130/156 ≈ 17% dari bawah) */}
         <div className="pointer-events-none absolute inset-x-0 bottom-[17%] text-center">
-          <p className="text-[11px] font-bold tracking-widest text-muted uppercase">Remaining</p>
+          <p className="text-[11px] font-bold tracking-widest text-muted uppercase">{k.dasbor.bandwidth.sisa}</p>
           <p className="font-display text-3xl leading-none font-extrabold text-ink sm:text-4xl">{formatGb(remainingGb)}</p>
-          <p className="mt-1 text-xs text-muted">of {formatGb(data.limitGb)}</p>
+          <p className="mt-1 text-xs text-muted">{k.dasbor.bandwidth.dari} {formatGb(data.limitGb)}</p>
         </div>
 
         {hover && (
@@ -190,7 +198,7 @@ function BandwidthMeter({ data }: { data: BandwidthData }) {
         </div>
         <div className={cn("rounded-2xl border-2 border-ink px-2 py-2.5", severity.chip)}>
           <dt className="flex items-center justify-center gap-1 text-xs font-bold text-ink">
-            <severity.Icon className="size-3.5" /> {severity.label}
+            <severity.Icon className="size-3.5" /> {LABEL_SEVERITY[severityOf(rawPercent)]}
           </dt>
           <dd className="mt-0.5 text-sm font-extrabold text-ink sm:text-base">{percentText}</dd>
         </div>
@@ -198,7 +206,7 @@ function BandwidthMeter({ data }: { data: BandwidthData }) {
 
       {rawPercent > 95 && (
         <p className="mt-3 flex items-center justify-center gap-2 rounded-2xl border-2 border-ink bg-bad-soft px-3 py-2 text-center text-sm font-semibold">
-          <AlertIcon className="size-4 shrink-0" /> Bandwidth is almost used up. Contact the admin to add more quota.
+          <AlertIcon className="size-4 shrink-0" /> {k.dasbor.bandwidth.hampirHabis}
         </p>
       )}
     </div>
@@ -206,6 +214,7 @@ function BandwidthMeter({ data }: { data: BandwidthData }) {
 }
 
 function UnlimitedView({ data }: { data: BandwidthData }) {
+  const { k } = useKamus();
   return (
     <div className="flex flex-col items-center py-2 text-center">
       <span
@@ -215,7 +224,7 @@ function UnlimitedView({ data }: { data: BandwidthData }) {
         ∞
       </span>
       <p className="mt-4 font-display text-3xl font-extrabold uppercase">
-        <span className="text-brand">Unlimited</span>
+        <span className="text-brand">{k.dasbor.bandwidth.takTerbatas}</span>
       </p>
       <p className="mt-1 text-sm text-muted">
         <b className="text-ink">{formatGb(data.usedGb)}</b> used this period
@@ -225,8 +234,9 @@ function UnlimitedView({ data }: { data: BandwidthData }) {
 }
 
 function MeterSkeleton() {
+  const { k } = useKamus();
   return (
-    <div className="animate-pulse" aria-busy="true" aria-label="Loading bandwidth data">
+    <div className="animate-pulse" aria-busy="true" aria-label={k.dasbor.bandwidth.memuat}>
       <svg viewBox={VIEWBOX} className="mx-auto w-full max-w-[340px]" aria-hidden="true">
         <path d={ARC} fill="none" stroke="#e3e6eb" strokeWidth={28} strokeLinecap="round" />
       </svg>

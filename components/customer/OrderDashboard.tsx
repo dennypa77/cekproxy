@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { LogoTab, ServicePill } from "@/components/Brand";
+import { useKamus } from "@/components/KamusProvider";
 import { Decor } from "@/components/Decor";
 import { ChevronLeftIcon, ClockIcon, ServerIcon, UserIcon, WhatsAppIcon } from "@/components/icons";
 import { buttonClass, Card, CardHeader, cn, Pill } from "@/components/ui";
@@ -34,7 +35,8 @@ export const WARNING_DAYS = 3;
 export function OrderDashboard(props: OrderDashboardProps) {
   const { orderNo, namaCustomer, expiresAtLabel, expiresDateShort, graceEndsLabel, daysLeft, expired, jenisProxy } = props;
   const backHref = props.backHref ?? "/";
-  const backLabel = props.backLabel ?? "Check another order";
+  const { k } = useKamus();
+  const backLabel = props.backLabel ?? k.dasbor.cekPesananLain;
   const [quota, setQuota] = useState({ used: props.initialReplaceUsed, total: props.initialReplaceQuota });
   const onQuotaChange = useCallback((used: number, total: number) => setQuota({ used, total }), []);
   const expiringSoon = !expired && daysLeft <= WARNING_DAYS;
@@ -54,7 +56,7 @@ export function OrderDashboard(props: OrderDashboardProps) {
       </div>
 
       <header className="mt-4 mb-6">
-        <p className="text-xs font-bold tracking-widest text-muted uppercase">Order number</p>
+        <p className="text-xs font-bold tracking-widest text-muted uppercase">{k.dasbor.nomorPesanan}</p>
         <h1 className="font-mono text-2xl font-bold break-all text-brand-deep sm:text-3xl">{orderNo}</h1>
         <div className="mt-3 flex flex-wrap gap-2">
           <Pill
@@ -64,7 +66,7 @@ export function OrderDashboard(props: OrderDashboardProps) {
               />
             }
           >
-            {expired ? "Expired" : expiringSoon ? "Expiring soon" : "Active"}
+            {expired ? k.dasbor.status.habis : expiringSoon ? k.dasbor.status.akanHabis : k.dasbor.status.aktif}
           </Pill>
           {jenisProxy && (
             <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-brand-soft px-3 py-1 text-xs font-bold">
@@ -91,7 +93,7 @@ export function OrderDashboard(props: OrderDashboardProps) {
 
         <div className="grid gap-6 md:grid-cols-5">
           <Card className="flex flex-col md:col-span-2">
-            <CardHeader title="Validity" accent="Period" icon={<ClockIcon className="size-5" />} />
+            <CardHeader title={k.dasbor.masaBerlaku} accent={k.dasbor.periode} icon={<ClockIcon className="size-5" />} />
             <div
               className={cn(
                 "rounded-2xl border-2 border-ink p-4 text-center",
@@ -99,7 +101,7 @@ export function OrderDashboard(props: OrderDashboardProps) {
               )}
             >
               {expired ? (
-                <p className="font-display text-3xl font-extrabold uppercase">Expired</p>
+                <p className="font-display text-3xl font-extrabold uppercase">{k.dasbor.habis}</p>
               ) : (
                 <p className="font-display">
                   <span className="text-6xl leading-none font-extrabold text-ink">{daysLeft}</span>
@@ -107,20 +109,20 @@ export function OrderDashboard(props: OrderDashboardProps) {
                 </p>
               )}
             </div>
-            <p className="mt-4 text-sm text-muted">Valid until</p>
+            <p className="mt-4 text-sm text-muted">{k.dasbor.berlakuSampai}</p>
             <p className="font-bold text-ink">{expiresAtLabel}</p>
 
             <div className="mt-auto pt-5">
-              <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">Renew</p>
+              <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">{k.dasbor.perpanjang}</p>
               <a
                 href={waExtendLink(orderNo, expiresDateShort)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={buttonClass("primary", "sm", "w-full")}
               >
-                <WhatsAppIcon className="size-4" /> Renew now
+                <WhatsAppIcon className="size-4" /> {k.dasbor.kedaluwarsa.tombol}
               </a>
-              <p className="mt-1.5 text-center text-xs text-muted">No service fee, same price.</p>
+              <p className="mt-1.5 text-center text-xs text-muted">{k.dasbor.tanpaBiaya}</p>
             </div>
           </Card>
 
