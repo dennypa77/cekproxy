@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { claimOrderAction, loginCustomerAction, registerCustomerAction } from "@/app/_actions/account";
+import { useKamus } from "@/components/KamusProvider";
 import { ResultDetails } from "@/components/ResultDetails";
 import { Button, inputClass, labelClass } from "@/components/ui";
 import { useServerForm } from "@/components/useServerForm";
@@ -18,10 +19,11 @@ function tautan(path: string, next?: string): string {
 }
 
 function WaField({ id = "wa_number" }: { id?: string }) {
+  const { k } = useKamus();
   return (
     <div>
       <label className={labelClass} htmlFor={id}>
-        WhatsApp number
+        {k.akun.form.noWa}
       </label>
       <input
         id={id}
@@ -33,12 +35,13 @@ function WaField({ id = "wa_number" }: { id?: string }) {
         placeholder="0812-3456-7890"
         className={inputClass}
       />
-      <p className="mt-1 text-xs text-muted">You can write it as 0812…, +62812…, or 62812… — it's all the same.</p>
+      <p className="mt-1 text-xs text-muted">{k.akun.form.noWaBantuan}</p>
     </div>
   );
 }
 
 export function RegisterForm({ next }: { next?: string }) {
+  const { k } = useKamus();
   const { pending, state, onSubmit, formRef } = useServerForm(registerCustomerAction);
 
   return (
@@ -68,7 +71,7 @@ export function RegisterForm({ next }: { next?: string }) {
             autoComplete="new-password"
             className={inputClass}
           />
-          <p className="mt-1 text-xs text-muted">At least 8 characters.</p>
+          <p className="mt-1 text-xs text-muted">{k.akun.form.passwordMinimal}</p>
         </div>
         <div>
           <label className={labelClass} htmlFor="password_konfirmasi">
@@ -86,14 +89,14 @@ export function RegisterForm({ next }: { next?: string }) {
       </div>
 
       <Button type="submit" loading={pending} className="w-full">
-        Create account
+        {k.akun.form.tombolDaftar}
       </Button>
       <ResultDetails state={state} />
 
       <p className="text-center text-sm text-muted">
-        Already have an account?{" "}
+        {k.akun.form.sudahPunyaAkun}{" "}
         <Link href={tautan("/account/login", next)} className="font-semibold text-brand-deep hover:underline">
-          Log in here
+          {k.akun.form.masukDiSini}
         </Link>
       </p>
     </form>
@@ -101,6 +104,7 @@ export function RegisterForm({ next }: { next?: string }) {
 }
 
 export function LoginForm({ next }: { next?: string }) {
+  const { k } = useKamus();
   const { pending, state, onSubmit, formRef } = useServerForm(loginCustomerAction);
 
   return (
@@ -124,17 +128,17 @@ export function LoginForm({ next }: { next?: string }) {
       </div>
 
       <Button type="submit" loading={pending} className="w-full">
-        Log in
+        {k.akun.form.tombolMasuk}
       </Button>
       <ResultDetails state={state} />
 
       <p className="text-center text-sm text-muted">
-        Don't have an account yet?{" "}
+        {k.akun.form.belumPunyaAkun}{" "}
         <Link href={tautan("/account/register", next)} className="font-semibold text-brand-deep hover:underline">
-          Sign up first
+          {k.akun.form.daftarDulu}
         </Link>
       </p>
-      <p className="text-center text-xs text-muted">Forgot your password? Contact the admin on WhatsApp.</p>
+      <p className="text-center text-xs text-muted">{k.akun.form.lupaPassword}</p>
     </form>
   );
 }

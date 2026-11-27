@@ -240,6 +240,58 @@ export const id = {
     aman: "Aman",
     terpercaya: "Terpercaya",
   },
+
+  akun: {
+    kembali: "← Beranda",
+    eyebrow: "Akun saya",
+    judul: "Pesanan",
+    aksen: "Anda",
+    keluar: "Keluar",
+
+    masuk: {
+      meta: "Masuk",
+      judul: "Masuk ke",
+      aksen: "akun Anda",
+      ringkas: "Gunakan nomor WhatsApp yang Anda pakai saat mendaftar untuk melihat semua pesanan di satu tempat.",
+    },
+    daftar: {
+      meta: "Buat Akun",
+      judul: "Buat",
+      aksen: "akun",
+      ringkas:
+        "Satu akun untuk semua pesanan Anda. Nomor WhatsApp dipakai untuk masuk dan untuk menghubungi Anda saat pesanan hampir habis masa aktifnya.",
+    },
+    klaim: {
+      meta: "Klaim Pesanan",
+      judul: "Klaim",
+      aksen: "pesanan",
+      ringkasDenganNomor: "Masukkan kode klaim untuk pesanan {pesanan}. Kodenya kami kirim lewat WhatsApp.",
+      ringkas: "Masukkan kode klaim yang kami kirim lewat WhatsApp. Satu kode untuk satu pesanan.",
+      belumPunyaJudul: "Belum punya kode?",
+      belumPunyaIsi:
+        "Chat kami di WhatsApp dan sebutkan nomor pesanan Anda. Kodenya berlaku 7 hari dan hanya bisa dipakai sekali.",
+      mintaKode: "Minta kode klaim",
+      kembaliKePesanan: "Kembali ke pesanan saya",
+    },
+
+    form: {
+      noWa: "Nomor WhatsApp",
+      noWaBantuan: "Boleh ditulis 0812…, +62812…, atau 62812… — sama saja.",
+      nama: "Nama",
+      password: "Kata sandi",
+      passwordMinimal: "Minimal 8 karakter.",
+      ulangiPassword: "Ulangi kata sandi",
+      kodeKlaim: "Kode klaim dari admin",
+      tombolMasuk: "Masuk",
+      tombolDaftar: "Buat akun",
+      tombolKlaim: "Tambahkan pesanan",
+      lupaPassword: "Lupa kata sandi? Hubungi admin lewat WhatsApp.",
+      sudahPunyaAkun: "Sudah punya akun?",
+      masukDiSini: "Masuk di sini",
+      belumPunyaAkun: "Belum punya akun?",
+      daftarDulu: "Daftar dulu",
+    },
+  },
 };
 
 export type Kamus = typeof id;

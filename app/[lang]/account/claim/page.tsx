@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { isiVar, jalur } from "@/lib/i18n";
+import { bahasaSekarang, kamus } from "@/lib/kamus";
 import Link from "next/link";
 import { AccountShell } from "@/components/customer/account/AccountShell";
 import { ClaimForm } from "@/components/customer/account/AccountForms";
@@ -8,40 +10,46 @@ import { requireCustomer } from "@/lib/customer-session";
 import { waHelpLink } from "@/lib/links";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Claim Order" };
+
 
 export default async function KlaimPage({ searchParams }: { searchParams: Promise<{ pesanan?: string }> }) {
   const customer = await requireCustomer("/account/claim");
   const { pesanan } = await searchParams;
 
+  const k = await kamus();
+  const bahasa = await bahasaSekarang();
   return (
     <AccountShell nama={customer.nama}>
       <Card>
         <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-          Claim an <span className="text-brand">order</span>
+          {k.akun.klaim.judul} <span className="text-brand">{k.akun.klaim.aksen}</span>
         </h2>
         <p className="mt-2 mb-5 text-sm text-muted">
-          {pesanan
-            ? `Enter the claim code for order ${pesanan}. We send the code to you on WhatsApp.`
-            : "Enter the claim code we send you on WhatsApp. One code for one order."}
+          {pesanan ? isiVar(k.akun.klaim.ringkasDenganNomor, { pesanan }) : k.akun.klaim.ringkas}
         </p>
         <ClaimForm />
       </Card>
 
       <Card>
-        <h3 className="font-display text-base font-extrabold tracking-tight text-ink uppercase">Don&apos;t have a code?</h3>
-        <p className="mt-2 text-sm text-muted">
-          Ask us on WhatsApp and include your order number. The code is valid for 7 days and can only be used once.
-        </p>
+        <h3 className="font-display text-base font-extrabold tracking-tight text-ink uppercase">
+          {k.akun.klaim.belumPunyaJudul}
+        </h3>
+        <p className="mt-2 text-sm text-muted">{k.akun.klaim.belumPunyaIsi}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <a href={waHelpLink(pesanan)} target="_blank" rel="noopener noreferrer" className={buttonClass("secondary", "md")}>
-            <WhatsAppIcon className="size-4" /> Request a claim code
+            <WhatsAppIcon className="size-4" /> {k.akun.klaim.mintaKode}
           </a>
-          <Link href="/account" className={buttonClass("ghost", "md")}>
-            Back to my orders
+          <Link href={jalur(bahasa, "/account")} className={buttonClass("ghost", "md")}>
+            {k.akun.klaim.kembaliKePesanan}
           </Link>
         </div>
       </Card>
     </AccountShell>
   );
+}
+
+/** Judul tab ikut bahasa; halaman akun memang tidak diindeks. */
+export async function generateMetadata(): Promise<Metadata> {
+  const k = await kamus();
+  return { title: k.akun.klaim.meta };
 }

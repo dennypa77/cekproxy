@@ -239,4 +239,56 @@ export const en: Kamus = {
     aman: "Secure",
     terpercaya: "Trusted",
   },
+
+  akun: {
+    kembali: "← Home",
+    eyebrow: "My account",
+    judul: "Your",
+    aksen: "orders",
+    keluar: "Log out",
+
+    masuk: {
+      meta: "Log In",
+      judul: "Log in to your",
+      aksen: "account",
+      ringkas: "Use the WhatsApp number you registered with to see all your orders in one place.",
+    },
+    daftar: {
+      meta: "Create Account",
+      judul: "Create an",
+      aksen: "account",
+      ringkas:
+        "One account for all your orders. Your WhatsApp number is used to log in and to reach you when an order is close to expiring.",
+    },
+    klaim: {
+      meta: "Claim Order",
+      judul: "Claim an",
+      aksen: "order",
+      ringkasDenganNomor: "Enter the claim code for order {pesanan}. We send the code to you on WhatsApp.",
+      ringkas: "Enter the claim code we send you on WhatsApp. One code for one order.",
+      belumPunyaJudul: "Don't have a code?",
+      belumPunyaIsi:
+        "Ask us on WhatsApp and include your order number. The code is valid for 7 days and can only be used once.",
+      mintaKode: "Request a claim code",
+      kembaliKePesanan: "Back to my orders",
+    },
+
+    form: {
+      noWa: "WhatsApp number",
+      noWaBantuan: "You can write it as 0812…, +62812…, or 62812… — it's all the same.",
+      nama: "Name",
+      password: "Password",
+      passwordMinimal: "At least 8 characters.",
+      ulangiPassword: "Repeat password",
+      kodeKlaim: "Claim code from the admin",
+      tombolMasuk: "Log in",
+      tombolDaftar: "Create account",
+      tombolKlaim: "Add order",
+      lupaPassword: "Forgot your password? Contact the admin on WhatsApp.",
+      sudahPunyaAkun: "Already have an account?",
+      masukDiSini: "Log in here",
+      belumPunyaAkun: "Don't have an account yet?",
+      daftarDulu: "Sign up first",
+    },
+  },
 };
