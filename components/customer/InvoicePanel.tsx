@@ -4,8 +4,10 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { cancelInvoiceAction, markInvoicePaidAction } from "@/app/_actions/account";
+import { isiVar } from "@/lib/i18n";
 import { AlertIcon, CheckIcon, ClockIcon, CopyIcon } from "@/components/icons";
 import { Button, cn } from "@/components/ui";
+import { useKamus } from "@/components/KamusProvider";
 import { useServerForm } from "@/components/useServerForm";
 import { copyText } from "@/lib/client/clipboard";
 
@@ -58,13 +60,14 @@ function useHitungMundur(expiresAt: string): { label: string; habis: boolean } {
 }
 
 function Salin({ nilai, label }: { nilai: string; label: string }) {
+  const { k } = useKamus();
   return (
     <button
       type="button"
       onClick={async () => {
         const berhasil = await copyText(nilai);
         if (berhasil) toast.success(`${label} copied`);
-        else toast.error("Could not copy — please copy it by hand");
+        else toast.error(k.invoice.gagalSalin);
       }}
       className="inline-flex shrink-0 items-center gap-1.5 rounded-full border-2 border-ink/45 bg-surface px-3 py-1.5 text-xs font-bold text-ink transition-colors hover:border-brand hover:bg-brand-softer"
     >
@@ -73,13 +76,9 @@ function Salin({ nilai, label }: { nilai: string; label: string }) {
   );
 }
 
-const LANGKAH = [
-  { judul: "Confirmation received", detail: "1–3 minutes", selesaiPada: 1 },
-  { judul: "We check the payment", detail: "by hand, no payment gateway", selesaiPada: 2 },
-  { judul: "Proxies activated", detail: "usually within 0–2 hours", selesaiPada: 3 },
-];
 
 export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode: MetodeView | null }) {
+  const { k } = useKamus();
   const { label, habis } = useHitungMundur(invoice.expiresAt);
   const menungguBayar = invoice.status === "menunggu_bayar" && !habis;
   const sudahLapor = invoice.status === "menunggu_verifikasi";
@@ -92,51 +91,51 @@ export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode
       {/* Nominal: bagian terpenting halaman ini. */}
       <section className="rounded-3xl border-2 border-ink bg-surface p-5 sm:p-6">
         <p className="text-xs font-bold tracking-wider text-muted uppercase">
-          {menungguBayar ? "Transfer exactly" : "Invoice amount"}
+          {menungguBayar ? k.invoice.transferPersis : k.invoice.nominalInvoice}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <span className="font-display text-4xl leading-none font-extrabold tracking-tight text-ink tabular-nums sm:text-5xl">
             {invoice.totalLabel}
           </span>
-          <Salin nilai={String(invoice.totalRp)} label="Amount" />
+          <Salin nilai={String(invoice.totalRp)} label={k.invoice.salinNominal} />
         </div>
         <p className="mt-1 text-sm text-muted">
-          ≈{invoice.usdLabel} — billed in Indonesian rupiah, so send the rupiah amount above.
+          {isiVar(k.invoice.setaraUsd, { usd: invoice.usdLabel })}
         </p>
 
         <p className="mt-3 flex items-start gap-2 rounded-2xl border-2 border-warn/40 bg-warn-soft p-3 text-sm text-ink">
           <AlertIcon className="mt-0.5 size-4 shrink-0" />
           <span>
-            Send the amount <b>exactly</b>, including the last 3 digits (<b>{invoice.kodeUnik}</b>). That is how we
-            recognise your payment — a rounded amount can&apos;t be matched automatically.
+            {k.invoice.peringatanAwal} <b>{k.invoice.peringatanTebal}</b>
+            {isiVar(k.invoice.peringatanAkhir, { kode: invoice.kodeUnik })}
           </span>
         </p>
 
         <dl className="mt-4 grid gap-2 border-t border-line pt-4 text-sm sm:grid-cols-2">
           <div>
-            <dt className="text-xs font-bold tracking-wider text-muted uppercase">Plan</dt>
+            <dt className="text-xs font-bold tracking-wider text-muted uppercase">{k.invoice.paket}</dt>
             <dd className="text-ink">
               {invoice.paketNama}
-              {invoice.jenisPerpanjangan && " (renewal)"}
+              {invoice.jenisPerpanjangan && k.pesanan.renewalSuffix}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-bold tracking-wider text-muted uppercase">Duration</dt>
+            <dt className="text-xs font-bold tracking-wider text-muted uppercase">{k.invoice.durasi}</dt>
             <dd className="text-ink">{invoice.masaAktifHari} days</dd>
           </div>
           <div>
-            <dt className="text-xs font-bold tracking-wider text-muted uppercase">Plan price</dt>
+            <dt className="text-xs font-bold tracking-wider text-muted uppercase">{k.invoice.hargaPaket}</dt>
             <dd className="text-ink">{invoice.hargaLabel}</dd>
           </div>
           <div>
-            <dt className="text-xs font-bold tracking-wider text-muted uppercase">Unique code</dt>
+            <dt className="text-xs font-bold tracking-wider text-muted uppercase">{k.invoice.kodeUnik}</dt>
             <dd className="text-ink">+{invoice.kodeUnik}</dd>
           </div>
         </dl>
 
         {menungguBayar && (
           <p className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-line bg-surface-2 px-4 py-1.5 text-sm font-bold text-ink tabular-nums">
-            <ClockIcon className="size-4" /> {label} left to pay
+            <ClockIcon className="size-4" /> {isiVar(k.invoice.sisaWaktu, { waktu: label })}
           </p>
         )}
       </section>
@@ -145,7 +144,7 @@ export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode
       {menungguBayar && metode && (
         <section className="rounded-3xl border-2 border-ink bg-surface p-5 sm:p-6">
           <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-            Pay with <span className="text-brand">{metode.nama}</span>
+            {k.invoice.bayarDengan} <span className="text-brand">{metode.nama}</span>
           </h2>
           <p className="mt-1 text-sm text-muted">{metode.petunjuk}</p>
 
@@ -164,10 +163,10 @@ export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode
             </div>
           ) : (
             <div className="mt-4 rounded-2xl border-2 border-line bg-surface-2 p-4">
-              <p className="text-xs font-bold tracking-wider text-muted uppercase">Account number</p>
+              <p className="text-xs font-bold tracking-wider text-muted uppercase">{k.invoice.nomorRekening}</p>
               <div className="mt-1 flex flex-wrap items-center gap-3">
                 <span className="font-mono text-xl font-bold tracking-wide text-ink">{metode.nomor}</span>
-                <Salin nilai={metode.nomor ?? ""} label="Account number" />
+                <Salin nilai={metode.nomor ?? ""} label={k.invoice.nomorRekening} />
               </div>
               <p className="mt-2 text-sm text-muted">
                 Account name: <span className="font-semibold text-ink">{metode.atasNama}</span>
@@ -178,10 +177,10 @@ export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode
           <form ref={bayar.formRef} onSubmit={bayar.onSubmit} className="mt-5 space-y-3">
             <input type="hidden" name="invoice_no" value={invoice.invoiceNo} />
             <Button type="submit" size="lg" loading={bayar.pending} className="w-full">
-              I&apos;ve sent the payment
+              {k.invoice.sudahTransfer}
             </Button>
             <p className="text-center text-xs text-muted">
-              Press this only after the transfer has gone through. We&apos;ll be notified straight away.
+              {k.invoice.sudahTransferBantuan}
             </p>
           </form>
         </section>
@@ -190,10 +189,10 @@ export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode
       {sudahLapor && (
         <section className="rounded-3xl border-2 border-ink bg-surface p-5 sm:p-6">
           <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-            What happens <span className="text-brand">next</span>
+            {k.invoice.langkahJudul} <span className="text-brand">{k.invoice.langkahAksen}</span>
           </h2>
           <ol className="mt-4 space-y-4">
-            {LANGKAH.map((langkah, index) => {
+            {k.invoice.langkah.map((langkah, index) => {
               const selesai = index === 0;
               return (
                 <li key={langkah.judul} className="flex gap-3">
@@ -215,7 +214,7 @@ export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode
             })}
           </ol>
           <p className="mt-4 border-t border-line pt-4 text-sm text-muted">
-            We check payments by hand, so nothing is confirmed automatically. You&apos;ll see the order appear in your
+            {k.invoice.catatanManual}
             account as soon as it&apos;s activated.
           </p>
         </section>
@@ -223,7 +222,7 @@ export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode
 
       {invoice.status === "disetujui" && (
         <section className="rounded-3xl border-2 border-ok/50 bg-ok-soft p-5 sm:p-6">
-          <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">Payment confirmed</h2>
+          <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">{k.invoice.lunasJudul}</h2>
           <p className="mt-1 text-sm text-ink">
             {invoice.orderNo ? (
               <>
@@ -231,7 +230,7 @@ export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode
                 account page to see the proxy list.
               </>
             ) : (
-              "Your order is active. Open it from your account page."
+              k.invoice.lunasIsi
             )}
           </p>
         </section>
@@ -239,14 +238,14 @@ export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode
 
       {invoice.status === "ditolak" && (
         <section className="rounded-3xl border-2 border-bad/50 bg-bad-soft p-5 sm:p-6">
-          <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">Invoice rejected</h2>
-          <p className="mt-1 text-sm text-ink">{invoice.alasanTolak ?? "Please contact us on WhatsApp."}</p>
+          <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">{k.invoice.ditolakJudul}</h2>
+          <p className="mt-1 text-sm text-ink">{invoice.alasanTolak ?? k.invoice.ditolakBawaan}</p>
         </section>
       )}
 
       {(invoice.status === "kedaluwarsa" || (invoice.status === "menunggu_bayar" && habis)) && (
         <section className="rounded-3xl border-2 border-line bg-surface p-5 sm:p-6">
-          <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">Invoice expired</h2>
+          <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">{k.invoice.kedaluwarsaJudul}</h2>
           <p className="mt-1 text-sm text-muted">
             This invoice is past its 24-hour window, so the amount is no longer reserved. Create a new one — or message
             us on WhatsApp if you already sent the money.
@@ -258,7 +257,7 @@ export function InvoicePanel({ invoice, metode }: { invoice: InvoiceView; metode
         <form ref={batal.formRef} onSubmit={batal.onSubmit} className="flex justify-center">
           <input type="hidden" name="invoice_no" value={invoice.invoiceNo} />
           <Button type="submit" variant="ghost" size="sm" loading={batal.pending}>
-            Cancel this invoice
+            {k.invoice.batalkan}
           </Button>
         </form>
       )}

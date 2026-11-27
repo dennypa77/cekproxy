@@ -7,7 +7,9 @@ import { Badge, buttonClass } from "@/components/ui";
 import { getCustomer } from "@/lib/customer-session";
 import { checkoutEnabled } from "@/lib/env";
 import { formatDate } from "@/lib/format";
-import { INVOICE_AKTIF, INVOICE_BADGE } from "@/lib/invoice-status";
+import { jalur } from "@/lib/i18n";
+import { bahasaSekarang, kamus, type Kamus } from "@/lib/kamus";
+import { INVOICE_AKTIF, INVOICE_BADGE, labelInvoice } from "@/lib/invoice-status";
 import { db } from "@/lib/db";
 import { metodeBayar } from "@/lib/payment";
 import {
@@ -24,9 +26,10 @@ import {
 import { listPerpanjang, sapuInvoiceKedaluwarsa } from "@/lib/services/invoice";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Buy a plan" };
 
-const ROWS: PaketRow[] = [
+
+function barisPaket(k: Kamus): PaketRow[] {
+  return [
   ...SEMUA_PAKET.map((paket) => ({
     sku: paket.sku,
     kategoriId: paket.kategoriId,
@@ -49,18 +52,21 @@ const ROWS: PaketRow[] = [
     rotating: true,
     // Pool gabungan: tidak ada jumlah IP maupun kuota GB untuk ditampilkan.
     ip: 0,
-    bandwidthLabel: "Shared pool",
+    bandwidthLabel: k.harga.poolBersama,
     hargaLabel: rupiah(paket.hargaRp),
     usdLabel: usd(paket.hargaRp),
-    perIpLabel: `${usdPerHari(paket)} / day`,
+    perIpLabel: `${usdPerHari(paket)} / ${k.harga.kolom.perHari.toLowerCase()}`,
     durasiLabel: labelDurasi(paket.hari),
     populer: Boolean(paket.populer),
   })),
-];
+  ];
+}
 
 export default async function BeliPage({ searchParams }: { searchParams: Promise<{ sku?: string }> }) {
   // Checkout masih dimatikan → halaman ini memang tidak ada.
   if (!checkoutEnabled()) notFound();
+  const k = await kamus();
+  const bahasa = await bahasaSekarang();
 
   // sku dibaca lebih dulu supaya ikut terbawa kalau pengunjung belum punya akun.
   const { sku } = await searchParams;
@@ -69,8 +75,8 @@ export default async function BeliPage({ searchParams }: { searchParams: Promise
     // Pembeli yang menekan "Buy" dari daftar harga hampir selalu orang baru,
     // jadi diarahkan ke pendaftaran — halaman itu sendiri menyediakan tautan
     // "Log in here" bagi yang ternyata sudah punya akun.
-    const tujuan = sku ? `/account/buy?sku=${encodeURIComponent(sku)}` : "/account/buy";
-    redirect(`/account/register?next=${encodeURIComponent(tujuan)}`);
+    const tujuan = jalur(bahasa, sku ? `/account/buy?sku=${encodeURIComponent(sku)}` : "/account/buy");
+    redirect(`${jalur(bahasa, "/account/register")}?next=${encodeURIComponent(tujuan)}`);
   }
 
   // Tidak ada cron: invoice lewat tempo disapu sambil lalu, maksimal sekali semenit.
@@ -86,30 +92,27 @@ export default async function BeliPage({ searchParams }: { searchParams: Promise
   return (
     <AccountShell
       nama={customer.nama}
-      eyebrow="Checkout"
-      judul="Pick a"
-      aksen="plan"
+      eyebrow={k.beli.eyebrow}
+      judul={k.beli.judul}
+      aksen={k.beli.aksen}
       action={
-        <Link href="/account" className={buttonClass("secondary", "sm")}>
-          ← My orders
+        <Link href={jalur(bahasa, "/account")} className={buttonClass("secondary", "sm")}>
+          {k.beli.kembaliKePesanan}
         </Link>
       }
     >
-      <p className="text-sm text-muted">
-        Pay by QRIS or bank transfer. We check every payment by hand, so your proxies are usually ready within 2 hours
-        — often much sooner. Prices are charged in Indonesian rupiah.
-      </p>
+      <p className="text-sm text-muted">{k.beli.ringkas}</p>
 
       {aktif.length > 0 && (
         <div className="rounded-3xl border-2 border-brand/50 bg-surface-2 p-5">
-          <p className="text-xs font-bold tracking-wider text-muted uppercase">Open invoices</p>
+          <p className="text-xs font-bold tracking-wider text-muted uppercase">{k.beli.invoiceBerjalan}</p>
           <ul className="mt-3 divide-y divide-line">
             {aktif.map((invoice) => (
               <li key={invoice.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
                 <span className="min-w-0">
                   <span className="font-mono text-sm font-bold text-ink">{invoice.invoice_no}</span>
                   <span className="ml-2 align-middle">
-                    <Badge tone={INVOICE_BADGE[invoice.status].tone}>{INVOICE_BADGE[invoice.status].label}</Badge>
+                    <Badge tone={INVOICE_BADGE[invoice.status].tone}>{labelInvoice(k, invoice.status)}</Badge>
                   </span>
                   <span className="block text-xs text-muted">
                     {invoice.paket_nama} · {rupiah(invoice.total_rp)} · created {formatDate(invoice.created_at)}
@@ -128,7 +131,7 @@ export default async function BeliPage({ searchParams }: { searchParams: Promise
       )}
 
       <BuyCatalog
-        paket={ROWS}
+        paket={barisPaket(k)}
         metode={metodeBayar().map((m) => ({ kode: m.kode, nama: m.nama }))}
         perpanjang={perpanjang.map((item) => ({
           orderId: item.orderId,
@@ -142,4 +145,9 @@ export default async function BeliPage({ searchParams }: { searchParams: Promise
       />
     </AccountShell>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const k = await kamus();
+  return { title: k.beli.meta };
 }

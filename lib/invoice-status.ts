@@ -33,3 +33,25 @@ export function cocokFilter(status: InvoiceStatus, filter: InvoiceFilter): boole
       return true;
   }
 }
+
+/**
+ * Label status invoice untuk CUSTOMER, mengikuti bahasa halaman.
+ *
+ * INVOICE_BADGE di atas tetap dipakai panel admin — panel itu di luar
+ * segmen [lang] dan sengaja berbahasa Inggris, jadi labelnya tidak boleh
+ * ikut berubah.
+ */
+export function labelInvoice(
+  k: { invoiceStatus: Record<string, string> },
+  status: InvoiceStatus,
+): string {
+  const peta: Record<InvoiceStatus, string> = {
+    menunggu_bayar: k.invoiceStatus.menungguBayar,
+    menunggu_verifikasi: k.invoiceStatus.menungguVerifikasi,
+    disetujui: k.invoiceStatus.disetujui,
+    ditolak: k.invoiceStatus.ditolak,
+    kedaluwarsa: k.invoiceStatus.kedaluwarsa,
+    dibatalkan: k.invoiceStatus.dibatalkan,
+  };
+  return peta[status];
+}

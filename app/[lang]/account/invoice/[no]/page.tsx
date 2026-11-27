@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { jalur } from "@/lib/i18n";
+import { bahasaSekarang, kamus } from "@/lib/kamus";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AccountShell } from "@/components/customer/account/AccountShell";
@@ -9,18 +11,20 @@ import { requireCustomer } from "@/lib/customer-session";
 import { db } from "@/lib/db";
 import { checkoutEnabled } from "@/lib/env";
 import { formatDateTime } from "@/lib/format";
-import { INVOICE_BADGE } from "@/lib/invoice-status";
+import { INVOICE_BADGE, labelInvoice } from "@/lib/invoice-status";
 import { waHelpLink } from "@/lib/links";
 import { findMetode } from "@/lib/payment";
 import { rupiah, usd } from "@/lib/pricing";
 import { sapuInvoiceKedaluwarsa } from "@/lib/services/invoice";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Invoice" };
+
 
 export default async function InvoicePage({ params }: { params: Promise<{ no: string }> }) {
   if (!checkoutEnabled()) notFound();
   const [{ no }, customer] = await Promise.all([params, requireCustomer()]);
+  const k = await kamus();
+  const bahasa = await bahasaSekarang();
   await sapuInvoiceKedaluwarsa();
 
   // Query sudah memfilter customer_id di SQL: invoice orang lain = 404,
@@ -35,12 +39,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ no: st
   return (
     <AccountShell
       nama={customer.nama}
-      eyebrow="Checkout"
-      judul="Your"
-      aksen="invoice"
+      eyebrow={k.beli.eyebrow}
+      judul={k.invoice.judulHalaman}
+      aksen={k.invoice.aksenHalaman}
       action={
-        <Link href="/account" className={buttonClass("secondary", "sm")}>
-          ← My orders
+        <Link href={jalur(bahasa, "/account")} className={buttonClass("secondary", "sm")}>
+          {k.beli.kembaliKePesanan}
         </Link>
       }
     >
@@ -49,7 +53,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ no: st
           <p className="font-mono text-lg font-bold break-all text-ink">{invoice.invoice_no}</p>
           <p className="text-xs text-muted">Created {formatDateTime(invoice.created_at)}</p>
         </div>
-        <Badge tone={badge.tone}>{badge.label}</Badge>
+        <Badge tone={badge.tone}>{labelInvoice(k, invoice.status)}</Badge>
       </div>
 
       <InvoicePanel
@@ -92,4 +96,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ no: st
       </div>
     </AccountShell>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const k = await kamus();
+  return { title: k.invoice.meta };
 }

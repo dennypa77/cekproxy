@@ -5,8 +5,10 @@ import { createInvoiceAction } from "@/app/_actions/account";
 import { Modal } from "@/components/Modal";
 import { CheckIcon } from "@/components/icons";
 import { Badge, Button, buttonClass, cn, inputClass, labelClass } from "@/components/ui";
+import { useKamus } from "@/components/KamusProvider";
 import { useServerForm } from "@/components/useServerForm";
 import { countryName } from "@/lib/format";
+import { isiVar, jalur } from "@/lib/i18n";
 import { LOKASI_ACAK, negaraTersedia } from "@/lib/locations";
 
 export interface PaketRow {
@@ -63,6 +65,7 @@ export function BuyCatalog({
   perpanjang: PerpanjangItem[];
   skuAwal: string | null;
 }) {
+  const { k, bahasa } = useKamus();
   // Tautan "Order" dari halaman harga membawa ?sku=… → langsung buka dialognya.
   const [pilihan, setPilihan] = useState<Pilihan | null>(
     skuAwal && paket.some((p) => p.sku === skuAwal) ? { sku: skuAwal, extendOrderId: null } : null,
@@ -78,22 +81,23 @@ export function BuyCatalog({
       {perpanjang.length > 0 && (
         <section id="renew" className="scroll-mt-6 rounded-3xl border-2 border-ink bg-surface p-5 sm:p-6">
           <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-            Renew an <span className="text-brand">existing order</span>
+            {k.katalog.perpanjangJudul} <span className="text-brand">{k.katalog.perpanjangAksen}</span>
           </h2>
-          <p className="mt-1 text-sm text-muted">
-            Renewing extends the same order — you keep the same IPs, API key, and dashboard.
-          </p>
+          <p className="mt-1 text-sm text-muted">{k.katalog.perpanjangRingkas}</p>
 
           <ul className="mt-4 divide-y divide-line">
             {perpanjang.map((item) => (
               <li key={item.orderId} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div className="min-w-0">
                   <p className="font-mono text-sm font-bold break-all text-ink">{item.orderNo}</p>
-                  <p className="text-xs text-muted">Active until {item.expiresLabel}</p>
+                  <p className="text-xs text-muted">{isiVar(k.katalog.aktifSampai, { tanggal: item.expiresLabel })}</p>
                 </div>
                 {item.invoiceBerjalan ? (
-                  <a href={`/account/invoice/${encodeURIComponent(item.invoiceBerjalan)}`} className={buttonClass("secondary", "sm")}>
-                    Open invoice {item.invoiceBerjalan}
+                  <a
+                    href={jalur(bahasa, `/account/invoice/${encodeURIComponent(item.invoiceBerjalan)}`)}
+                    className={buttonClass("secondary", "sm")}
+                  >
+                    {isiVar(k.katalog.bukaInvoice, { no: item.invoiceBerjalan })}
                   </a>
                 ) : (
                   <Button
@@ -109,7 +113,7 @@ export function BuyCatalog({
                       })
                     }
                   >
-                    Renew →
+                    {k.katalog.perpanjangTombol}
                   </Button>
                 )}
               </li>
@@ -124,7 +128,7 @@ export function BuyCatalog({
         return (
           <section key={id} className="rounded-3xl border-2 border-ink bg-surface p-5 sm:p-6">
             <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-              {rows[0]?.kategoriNama} <span className="text-brand">proxies</span>
+              {rows[0]?.kategoriNama} <span className="text-brand">{k.katalog.proxiesSuffix}</span>
             </h2>
 
             {grup.map((label) => (
@@ -134,11 +138,11 @@ export function BuyCatalog({
                   <table className="w-full min-w-[420px] text-left text-sm">
                     <thead className="border-b border-line text-xs tracking-wider text-muted uppercase">
                       <tr>
-                        <th className="py-2 pr-3 font-medium">IP count</th>
-                        <th className="py-2 pr-3 font-medium">Bandwidth</th>
-                        <th className="py-2 pr-3 font-medium">Price</th>
-                        <th className="hidden py-2 pr-3 font-medium sm:table-cell">Per IP</th>
-                        <th className="py-2 text-right font-medium">Action</th>
+                        <th className="py-2 pr-3 font-medium">{k.harga.kolom.jumlahIp}</th>
+                        <th className="py-2 pr-3 font-medium">{k.harga.kolom.bandwidth}</th>
+                        <th className="py-2 pr-3 font-medium">{k.harga.kolom.harga}</th>
+                        <th className="hidden py-2 pr-3 font-medium sm:table-cell">{k.harga.kolom.perIp}</th>
+                        <th className="py-2 text-right font-medium">{k.harga.kolom.aksi}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line">
@@ -150,7 +154,7 @@ export function BuyCatalog({
                               <span className="font-display text-base font-extrabold text-ink">{p.ip} IP</span>
                               {p.populer && (
                                 <span className="ml-2 align-middle">
-                                  <Badge tone="blue">Best seller</Badge>
+                                  <Badge tone="blue">{k.harga.palingLaris}</Badge>
                                 </span>
                               )}
                             </td>
@@ -164,7 +168,7 @@ export function BuyCatalog({
                             </td>
                             <td className="py-3 text-right">
                               <Button size="sm" onClick={() => setPilihan({ sku: p.sku, extendOrderId: null })}>
-                                Buy
+                                {k.katalog.beli}
                               </Button>
                             </td>
                           </tr>
@@ -181,28 +185,25 @@ export function BuyCatalog({
       {rotating.length > 0 && (
         <section id="rotating" className="scroll-mt-6 rounded-3xl border-2 border-ink bg-surface p-5 sm:p-6">
           <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-            Rotating <span className="text-brand">API</span>
+            {k.katalog.rotatingJudul} <span className="text-brand">{k.katalog.rotatingAksen}</span>
           </h2>
-          <p className="mt-1 text-sm text-muted">
-            One API key that hands you a fresh proxy from our shared pool on every call. Sold by duration, so there is
-            no GB counter to watch. Fair use applies — see the FAQ.
-          </p>
+          <p className="mt-1 text-sm text-muted">{k.katalog.rotatingRingkas}</p>
 
           {[...new Set(rotating.map((p) => p.kategoriId))].map((id) => {
             const rows = rotating.filter((p) => p.kategoriId === id);
             return (
               <div key={id} className="mt-5">
                 <p className="mb-2 text-xs font-bold tracking-wider text-muted uppercase">
-                  {rows[0]?.kategoriNama} pool
+                  {rows[0]?.kategoriNama} {k.katalog.poolLabel}
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[420px] text-left text-sm">
                     <thead className="border-b border-line text-xs tracking-wider text-muted uppercase">
                       <tr>
-                        <th className="py-2 pr-3 font-medium">Duration</th>
-                        <th className="py-2 pr-3 font-medium">Price</th>
-                        <th className="hidden py-2 pr-3 font-medium sm:table-cell">Per day</th>
-                        <th className="py-2 text-right font-medium">Action</th>
+                        <th className="py-2 pr-3 font-medium">{k.harga.kolom.durasi}</th>
+                        <th className="py-2 pr-3 font-medium">{k.harga.kolom.harga}</th>
+                        <th className="hidden py-2 pr-3 font-medium sm:table-cell">{k.harga.kolom.perHari}</th>
+                        <th className="py-2 text-right font-medium">{k.harga.kolom.aksi}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line">
@@ -212,7 +213,7 @@ export function BuyCatalog({
                             <span className="font-display text-base font-extrabold text-ink">{p.durasiLabel}</span>
                             {p.populer && (
                               <span className="ml-2 align-middle">
-                                <Badge tone="blue">Best value</Badge>
+                                <Badge tone="blue">{k.harga.palingHemat}</Badge>
                               </span>
                             )}
                           </td>
@@ -225,7 +226,7 @@ export function BuyCatalog({
                           </td>
                           <td className="py-3 text-right">
                             <Button size="sm" onClick={() => setPilihan({ sku: p.sku, extendOrderId: null })}>
-                              Buy
+                              {k.katalog.beli}
                             </Button>
                           </td>
                         </tr>
@@ -241,8 +242,8 @@ export function BuyCatalog({
 
       <Modal
         open={Boolean(pilihan && terpilih)}
-        title={pilihan?.extendOrderId ? "Renew" : "Checkout"}
-        accent={pilihan?.extendOrderId ? "order" : ""}
+        title={pilihan?.extendOrderId ? k.katalog.judulPerpanjang : k.katalog.judulCheckout}
+        accent={pilihan?.extendOrderId ? k.katalog.aksenPerpanjang : ""}
         lebar="lg"
         onClose={() => setPilihan(null)}
       >
@@ -298,6 +299,7 @@ function PilihLokasi({
   nilai: string;
   onChange: (nilai: string) => void;
 }) {
+  const { k } = useKamus();
   const acak = nilai === LOKASI_ACAK;
   const negara = negaraTersedia(kategoriId);
 
@@ -336,16 +338,17 @@ function PilihLokasi({
 
   const pesanSisa =
     sisa === 0
-      ? "All " + totalIp + " IPs allocated."
+      ? isiVar(k.katalog.lokasiSemuaTeralokasi, { jumlah: totalIp })
       : sisa > 0
-        ? sisa + " of " + totalIp + " IPs left to allocate."
-        : -sisa + " IPs too many — reduce somewhere.";
+        ? isiVar(k.katalog.lokasiSisa, { sisa, jumlah: totalIp })
+        : isiVar(k.katalog.lokasiKelebihan, { lebih: -sisa });
 
   return (
     <fieldset>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <legend className={labelClass}>
-          Location {rotating ? "(preferred)" : "(" + totalIp + " IP to allocate)"}
+          {k.katalog.lokasiJudul}{" "}
+          {rotating ? k.katalog.lokasiPreferensi : isiVar(k.katalog.lokasiAlokasi, { jumlah: totalIp })}
         </legend>
         {!acak && rincian.size > 0 && (
           <button
@@ -353,7 +356,7 @@ function PilihLokasi({
             onClick={() => onChange("")}
             className="text-xs font-bold text-muted underline hover:text-ink"
           >
-            Clear
+            {k.katalog.lokasiBersihkan}
           </button>
         )}
       </div>
@@ -379,7 +382,7 @@ function PilihLokasi({
         >
           {acak && <CheckIcon className="size-3" strokeWidth={4} />}
         </span>
-        Random — let us pick the best available
+        {k.katalog.lokasiAcak}
       </label>
 
       {!acak && (
@@ -419,7 +422,7 @@ function PilihLokasi({
                         onClick={() => togglePilihan(kode)}
                         className="shrink-0 rounded-full border-2 border-line px-3 py-0.5 text-xs font-bold text-ink hover:border-ink/50"
                       >
-                        {dipilih ? "Remove" : "Add"}
+                        {dipilih ? k.katalog.lokasiHapus : k.katalog.lokasiTambah}
                       </button>
                     ) : (
                       <input
@@ -429,7 +432,7 @@ function PilihLokasi({
                         max={totalIp}
                         value={jumlah === 0 ? "" : jumlah}
                         placeholder="0"
-                        aria-label={"IPs in " + countryName(kode)}
+                        aria-label={isiVar(k.katalog.lokasiJumlahAria, { negara: countryName(kode) })}
                         onChange={(event) => setJumlah(kode, Number.parseInt(event.target.value, 10))}
                         className="w-16 shrink-0 rounded-lg border-2 border-line bg-paper px-2 py-1 text-right font-mono text-sm font-bold text-ink focus:border-brand focus:outline-none"
                       />
@@ -442,7 +445,7 @@ function PilihLokasi({
 
           {rotating && (
             <p className="mt-2 text-xs text-muted">
-              You can still request any country per API call — this just tells us which ones to keep stocked for you.
+              {k.katalog.lokasiCatatanRotating}
             </p>
           )}
         </>
@@ -466,6 +469,7 @@ function FormInvoice({
   onCancel: () => void;
   onGantiSku: (sku: string) => void;
 }) {
+  const { k } = useKamus();
   const { pending, onSubmit, formRef } = useServerForm(createInvoiceAction);
   const [metodePilihan, setMetodePilihan] = useState(metode[0]?.kode ?? "");
   const [lokasi, setLokasi] = useState("");
@@ -486,7 +490,7 @@ function FormInvoice({
   const blokPaket = pilihan.extendOrderId ? (
     <div>
       <label className={labelClass} htmlFor="sku-pilih">
-        Plan
+        {k.katalog.paketLabel}
       </label>
       <select
         id="sku-pilih"
@@ -505,9 +509,7 @@ function FormInvoice({
             </option>
           ))}
       </select>
-      <p className="mt-1.5 text-xs text-muted">
-        Pre-selected from your current order. Change it if you want a different size.
-      </p>
+      <p className="mt-1.5 text-xs text-muted">{k.katalog.paketBantuan}</p>
     </div>
   ) : (
     <div className="rounded-2xl border-2 border-line bg-surface-2 p-4">
@@ -518,7 +520,7 @@ function FormInvoice({
       </p>
       <p className="mt-1 text-sm text-muted">
         {terpilih.durasiLabel}
-        {terpilih.rotating ? " · shared pool, one API key" : " plan"}
+        {terpilih.rotating ? k.katalog.rotatingRingkasPaket : k.katalog.paketSuffix}
       </p>
     </div>
   );
@@ -526,7 +528,7 @@ function FormInvoice({
   const blokBayar = (
     <>
       <div className="flex items-baseline justify-between rounded-2xl border-2 border-line bg-surface-2 px-4 py-3">
-        <span className="text-xs font-bold tracking-wider text-muted uppercase">Price</span>
+        <span className="text-xs font-bold tracking-wider text-muted uppercase">{k.harga.kolom.harga}</span>
         <span className="text-right">
           <span className="font-display text-2xl font-extrabold text-ink">{terpilih.usdLabel}</span>
           <span className="block text-xs text-muted">{terpilih.hargaLabel}</span>
@@ -534,7 +536,7 @@ function FormInvoice({
       </div>
 
       <fieldset>
-        <legend className={labelClass}>Payment method</legend>
+        <legend className={labelClass}>{k.katalog.metodeBayar}</legend>
         <div className="grid gap-2">
           {metode.map((m) => (
             <label
@@ -571,27 +573,27 @@ function FormInvoice({
 
       <div>
         <label className={labelClass} htmlFor="catatan">
-          Note for us (optional)
+          {k.katalog.catatanLabel}
         </label>
         <input
           id="catatan"
           name="catatan"
           maxLength={300}
           className={inputClass}
-          placeholder="e.g. a city, or anything else we should know"
+          placeholder={k.katalog.catatanPlaceholder}
         />
       </div>
 
       <p className="text-xs text-muted">
-        We&apos;ll show you an exact amount to transfer, down to the last 3 digits — that is how we match your payment.
+        {k.katalog.infoNominal}
       </p>
 
       <div className="flex gap-2">
         <Button type="submit" loading={pending} disabled={!lokasiSah} className="flex-1">
-          Create invoice
+          {k.katalog.buatInvoice}
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={pending}>
-          Cancel
+          {k.katalog.batal}
         </Button>
       </div>
     </>
@@ -605,8 +607,7 @@ function FormInvoice({
 
       {pilihan.extendOrderId && (
         <p className="rounded-2xl border-2 border-line bg-surface-2 p-3 text-sm text-muted">
-          Renewing order <span className="font-mono font-bold text-ink">{pilihan.orderNo}</span> — we add{" "}
-          {terpilih.durasiLabel} to its current expiry date.
+          {isiVar(k.katalog.perpanjangCatatan, { no: pilihan.orderNo ?? "", durasi: terpilih.durasiLabel })}
         </p>
       )}
 

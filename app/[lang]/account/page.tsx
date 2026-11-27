@@ -8,7 +8,9 @@ import { requireCustomer } from "@/lib/customer-session";
 import { db } from "@/lib/db";
 import { checkoutEnabled } from "@/lib/env";
 import { formatDate, formatDateTime } from "@/lib/format";
-import { INVOICE_AKTIF, INVOICE_BADGE } from "@/lib/invoice-status";
+import { isiVar, jalur } from "@/lib/i18n";
+import { bahasaSekarang, kamus } from "@/lib/kamus";
+import { INVOICE_AKTIF, INVOICE_BADGE, labelInvoice } from "@/lib/invoice-status";
 import { customerPath, waExtendLink, waHelpLink, waOrderGeneralLink } from "@/lib/links";
 import type { OrderState } from "@/lib/order-status";
 import { rupiah } from "@/lib/pricing";
@@ -16,16 +18,24 @@ import { listAccountOrders } from "@/lib/services/account";
 import { sapuInvoiceKedaluwarsa } from "@/lib/services/invoice";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "My Orders" };
 
-const STATE_BADGE: Record<OrderState, { tone: "green" | "yellow" | "red" | "gray"; label: string }> = {
-  aktif: { tone: "green", label: "Active" },
-  akan_expired: { tone: "yellow", label: "Expiring soon" },
-  expired: { tone: "red", label: "Expired" },
-  nonaktif: { tone: "gray", label: "Inactive" },
+
+const STATE_TONE: Record<OrderState, "green" | "yellow" | "red" | "gray"> = {
+  aktif: "green",
+  akan_expired: "yellow",
+  expired: "red",
+  nonaktif: "gray",
 };
 
 export default async function AkunPage() {
+  const k = await kamus();
+  const bahasa = await bahasaSekarang();
+  const STATE_LABEL: Record<OrderState, string> = {
+    aktif: k.pesanan.status.aktif,
+    akan_expired: k.pesanan.status.akanExpired,
+    expired: k.pesanan.status.expired,
+    nonaktif: k.pesanan.status.nonaktif,
+  };
   const customer = await requireCustomer();
   const checkout = checkoutEnabled();
   // Selama checkout mati, tabel invoices tidak disentuh sama sekali.
@@ -45,8 +55,8 @@ export default async function AkunPage() {
       action={
         <>
           {checkout ? (
-            <Link href="/account/buy" className={buttonClass("primary", "sm")}>
-              + Buy a plan
+            <Link href={jalur(bahasa, "/account/buy")} className={buttonClass("primary", "sm")}>
+              {k.pesanan.beliPaket}
             </Link>
           ) : (
             <a
@@ -55,11 +65,11 @@ export default async function AkunPage() {
               rel="noopener noreferrer"
               className={buttonClass("primary", "sm")}
             >
-              <WhatsAppIcon className="size-4" /> Order a plan
+              <WhatsAppIcon className="size-4" /> {k.pesanan.pesanPaket}
             </a>
           )}
-          <Link href="/account/claim" className={buttonClass("secondary", "sm")}>
-            Claim order
+          <Link href={jalur(bahasa, "/account/claim")} className={buttonClass("secondary", "sm")}>
+            {k.pesanan.klaimPesanan}
           </Link>
         </>
       }
@@ -67,11 +77,9 @@ export default async function AkunPage() {
       {invoiceAktif.length > 0 && (
         <Card className="border-brand/50">
           <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-            Your <span className="text-brand">invoices</span>
+            {k.pesanan.invoiceJudul} <span className="text-brand">{k.pesanan.invoiceAksen}</span>
           </h2>
-          <p className="mt-1 text-sm text-muted">
-            Orders appear below once we&apos;ve checked the payment — usually within 2 hours.
-          </p>
+          <p className="mt-1 text-sm text-muted">{k.pesanan.invoiceRingkas}</p>
           <ul className="mt-4 divide-y divide-line">
             {invoiceAktif.map((invoice) => (
               <li key={invoice.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
@@ -79,17 +87,17 @@ export default async function AkunPage() {
                   <p className="font-mono text-sm font-bold break-all text-ink">{invoice.invoice_no}</p>
                   <p className="mt-1 text-xs text-muted">
                     {invoice.paket_nama}
-                    {invoice.jenis === "perpanjangan" && " (renewal)"} · {rupiah(invoice.total_rp)} ·{" "}
+                    {invoice.jenis === "perpanjangan" && k.pesanan.renewalSuffix} · {rupiah(invoice.total_rp)} ·{" "}
                     {formatDateTime(invoice.created_at)}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Badge tone={INVOICE_BADGE[invoice.status].tone}>{INVOICE_BADGE[invoice.status].label}</Badge>
+                  <Badge tone={INVOICE_BADGE[invoice.status].tone}>{labelInvoice(k, invoice.status)}</Badge>
                   <Link
-                    href={`/account/invoice/${encodeURIComponent(invoice.invoice_no)}`}
+                    href={jalur(bahasa, `/account/invoice/${encodeURIComponent(invoice.invoice_no)}`)}
                     className={buttonClass("secondary", "sm")}
                   >
-                    Open →
+                    {k.pesanan.buka}
                   </Link>
                 </div>
               </li>
@@ -101,17 +109,17 @@ export default async function AkunPage() {
       {rows.length === 0 ? (
         <Card>
           <h2 className="font-display text-lg font-extrabold tracking-tight text-ink uppercase">
-            No <span className="text-brand">orders</span> yet
+            {k.pesanan.belumAdaJudul} <span className="text-brand">{k.pesanan.belumAdaAksen}</span>
           </h2>
           <p className="mt-2 text-sm text-muted">
             {checkout
-              ? "Pick a plan and pay by QRIS or bank transfer — or, if you already ordered elsewhere, enter the claim code we gave you."
-              : "Message us on WhatsApp to order a plan — or, if you already ordered, enter the claim code we gave you."}
+              ? k.pesanan.belumAdaCheckout
+              : k.pesanan.belumAdaWa}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {checkout ? (
-              <Link href="/account/buy" className={buttonClass("primary", "md")}>
-                Browse plans
+              <Link href={jalur(bahasa, "/account/buy")} className={buttonClass("primary", "md")}>
+                {k.pesanan.lihatPaket}
               </Link>
             ) : (
               <a
@@ -120,11 +128,11 @@ export default async function AkunPage() {
                 rel="noopener noreferrer"
                 className={buttonClass("primary", "md")}
               >
-                <WhatsAppIcon className="size-4" /> Order on WhatsApp
+                <WhatsAppIcon className="size-4" /> {k.pesanan.pesanLewatWa}
               </a>
             )}
-            <Link href="/account/claim" className={buttonClass("secondary", "md")}>
-              Claim an order with a code
+            <Link href={jalur(bahasa, "/account/claim")} className={buttonClass("secondary", "md")}>
+              {k.pesanan.klaimDenganKode}
             </Link>
             <a
               href={waHelpLink()}
@@ -132,26 +140,25 @@ export default async function AkunPage() {
               rel="noopener noreferrer"
               className={buttonClass("secondary", "md")}
             >
-              <WhatsAppIcon className="size-4" /> Request a code from us
+              <WhatsAppIcon className="size-4" /> {k.pesanan.mintaKode}
             </a>
           </div>
         </Card>
       ) : (
         <>
           <p className="text-sm text-muted">
-            {rows.length} {rows.length === 1 ? "order" : "orders"} in this account. Click one to see its proxy list,
-            bandwidth, and settings.
+            {isiVar(k.pesanan.jumlahSatu, { n: rows.length })}
           </p>
 
           {rows.map(({ order, state, daysLeft, jenis, openable }) => {
-            const badge = STATE_BADGE[state];
+            const tone = STATE_TONE[state];
             return (
               <Card key={order.id}>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="font-mono text-lg font-bold break-all text-ink">{order.shopee_order_no}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <Badge tone={badge.tone}>{badge.label}</Badge>
+                      <Badge tone={tone}>{STATE_LABEL[state]}</Badge>
                       {jenis && (
                         <Badge tone="blue">
                           <ServerIcon className="size-3.5" /> {jenis}
@@ -161,22 +168,28 @@ export default async function AkunPage() {
                     </div>
                     <p className="mt-2 text-sm text-muted">
                       {state === "expired" || state === "nonaktif"
-                        ? `Ended ${formatDate(order.expires_at)}`
-                        : `Active until ${formatDate(order.expires_at)} · ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left`}
+                        ? isiVar(k.pesanan.berakhir, { tanggal: formatDate(order.expires_at) })
+                        : isiVar(k.pesanan.aktifSampai, {
+                            tanggal: formatDate(order.expires_at),
+                            hari: daysLeft,
+                          })}
                     </p>
                   </div>
 
                   <div className="flex shrink-0 flex-col gap-2 sm:items-end">
                     {openable ? (
-                      <Link href={customerPath(order.shopee_order_no)} className={buttonClass("primary", "sm")}>
-                        Open dashboard →
+                      <Link
+                        href={jalur(bahasa, customerPath(order.shopee_order_no))}
+                        className={buttonClass("primary", "sm")}
+                      >
+                        {k.pesanan.bukaDashboard}
                       </Link>
                     ) : (
-                      <span className="text-xs font-semibold text-muted">This order page is now closed</span>
+                      <span className="text-xs font-semibold text-muted">{k.pesanan.halamanDitutup}</span>
                     )}
                     {checkout ? (
-                      <Link href="/account/buy#renew" className={buttonClass("secondary", "sm")}>
-                        Renew
+                      <Link href={jalur(bahasa, "/account/buy#renew")} className={buttonClass("secondary", "sm")}>
+                        {k.pesanan.perpanjang}
                       </Link>
                     ) : (
                       <a
@@ -185,7 +198,7 @@ export default async function AkunPage() {
                         rel="noopener noreferrer"
                         className={buttonClass("secondary", "sm")}
                       >
-                        <WhatsAppIcon className="size-4" /> Renew
+                        <WhatsAppIcon className="size-4" /> {k.pesanan.perpanjang}
                       </a>
                     )}
                   </div>
@@ -204,4 +217,9 @@ export default async function AkunPage() {
       </div>
     </AccountShell>
   );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const k = await kamus();
+  return { title: k.pesanan.meta };
 }
