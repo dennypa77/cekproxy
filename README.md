@@ -14,6 +14,20 @@ Aplikasi ini **tidak menjual apa pun** dan tidak ada pembayaran. Admin mengelola
 
 **Stack:** Next.js 16 (App Router) + TypeScript + Tailwind CSS 4 · Supabase Postgres · Deploy di Netlify.
 
+## Dua bahasa (Indonesia & Inggris)
+
+Situs berbahasa **Indonesia di alamat utama** dan **Inggris di bawah `/en`** — mis. `/harga` dan `/en/harga`. Tombol ID/EN di header dan footer mempertahankan halaman yang sedang dibuka.
+
+- **Teks ada di [`lib/kamus/id.ts`](lib/kamus/id.ts)**, yang sekaligus jadi sumber bentuk tipenya. [`en.ts`](lib/kamus/en.ts) diketik terhadapnya, jadi kunci yang hilang atau salah tulis **menggagalkan build** — bukan muncul sebagai teks kosong di layar pembeli.
+- **Kamus hanya boleh berisi string.** Isinya dioper ke komponen client, dan fungsi tidak bisa menyeberangi batas server→client. Angka yang berubah-ubah ditulis sebagai `{placeholder}` lalu diisi `isiVar()`.
+- **Komponen server** memanggil `await kamus()` tanpa props, lewat `next/root-params`. **Komponen client** memakai `useKamus()`. Komponen yang dipakai keduanya (mis. `Brand.tsx`) tidak boleh menyentuh kamus sama sekali.
+- **Setiap tautan internal harus lewat `jalur(bahasa, path)`.** Tanpa itu, `href="/account"` dari halaman `/en` melompat balik ke versi Indonesia.
+- Pembagian alamat ditangani [`proxy.ts`](proxy.ts) di akar proyek (Next 16 mengganti nama `middleware.js` jadi `proxy.js`): permintaan tanpa awalan ditulis ulang ke `/id/...` secara internal.
+- **Panel admin sengaja tetap berbahasa Inggris** dan berada di luar segmen `[lang]`; hanya pemilik yang memakainya.
+- **Artikel blog** tetap berbahasa Inggris di kedua versi — menerjemahkannya pekerjaan menulis konten, bukan kode.
+
+Menambah bahasa ketiga: tambahkan kodenya di `BAHASA` ([`lib/i18n.ts`](lib/i18n.ts)) dan buat berkas kamusnya; build akan menuntun kunci mana saja yang kurang.
+
 ---
 
 ## Daftar isi
